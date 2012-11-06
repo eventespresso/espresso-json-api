@@ -57,7 +57,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		foreach($keyOpVals as $key=>$OpAndVal){
 			$whereSubclause=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
 			if(!empty($whereSubclause)){
-				$whereSqlArray[]=$whereSqlArray;
+				$whereSqlArray[]=$whereSubclause;
 			}
 		}
 		return $whereSqlArray;
@@ -184,7 +184,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			return $this->constructSimpleValueInWhereClause($valueInput);
 		}
 	}
-	private function constructSimpleValueInWhereClause($valueInput){
+	protected function constructSimpleValueInWhereClause($valueInput){
 		if($valueInput=='true'){
 			return 'true';
 		}elseif($valueInput=='false'){

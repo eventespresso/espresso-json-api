@@ -8,11 +8,11 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 		'id'=>'Event.id',
 		'name'=>'Event.event_name',
 		'description'=>'Event.description',
-		'status'=>'Event.status',
-		'limit'=>'Event.limit',
+		'status'=>'Event.event_status',
+		'limit'=>'Event.reg_limit',
 		'group_registrations_allowed'=>'Event.group_registration_allowed',
 		'group_registrations_max'=>'Event.group_registration_max',
-		'active'=>'Event.active',
+		'active'=>'Event.is_active',
 		'member_only'=>'Event.member_only',
 		'virtual_url'=>'Event.virtual_url',
 		'call_in_number'=>'Event.virtual_phone',
@@ -37,7 +37,15 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 		"Category"=>array('modelNamePlural'=>"Categories",'hasMany'=>true),
 		'Promocode'=>array('modelNamePlural'=>'Promocodes','hasMany'=>true),
 		'Price'=>array('modelNamePlural'=>'Prices','hasMany'=>true));
-	
+	var $statusConversions=array(
+				'S'=>'seconary/waitlist',
+				'X'=>'expired',
+				'A'=>'active',
+				'D'=>'denied',
+				'IA'=>'inactive',
+				'O'=>'ongoing',
+				'P'=>'pending',
+				'R'=>'draft');
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
@@ -75,6 +83,35 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 		return $resultsICanView;
 	}
 	
+	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		
+		switch($columnName){
+			case 'status':
+				$apiParamToDbStatus=array_flip($this->statusConversions);
+				if($operator=="IN"){
+					$valuesSeperated=explode(",",$value);
+					$valuesConverted=array();
+					foreach($valuesSeperated as $singleValueInIn){
+						$valuesConverted[]=$apiParamToDbStatus[$singleValueInIn];
+					}
+					$value=implode(",",$valuesConverted);
+				}else{
+					$value=$apiParamToDbStatus[$value];
+				}
+				//now we've converted the status from something like 'Active' to 'A', handle the value as usual
+				break;
+			case 'active':
+			case 'member_only':
+				if($value=='true'){
+					$value='Y';
+				}else{
+					$value='N';
+				}
+		}
+				
+		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
+	}
+	
 
 	/**
 	 *for taking the info in the $sql row and formatting it according
@@ -85,15 +122,7 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 			$metaDatas=unserialize($sqlResult['Event.meta']);
 			$statusUnconverted=$sqlResult['Event.status'];
-			$statusConversions=array(
-				'S'=>'seconary/waitlist',
-				'X'=>'expired',
-				'A'=>'active',
-				'D'=>'denied',
-				'IA'=>'inactive',
-				'O'=>'ongoing',
-				'P'=>'pending',
-				'R'=>'draft');
+			
 			$eventActive=($sqlResult['Event.active']=='Y')?true:false;
 			$memberOnly=($sqlResult['Event.member_only']=='Y')?true:false;
 			$groupRegistrationsAllowed=$sqlResult['Event.group_registrations_allowed']=='Y'?true:false;
@@ -102,7 +131,7 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 				'name'=>$sqlResult['Event.name'],
 				'description'=>$sqlResult['Event.description'],
 				'metadata'=>$metaDatas,
-				'status'=>$statusConversions[$statusUnconverted],
+				'status'=>$this->statusConversions[$statusUnconverted],
 				'limit'=>$sqlResult['Event.limit'],
 				'group_registrations_allowed'=>$groupRegistrationsAllowed,
 				'group_registrations_max'=>$sqlResult['Event.group_registrations_max'],
