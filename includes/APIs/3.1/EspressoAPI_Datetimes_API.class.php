@@ -60,34 +60,34 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		$matches=array();
 		switch($columnName){
-			case 'event_start':
+			case 'Datetime.event_start':
 				//break value into parts
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.start_date',$date,'StartEnd.start_time',$hourAndMinute);
-			case 'event_end':
+			case 'Datetime.event_end':
 				//break value into parts
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.end_date',$date,'StartEnd.end_time',$hourAndMinute);
-			case 'registration_start':
+			case 'Datetime.registration_start':
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_start',$date,'Event.registration_startT',$hourAndMinute);
-			case 'registration_end':
+			case 'Datetime.registration_end':
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_end',$date,'Event.registration_endT',$hourAndMinute);
-			case 'limit':
+			case 'Datetime.limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
-			case 'is_primary'://ignore, doesn't apply to 3.1
+			case 'Datetime.is_primary'://ignore, doesn't apply to 3.1
 				return null;
-			case 'tickets_left'://handled in processSQLResults
+			case 'Datetime.tickets_left'://handled in processSQLResults
 				return null;
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		

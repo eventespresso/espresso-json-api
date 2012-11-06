@@ -86,7 +86,7 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		
 		switch($columnName){
-			case 'status':
+			case 'Event.status':
 				$apiParamToDbStatus=array_flip($this->statusConversions);
 				if($operator=="IN"){
 					$valuesSeperated=explode(",",$value);
@@ -100,8 +100,8 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 				}
 				//now we've converted the status from something like 'Active' to 'A', handle the value as usual
 				break;
-			case 'active':
-			case 'member_only':
+			case 'Event.active':
+			case 'Event.member_only':
 				if($value=='true'){
 					$value='Y';
 				}else{

@@ -5,15 +5,11 @@
 class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		"id"=>"Attendee.id",
-		"status"=>"Attendee.status.PROCESS",
 		"date_of_registration"=>"Attendee.date_of_registration",
 		'final_price'=>'Attendee.final_price',
-		'code'=>'Attendee.code.PROCESS',
-		'url_link'=>'Registraiton.url_link.PROCESS',
+		'code'=>'Attendee.registration_id',
 		'is_primary'=>'Attendee.is_primary',
-		'is_group_registration'=>'Registration.is_group_registration.PROCESS',
-		'is_going'=>'Registration.is_going.PROCESS',
-		'is_checked_in'=>'Registration.is_checked_in.PROCESS');
+		'is_checked_in'=>'Attendee.checked_in');
 	
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
@@ -54,6 +50,25 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 				
 		return $sql;
 	}
+	
+	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		switch($columnName){
+			case 'Registration.status':
+			case 'Registration.url_link':
+			case 'Registration.is_primary':
+			case 'Registration.is_going':
+				return null;
+			case 'Registration.is_group_registration':
+				if($value=='true'){
+					return "Attendee.quantity > 1";
+				}else{
+					return "Attendee.quantity <= 1";
+				}
+				
+			
+		}
+		return parent::constructSQLWhereSubclause($columnName,$operator,$value);
+	}
 	/*
 	 * overrides parent constructSQLWherSubclauses in order to attach an additional wherecaluse
 	 * which will ensure the prices found match the ones the attendees purchased
@@ -61,7 +76,9 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 	protected function constructSQLWhereSubclauses($keyOpVals){
 		$whereSqlArray=array();
 		foreach($keyOpVals as $key=>$OpAndVal){
-			$whereSqlArray[]=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
+			$whereSubclause=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
+			if(!empty($whereSubclause))
+				$whereSqlArray[]=$whereSubclause;
 		}
 		$whereSqlArray[]="
 		(
@@ -93,7 +110,34 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 		return $resultsICanView;
 	}
 	*/
-
+protected function processSqlResults($rows,$keyOpVals){
+		global $wpdb;
+		if(!function_exists('is_attendee_approved')){
+			require_once(EVENT_ESPRESSO_PLUGINFULLPATH.'includes/functions/attendee_functions.php');
+		}
+		$attendeeStatuses=array();
+		$processedRows=array();
+		foreach($rows as $row){
+			if(!array_key_exists($row['Registration.id'],$attendeeStatuses)){
+				$isApproved=is_attendee_approved(intval($row['Event.id']),intval($row['Registration.id']));
+				$status=$isApproved?'approved':'not_approved';
+				$attendeeStatuses[$row['Registration.id']]=$status;
+			}
+			$attendeeStatus=$attendeeStatuses[$row['Registration.id']];
+			$row['Registration.status.POST_PROCESSED']=$attendeeStatus;
+			
+			//perform filtering that couldn't be done in sql
+			if(array_key_exists('Registration.status',$keyOpVals)){
+				$opAndVal=$keyOpVals['Registration.status'];
+				if(!$this->evaluate($row['Registration.status.POST_PROCESSED'],$opAndVal['operator'],$opAndVal['value'])){
+					continue;//this condiiton failed, don't include this row in the results!!
+				}
+			}			
+			$processedRows[]=$row;
+			
+		}
+		return $processedRows;
+	}
 	/**
 	 *for taking the info in the $sql row and formatting it according
 	 * to the model
@@ -101,16 +145,12 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		if(!function_exists('is_attendee_approved')){
-			require_once(EVENT_ESPRESSO_PLUGINFULLPATH.'includes/functions/attendee_functions.php');
-		}
-		$isApproved=is_attendee_approved(intval($sqlResult['Event.id']),intval($sqlResult['Registration.id']));
 		$isGroupRegistration=$sqlResult['Registration.is_group_registration.PROCESS']>1?true:false;
 		$isPrimary=$sqlResult['Registration.is_primary']?true:false;
 		$isCheckedIn=$sqlResult['Registration.is_checked_in']?true:false;
 		$transaction=array(
 			'id'=>$sqlResult['Registration.id'],
-			'status'=>$isApproved?'approved':'not_approved',
+			'status'=>$sqlResult['Registration.status.POST_PROCESSED'],
 			'date_of_registration'=>$sqlResult['Registration.date_of_registration'],
 			'final_price'=>$sqlResult['Registration.final_price'],
 			'code'=>$sqlResult['Registration.code'],

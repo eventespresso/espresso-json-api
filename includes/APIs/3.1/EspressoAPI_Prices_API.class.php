@@ -9,9 +9,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		'amount'=>'Price.amount',
 		'description'=>'Price.description',
 		'limit'=>'Price.limit',
-		'remaining'=>'Price.remaining',
-		'start_date'=>'Price.start_date',
-		'end_date'=>'Price.end_date',
+		'remaining'=>'Price.remaining'
 	);
 	var $selectFields="
 		Price.id AS 'Price.id',
@@ -36,7 +34,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 	 * @param type $idValue
 	 * @return type 
 	 */
-	function extractMyUniqueModelsFromSqlResults($sqlResults,$idKey=null,$idValue=null){
+	protected function extractMyUniqueModelsFromSqlResults($sqlResults,$idKey=null,$idValue=null){
 		$filteredResults=array();
 		foreach($sqlResults as $sqlResult){
 			if((!empty($idKey) && !empty($idValue) && $sqlResult[$idKey]!= $idValue))
@@ -49,6 +47,15 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		}
 		return $filteredResults;
 	}
+	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		switch($columnName){
+			case 'Price.start_date':
+			case 'Price.end_date':
+				return null;
+		}
+		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
+	}
+	
 	/**
 	 * takes the results acquired from a DB selection, and extracts
 	 * each instance of this model, and compiles into a nice array like

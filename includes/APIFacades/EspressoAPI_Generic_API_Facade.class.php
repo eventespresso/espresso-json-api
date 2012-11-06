@@ -33,14 +33,14 @@ abstract class EspressoAPI_Generic_API_Facade{
 	
 	protected function convertApiParamToDBColumn($apiParam){
 		$apiParamParts=explode(".",$apiParam,2);
-		
-		if(count($apiParamParts)==2 && $this->relatedModels[$apiParamParts[0]] && strpos($apiParam,"/")===FALSE){
-			//it's in teh form 'Table.column', and there' sno funny business like a '/' in it!
+		if(count($apiParamParts)==2 && array_key_exists($apiParamParts[0],$this->relatedModels)){
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],"Facade");
 			$columnName=$otherFacade->convertApiParamToDBColumn($apiParamParts[1]);
-			return $columnName;//if the otherfacade returned a result like "attendees.id", don't prepend the current model's name onto it
-		}elseif(count($apiParamParts==1)){
-			return $this->APIqueryParamsToDbColumns[$apiParam];
+			return $columnName;
+		//}elseif(count($apiParamParts)==1){//th
+		//	return $this->APIqueryParamsToDbColumns[$apiParam];
+		}elseif($apiParamParts[0]==$this->modelName){
+			return $this->APIqueryParamsToDbColumns[$apiParamParts[1]];
 		}else{
 			throw new EspressoAPI_BadRequestException(__("Illegal get parameter passed!:","event_espresso").$apiParam);
 		}
@@ -72,9 +72,12 @@ abstract class EspressoAPI_Generic_API_Facade{
 	protected function seperateIntoKeyOperatorValues($queryParameters){
 		$keyOperatorValues=array();
 		foreach($queryParameters as $keyAndOp=>$value){
-			list($columnName,$operator)=$this->getSQLOperatorAndCorrectAPIParam($keyAndOp);
-			//$columnName=$this->convertApiParamToDBColumn($columnName);
-			$keyOperatorValues[$columnName]=array('operator'=>$operator,'value'=>$value);
+			list($modelAndApiParam,$operator)=$this->getSQLOperatorAndCorrectAPIParam($keyAndOp);
+			//if they only passed the api param name, then add the model for clarification
+			if(strpos($modelAndApiParam,".")===FALSE){
+				$modelAndApiParam=$this->modelName.".$modelAndApiParam";
+			}
+			$keyOperatorValues[$modelAndApiParam]=array('operator'=>$operator,'value'=>$value);
 		}
 		return $keyOperatorValues;
 	}
@@ -92,10 +95,8 @@ abstract class EspressoAPI_Generic_API_Facade{
 		//determine which model its referring to ("Datetime" in teh first case, in the second case it's $this->modelName)
 		if(count($apiParamParts)==1){//if it's an api param with no ".", like "name" (as opposed to "Event.name")
 			$modelName=$this->modelName;
-			$columnName=$apiParamParts[0];
 		}else{//it's an api param like "Datetime.start_time"
 			$modelName=$apiParamParts[0];
-			$columnName=$apiParamParts[1];
 		}
 		//construct sqlSubWhereclause, or get the related model (to whom the attribute belongs)to do it.
 		//eg
