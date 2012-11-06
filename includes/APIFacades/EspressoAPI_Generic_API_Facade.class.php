@@ -55,7 +55,10 @@ abstract class EspressoAPI_Generic_API_Facade{
 	protected function constructSQLWhereSubclauses($keyOpVals){
 		$whereSqlArray=array();
 		foreach($keyOpVals as $key=>$OpAndVal){
-			$whereSqlArray[]=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
+			$whereSubclause=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
+			if(!empty($whereSubclause)){
+				$whereSqlArray[]=$whereSqlArray;
+			}
 		}
 		return $whereSqlArray;
 	}
@@ -284,7 +287,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		}
 		else{
 			$keyOpVals=array();
-			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);
+			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
 		}
 		if(empty($whereSubclauses))
 			$sqlWhere='';
@@ -298,6 +301,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		}
 		$sqlSelect=implode(",",$relatedModelFields);
 		$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhere);
+		if(isset($_GET['debug']))echo "generic api facade 301: sql:$sqlQuery";
 		$results = $wpdb->get_results($sqlQuery, ARRAY_A);
 		//var_dump($results);
 		$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
@@ -397,21 +401,31 @@ abstract class EspressoAPI_Generic_API_Facade{
 		if(is_int($operand2))
 			$operand2=intval($operand2);
 		switch($operatorRepresentation){
-			case 'lt':
+			case '<':
 				return $operand1<$operand2;
-			case 'lte':
+			case '<=':
 				return $operand1<=$operand2;
-			case 'gt':
+			case '>':
 				return $operand1>$operand2;
-			case 'gte':
+			case '>=':
 				return $operand1>=$operand2;
-			case 'like':
-				// @TODO : implement this one
-				throw new EspressoAPI_MethodNotImplementedException("We have not yet implemented 'like' on this operator!");
-			case 'in':
+			case 'LIKE':
+				//create regex by converting % to .* and _ to .
+				//also remove anything in the string that could be considered regex
+				$regexFromOperand2=preg_quote($operand2,"~");//using ~ as the regex delimeter
+				$regexFromOperand2=str_replace(array('%','_'),array('.*','.'),$regexFromOperand2);
+				
+				$regexFromOperand2='~^'.$regexFromOperand2.'$~';
+				$matches=array();
+				preg_match($regexFromOperand2,strval($operand1),$matches);
+				if(empty($matches))
+					return false;
+				else
+					return true;
+			case 'IN':
 				$operand2Values=explode(",",$operand2);
 				return (in_array($operand1,$operand2Values));
-			case 'equals':
+			case '=':
 				return $operand1==$operand2;
 			default:
 					throw new EspressoAPI_BadRequestException($operatorRepresentation.__(" is not a valid api operator. try one of these: lt,lte,gt,gte,like,in","event_espresso"));

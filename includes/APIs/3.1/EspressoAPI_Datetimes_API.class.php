@@ -5,8 +5,7 @@
 class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'StartEnd.id',
-		'limit'=>'StartEnd.reg_limit',
-		'tickets_left'=>'Datetime.tickets_left'
+		'limit'=>'StartEnd.reg_limit'
 	);
 	var $selectFields="
 		StartEnd.id AS 'Datetime.id',
@@ -87,7 +86,9 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
 			case 'is_primary'://ignore, doesn't apply to 3.1
-				return '';
+				return null;
+			case 'tickets_left'://handled in processSQLResults
+				return null;
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
@@ -113,16 +114,23 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
-		$attendeePerEvent=array();
+		$attendeesPerEvent=array();
 		$processedRows=array();
 		foreach($rows as $row){
-			if(empty($attendeePerEvent[$row['Event.id']])){
-				$count=$wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}events_detail WHERE id={$row['Event.id']};" ) );
-				$attendeePerEvent[$row['Event.id']]=$count;//basically cache the result
+			if(empty($attendeesPerEvent[$row['Event.id']])){
+				//because in 3.1 there can't be a limit per datetime, only per event, just count total attendees of an event
+				$quantitiesAttendingPerRow=$wpdb->get_col( $wpdb->prepare( "SELECT quantity FROM {$wpdb->prefix}events_attendee WHERE event_id=%d;", $row['Event.id']) );
+				$totalAttending=0;
+				foreach($quantitiesAttendingPerRow as $quantity){
+					$totalAttending+=intval($quantity);
+				}
+				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
-			$row['Datetime.tickets_left']=$row['Event.limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['Datetime.limit']-$attendeePerEvent[$row['Event.id']];
+			$row['Datetime.limit']=intval($row['Event.limit']);
+			$row['Datetime.tickets_left']=intval($row['Event.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['Datetime.limit']-$attendeesPerEvent[$row['Event.id']];
+			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(array_key_exists('Datetime.tickets_left',$keyOpVals)){
-				$opAndVal=$keyOpvals['Datetime.tickets_left'];
+				$opAndVal=$keyOpVals['Datetime.tickets_left'];
 			
 				if(!$this->evaluate($row['Datetime.tickets_left'],$opAndVal['operator'],$opAndVal['value'])){
 					continue;//this condiiton failed, don't include this row in the results!!
