@@ -6,7 +6,7 @@
 class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 	var $APIattributes = array(
 		'id'=>'Event.id',
-		'name'=>'Event.name',
+		'name'=>'Event.event_name',
 		'description'=>'Event.description',
 		'status'=>'Event.status',
 		'limit'=>'Event.limit',

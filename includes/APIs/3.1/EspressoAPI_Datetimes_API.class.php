@@ -4,13 +4,9 @@
  */
 class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	var $APIattributes=array(
-		'id'=>'Datetime.id',
-		'is_primary'=>'Datetime.is_primary',
-		'event_start'=>'Datetime.event_start',
-		'event_end'=>'Datetime.event_end',
-		'registration_start'=>'Datetime.registration_start',
-		'registration_end'=>'Datetime.registration_end',
-		'limit'=>'Datetime.limit',
+		'id'=>'StartEnd.id',
+		'is_primary'=>'1=1',
+		'limit'=>'StartEnd.reg_limit',
 		'tickets_left'=>'Datetime.tickets_left'
 	);
 	var $selectFields="
@@ -25,6 +21,35 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 		Event.registration_startT AS 'Datetime.registration_startT.PROCESS',
 		Event.registration_endT AS 'Datetime.registration_endT.PROCESS'
 	";
+	
+	/**
+	 * used to construct SQL for special cases when comparing dates. 
+	 * This extra logic exists because we accept times like '2012-11-23 23:40:59',
+	 * but in 3.1 the time columsn are stored in seperate tables (event_details and event_start_end)
+	 * and in different columns (usually one to represent the date, the other the time).
+	 * So if we want to all date models which have, for example, whose registration begins
+	 * before '2012-11-23 23:40:59', then what we we REALLY want is:
+	 * -all dates whose registration date is before 2012-11-23
+	 * AND
+	 * -all dates whose registration date is ON 2012-11-23 AND whose registration time is BEFORE 
+	 * @param type $operator
+	 * @param type $dateColumn
+	 * @param type $dateValue
+	 * @param type $timeColumn
+	 * @param type $timeValue
+	 * @return type 
+	 */
+	private function constructSqlDateTimeWhereSubclause($operator,$dateColumn,$dateValue,$timeColumn,$timeValue){
+		switch($operator){
+			case '<':
+			case '<=':
+			case '>':
+			case '>=':
+				return "($dateColumn $operator $dateValue || ($dateColumn=$dateValue && $timeColumn $operator $timeValue))";					
+			default:
+				return "$dateColumn $operator $dateValue && $timeColumn $operator $timeValue";
+		}
+	}
 	/**
 	 *overrides parent 'constructSQLWhereSubclause', because we need to handle 'Datetime.event_start', 'Datetime.event_end', and maybe some 
 	 * other columns differently
@@ -35,44 +60,31 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	 * @return string 
 	 */
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		$matches=array();
 		switch($columnName){
-			case 'Datetime.event_start':
+			case 'event_start':
 				//break value into parts
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
-				//produce events_detail.start_date
-				$dateWhereClause="Event.start_date $operator $date";
-				//produce vents_start_end.start_time
-				$hourAndMinuteWhereClause="StartEnd.start_time $operator $hourAndMinute";
-				return "$dateWhereClause AND $hourAndMinuteWhereClause";
-			case 'Datetime.event_end':
+				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.start_date',$date,'StartEnd.start_time',$hourAndMinute);
+			case 'event_end':
 				//break value into parts
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
-				//produce events_detail.start_date
-				$dateWhereClause="Event.end_date $operator $date";
-				//produce vents_start_end.start_time
-				$hourAndMinuteWhereClause="StartEnd.end_time $operator $hourAndMinute";
-				return "$dateWhereClause AND $hourAndMinuteWhereClause";
-			case 'Datetime.registration_start':
+				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.end_date',$date,'StartEnd.end_time',$hourAndMinute);
+			case 'registration_start':
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
-				$dateWhereClause="Event.registration_start $operator $date";
-				//produce vents_start_end.start_time
-				$hourAndMinuteWhereClause="Event.registration_startT $operator $hourAndMinute";
-				return "$dateWhereClause AND $hourAndMinuteWhereClause";
-			case 'Datetime.registration_end':
+				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_start',$date,'Event.registration_startT',$hourAndMinute);
+			case 'registration_end':
 				preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$value,$matches);
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
-				$dateWhereClause="Event.registration_end $operator $date";
-				//produce vents_start_end.start_time
-				$hourAndMinuteWhereClause="Event.registration_endT $operator $hourAndMinute";
-				return "$dateWhereClause AND $hourAndMinuteWhereClause";
-			case 'Datetime.limit':
+				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_end',$date,'Event.registration_endT',$hourAndMinute);
+			case 'limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
 		}

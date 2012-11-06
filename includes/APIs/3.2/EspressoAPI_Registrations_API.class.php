@@ -4,7 +4,6 @@
  */
 class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade{
    
-	protected $APIattributes=array("attendee"=>array("table"=>"esp_attendee","facade"=>"attendees"));
     /**
      * gets all events in the database, according to query parmeters
      * @global type $wpdb

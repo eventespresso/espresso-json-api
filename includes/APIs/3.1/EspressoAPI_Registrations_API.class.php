@@ -10,7 +10,7 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 		'final_price'=>'Attendee.final_price',
 		'code'=>'Attendee.code.PROCESS',
 		'url_link'=>'Registraiton.url_link.PROCESS',
-		'is_primary'=>'Registration.is_primary.PROCESS',
+		'is_primary'=>'Attendee.is_primary',
 		'is_group_registration'=>'Registration.is_group_registration.PROCESS',
 		'is_going'=>'Registration.is_going.PROCESS',
 		'is_checked_in'=>'Registration.is_checked_in.PROCESS');
@@ -51,7 +51,7 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 			LEFT JOIN
 				{$wpdb->prefix}events_start_end StartEnd ON StartEnd.start_time=Attendee.event_time AND StartEnd.end_time=Attendee.end_time AND StartEnd.event_id=Attendee.event_id
 			$whereSql";
-				//echo "registrationsapi 60: sql:$sql";
+				echo "registrationsapi 60: sql:$sql";
 		return $sql;
 	}
 	/*
@@ -131,10 +131,10 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 			throw new EspressoAPI_ObjectDoesNotExist($id);
 		if(!EspressoAPI_Permissions_Wrapper::espresso_is_my_event($registration['event_id']))
 			throw new EspressoAPI_UnauthorizedException();
-		$ignorePayment=(isset($queryParameters['ignorePayment']) && $queryParameters['ignorePayment']=='no')?false:true;
+		$ignorePayment=(isset($queryParameters['ignorePayment']) && $queryParameters['ignorePayment']=='true')?true:false;
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
 		//check payment status
-		if($registration['payment_status']=='Incomplete' || !$ignorePayment){
+		if($registration['payment_status']=='Incomplete' && !$ignorePayment){
 		//if its 'Incomplete' then stop
 			throw new EspressoAPI_SpecialException(__("Checkin denied. Payment not complete and 'ignorePayment' flag not set.",412));
 		}

@@ -36,7 +36,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		
 		if(count($apiParamParts)==2 && $this->relatedModels[$apiParamParts[0]] && strpos($apiParam,"/")===FALSE){
 			//it's in teh form 'Table.column', and there' sno funny business like a '/' in it!
-			$otherFacade=EspressoAPI_ClassLoader::load(ucwords($this->relatedModels[$apiParamParts[0]]),"Facade");
+			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],"Facade");
 			$columnName=$otherFacade->convertApiParamToDBColumn($apiParamParts[1]);
 			return $columnName;//if the otherfacade returned a result like "attendees.id", don't prepend the current model's name onto it
 		}elseif(count($apiParamParts==1)){
@@ -70,7 +70,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		$keyOperatorValues=array();
 		foreach($queryParameters as $keyAndOp=>$value){
 			list($columnName,$operator)=$this->getSQLOperatorAndCorrectAPIParam($keyAndOp);
-			$columnName=$this->convertApiParamToDBColumn($columnName);
+			//$columnName=$this->convertApiParamToDBColumn($columnName);
 			$keyOperatorValues[$columnName]=array('operator'=>$operator,'value'=>$value);
 		}
 		return $keyOperatorValues;
@@ -83,11 +83,23 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 * @return string of full where Subcluae like "foo='bar'", no 'AND's 
 	 */
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		//take an api param like "Datetime.is_primary" or "id"
 		$apiParamParts=explode(".",$columnName,2);
-		$modelName=$apiParamParts[0];
+		
+		//determine which model its referring to ("Datetime" in teh first case, in the second case it's $this->modelName)
+		if(count($apiParamParts)==1){//if it's an api param with no ".", like "name" (as opposed to "Event.name")
+			$modelName=$this->modelName;
+			$columnName=$apiParamParts[0];
+		}else{//it's an api param like "Datetime.start_time"
+			$modelName=$apiParamParts[0];
+			$columnName=$apiParamParts[1];
+		}
+		//construct sqlSubWhereclause, or get the related model (to whom the attribute belongs)to do it.
+		//eg
 		if($this->modelName==$modelName){
+			$dbColumn=$this->convertAPIParamToDBColumn($columnName);
 			$formattedValue=$this->constructValueInWhereClause($operator,$value);
-			return "$columnName $operator $formattedValue";
+			return "$dbColumn $operator $formattedValue";
 		}else{//this should be handled by the model to whom this attribute belongs, in case there's associated special logic
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$modelName]['modelNamePlural'],"Facade");
 			return $otherFacade->constructSQLWhereSubclause($columnName,$operator,$value);
@@ -156,13 +168,28 @@ abstract class EspressoAPI_Generic_API_Facade{
 	protected function tweakRequiredFullResponse($requiredFullResponse){
 		return $requiredFullResponse;
 	}
-	protected function constructValueInWhereClause($operator,$value){
+	protected function constructValueInWhereClause($operator,$valueInput){
 		if($operator=='IN'){
+			$values=explode(",",$valueInput);
+			$valuesProcessed=array();
+			foreach($values as $value){
+				$valuesProcessed[]=$this->constructSimpleValueInWhereClause($value);
+			}
+			$value=implode(",",$valuesProcessed);
 			return "($value)";
-		}elseif(is_numeric($value)){
-			return "$value";
 		}else{
-			return "'$value'";
+			return $this->constructSimpleValueInWhereClause($valueInput);
+		}
+	}
+	private function constructSimpleValueInWhereClause($valueInput){
+		if($valueInput=='true'){
+			return 'true';
+		}elseif($valueInput=='false'){
+			return 'false';
+		}elseif(is_numeric($valueInput)){
+			return $valueInput;
+		}else{
+			return "'$valueInput'";
 		}
 	}
 	protected function getSQLOperatorAndCorrectAPIParam($apiParam){
