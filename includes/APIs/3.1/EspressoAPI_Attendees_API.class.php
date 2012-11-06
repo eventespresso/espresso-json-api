@@ -30,7 +30,7 @@ class EspressoAPI_Attendees_API extends EspressoAPI_Attendees_API_Facade{
 		Attendee.zip as 'Attendee.zip',
 		Attendee.email as 'Attendee.email',
 		Attendee.phone as 'Attendee.phone'";
-	
+	var $relatedModels=array();
 	
 	/**
 	 *for taking the info in the $sql row and formatting it according

@@ -33,14 +33,16 @@ abstract class EspressoAPI_Generic_API_Facade{
 	
 	protected function convertApiParamToDBColumn($apiParam){
 		$apiParamParts=explode(".",$apiParam,2);
-		if(count($apiParamParts)==2 && array_key_exists($apiParamParts[0],$this->relatedModels)){
+		if(count($apiParamParts)!=2){
+			throw new EspressoAPI_BadRequestException(__("Illegal get parameter passed!:","event_espresso").$apiParam);
+		}else if($apiParamParts[0]==$this->modelName){
+			return $this->APIqueryParamsToDbColumns[$apiParamParts[1]];
+		}elseif(count($apiParamParts)==2 && array_key_exists($apiParamParts[0],$this->relatedModels)){
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],"Facade");
 			$columnName=$otherFacade->convertApiParamToDBColumn($apiParamParts[1]);
 			return $columnName;
 		//}elseif(count($apiParamParts)==1){//th
 		//	return $this->APIqueryParamsToDbColumns[$apiParam];
-		}elseif($apiParamParts[0]==$this->modelName){
-			return $this->APIqueryParamsToDbColumns[$apiParamParts[1]];
 		}else{
 			throw new EspressoAPI_BadRequestException(__("Illegal get parameter passed!:","event_espresso").$apiParam);
 		}

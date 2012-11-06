@@ -16,7 +16,7 @@ class EspressoAPI_Categories_API extends EspressoAPI_Categories_API_Facade{
 		Category.category_identifier AS 'Category.identifier',
 		Category.category_desc AS 'Category.description',
 		Category.wp_user AS 'Category.user'";
-	
+	var $relatedModels=array();
 	/**
      * gets all events in the database, according to query parmeters
      * @global type $wpdb

@@ -27,7 +27,7 @@ class EspressoAPI_Venues_API extends EspressoAPI_Venues_API_Facade{
 		Venue.country AS 'Venue.country',
 		Venue.meta AS 'Venue.metas',
 		Venue.wp_user AS 'Venue.user'";
-	
+	var $relatedModels=array();
 	/**
      * gets all events in the database, according to query parmeters
      * @global type $wpdb

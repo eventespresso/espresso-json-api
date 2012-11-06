@@ -19,7 +19,7 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 		Promocode.coupon_code_description AS 'Promocode.description',
 		Promocode.each_attendee AS 'Promocode.apply_to_each_attendee',
 		Promocode.wp_user AS 'Promocode.user'";
-	
+	var $relatedModels=array();
 	/**
      * gets all events in the database, according to query parmeters
      * @global type $wpdb

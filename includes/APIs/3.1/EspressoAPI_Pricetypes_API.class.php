@@ -14,6 +14,7 @@ class EspressoAPI_Pricetypes_API extends EspressoAPI_Pricetypes_API_Facade{
 		'order'=>null
 	);
 	var $selectFields="";
+	var $relatedModels=array();
 	/**
 	 * in 3.1 there is no price_type table. But there are effectively 
 	 * 4 price types: “base Price”,”Surcharge Amount”,”Surcharge Percent”, 

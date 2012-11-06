@@ -171,12 +171,12 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_ObjectDoesNotExist($id);
 		if(!EspressoAPI_Permissions_Wrapper::espresso_is_my_event($registration['event_id']))
 			throw new EspressoAPI_UnauthorizedException();
-		$ignorePayment=(isset($queryParameters['ignorePayment']) && $queryParameters['ignorePayment']=='true')?true:false;
+		$ignorePayment=(isset($queryParameters['ignore_payment']) && $queryParameters['ignore_payment']=='true')?true:false;
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
 		//check payment status
 		if($registration['payment_status']=='Incomplete' && !$ignorePayment){
 		//if its 'Incomplete' then stop
-			throw new EspressoAPI_SpecialException(__("Checkin denied. Payment not complete and 'ignorePayment' flag not set.",412));
+			throw new EspressoAPI_SpecialException(__("Checkin denied. Payment not complete and 'ignore_payment' flag not set.",412));
 		}
 		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity + $quantity, checked_in=1 WHERE registration_id='{$registration['registration_id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns

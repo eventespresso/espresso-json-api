@@ -19,7 +19,7 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 		Attendee.amount_pd as 'Transaction.amount_pd',
 		Attendee.payment_status as 'Transaction.status.PROCESS',
 		Attendee.quantity as 'Transaction.registrations_on_transaction'";
-	
+	var $relatedModels=array();
 	
 	/**
 	 *for taking the info in the $sql row and formatting it according

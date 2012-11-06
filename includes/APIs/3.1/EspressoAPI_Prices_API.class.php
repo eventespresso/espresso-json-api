@@ -5,11 +5,9 @@
 class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Price.id',
-		'name'=>'Price.name',
+		'name'=>'Price.price_type',
 		'amount'=>'Price.amount',
-		'description'=>'Price.description',
-		'limit'=>'Price.limit',
-		'remaining'=>'Price.remaining'
+		'limit'=>'Event.reg_limit'
 	);
 	var $selectFields="
 		Price.id AS 'Price.id',
@@ -22,6 +20,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		Price.member_price AS 'Price.member_price',
 		Price.member_price_type AS 'Price.member_price_type'
 		";
+	var $relatedModels=array();
     function _create($createParameters){
        return new EspressoAPI_MethodNotImplementedException();
     }

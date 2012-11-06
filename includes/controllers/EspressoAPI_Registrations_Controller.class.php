@@ -52,9 +52,9 @@ class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controlle
 	 protected function specificAttributeRequestGet($id,$attribute){
 		 switch($attribute){
 			 case 'checkin':
-				return $this->apiFacade->checkin($id,$_POST);
+				return $this->apiFacade->checkin($id,$_GET);
 			 case 'checkout':
-				return $this->apiFacade->checkout($id,$_POST);
+				return $this->apiFacade->checkout($id,$_GET);
 			 default:
 				  throw new EspressoAPI_MethodNotImplementedException();
 		 }

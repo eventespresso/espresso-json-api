@@ -19,6 +19,7 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 		Event.registration_startT AS 'Datetime.registration_startT.PROCESS',
 		Event.registration_endT AS 'Datetime.registration_endT.PROCESS'
 	";
+	var $relatedModels=array();
 	
 	/**
 	 * used to construct SQL for special cases when comparing dates. 
