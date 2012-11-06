@@ -3,9 +3,8 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
-	var $APIattributes=array(
+	var $APIqueryParamsToDbColumns=array(
 		'id'=>'StartEnd.id',
-		'is_primary'=>'1=1',
 		'limit'=>'StartEnd.reg_limit',
 		'tickets_left'=>'Datetime.tickets_left'
 	);
@@ -87,6 +86,8 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 			case 'limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
+			case 'is_primary'://ignore, doesn't apply to 3.1
+				return '';
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}

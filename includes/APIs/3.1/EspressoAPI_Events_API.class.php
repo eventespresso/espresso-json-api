@@ -4,7 +4,7 @@
  * this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
-	var $APIattributes = array(
+	var $APIqueryParamsToDbColumns = array(
 		'id'=>'Event.id',
 		'name'=>'Event.event_name',
 		'description'=>'Event.description',

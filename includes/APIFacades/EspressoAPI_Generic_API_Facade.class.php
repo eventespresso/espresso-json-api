@@ -29,7 +29,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 * sometimes these may seem repetitious, but they're mostly handy for enumerating a specific list of allowed api params
 	 * @var array 
 	 */
-	var $APIattributes=array();
+	var $APIqueryParamsToDbColumns=array();
 	
 	protected function convertApiParamToDBColumn($apiParam){
 		$apiParamParts=explode(".",$apiParam,2);
@@ -40,7 +40,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			$columnName=$otherFacade->convertApiParamToDBColumn($apiParamParts[1]);
 			return $columnName;//if the otherfacade returned a result like "attendees.id", don't prepend the current model's name onto it
 		}elseif(count($apiParamParts==1)){
-			return $this->APIattributes[$apiParam];
+			return $this->APIqueryParamsToDbColumns[$apiParam];
 		}else{
 			throw new EspressoAPI_BadRequestException(__("Illegal get parameter passed!:","event_espresso").$apiParam);
 		}

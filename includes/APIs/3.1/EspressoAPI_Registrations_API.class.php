@@ -3,7 +3,7 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade{
-	var $APIattributes=array(
+	var $APIqueryParamsToDbColumns=array(
 		"id"=>"Attendee.id",
 		"status"=>"Attendee.status.PROCESS",
 		"date_of_registration"=>"Attendee.date_of_registration",
@@ -51,7 +51,7 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 			LEFT JOIN
 				{$wpdb->prefix}events_start_end StartEnd ON StartEnd.start_time=Attendee.event_time AND StartEnd.end_time=Attendee.end_time AND StartEnd.event_id=Attendee.event_id
 			$whereSql";
-				echo "registrationsapi 60: sql:$sql";
+				if(isset($_GET['debug']))echo "registrationsapi 60: sql:$sql";
 		return $sql;
 	}
 	/*
