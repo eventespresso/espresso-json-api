@@ -31,7 +31,7 @@ class EspressoAPI_Cachedresults_Controller{
 			$cachedResults=$this->handleLimit($cachedResults);
 			return array(EspressoAPI_STATUS=>"OK",EspressoAPI_STATUS_CODE=>200,EspressoAPI_RESPONSE_BODY=>$cachedResults);
 		}else{
-			throw new EspressoAPI_ObjectDoesNotExist();
+			throw new EspressoAPI_ObjectDoesNotExist($param1);
 		}
 	}
 	protected function handleLimit($results){
