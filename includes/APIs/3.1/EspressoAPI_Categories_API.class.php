@@ -5,10 +5,10 @@
 class EspressoAPI_Categories_API extends EspressoAPI_Categories_API_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Category.id',
-		'name'=>'Category.name',
-		'identifier'=>'Category.identifier',
-		'description'=>'Category.description',
-		'user'=>'Category.description'
+		'name'=>'Category.category_name',
+		'identifier'=>'Category.category_identifier',
+		'description'=>'Category.category_desc',
+		'user'=>'Category.wp_user'
 	);
 	var $selectFields="
 		Category.id AS 'Category.id',
