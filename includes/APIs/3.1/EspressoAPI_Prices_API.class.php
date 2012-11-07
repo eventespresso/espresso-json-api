@@ -50,9 +50,40 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		switch($columnName){
 			case 'Price.start_date':
 			case 'Price.end_date':
-				return null;
+			case 'Price.remaining':
+			case 'Price.description':
+				return null;	
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
+	}
+	
+	protected function processSqlResults($rows,$keyOpVals){
+		global $wpdb;
+		$attendeesPerEvent=array();
+		$processedRows=array();
+		foreach($rows as $row){
+			if(empty($attendeesPerEvent[$row['Event.id']])){
+				//because in 3.1 there can't be a limit per datetime, only per event, just count total attendees of an event
+				$quantitiesAttendingPerRow=$wpdb->get_col( $wpdb->prepare( "SELECT quantity FROM {$wpdb->prefix}events_attendee WHERE event_id=%d;", $row['Event.id']) );
+				$totalAttending=0;
+				foreach($quantitiesAttendingPerRow as $quantity){
+					$totalAttending+=intval($quantity);
+				}
+				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
+			}
+			$row['Price.limit']=intval($row['Event.limit']);
+			$row['Price.remaining.POST_PROCESSED']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['Datetime.limit']-$attendeesPerEvent[$row['Event.id']];
+			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
+			if(array_key_exists('Price.remaining',$keyOpVals)){
+				$opAndVal=$keyOpVals['Price.remaining'];
+			
+				if(!$this->evaluate($row['Price.remaining.POST_PROCESSED'],$opAndVal['operator'],$opAndVal['value'])){
+					continue;//this condiiton failed, don't include this row in the results!!
+				}
+			}
+			$processedRows[]=$row;
+		}
+		return $processedRows;
 	}
 	
 	/**
@@ -80,7 +111,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		'name'=>$sqlResult['Price.name'],
 		'description'=>null,
 		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>999999,//$sqlResult['Event.remaining'],
+		'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
 		'start_date'=>null,
 		'end_date'=>null,
 		'Pricetype'=>$priceTypeModel->fakeDbTable[1]
@@ -97,7 +128,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 			'name'=>"Surcharge for ".$sqlResult['Price.name'],
 			'description'=>null,
 			'limit'=>$sqlResult['Price.limit'],
-			'remaining'=>99999,//$sqlResult['Event.remaining'],
+			'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
 			'start_date'=>null,
 			'end_date'=>null,
 			"Pricetype"=>$priceType
@@ -109,7 +140,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		'name'=>$sqlResult['Price.member_price_type'],
 		'description'=>null,
 		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>99999,//$sqlResult['Event.remaining'],
+		'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
 		'start_date'=>null,
 		'end_date'=>null,
 		"Pricetype"=>$priceTypeModel->fakeDbTable[4]
