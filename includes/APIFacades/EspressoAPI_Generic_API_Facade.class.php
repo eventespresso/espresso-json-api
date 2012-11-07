@@ -115,68 +115,6 @@ abstract class EspressoAPI_Generic_API_Facade{
 		
 	}
 	/**
-	 *gets the API Facade classes for each related model and puts in an array with keys like the following:
-	 * array('Event'=>array('modelName'=>'Event','modelNamePlural'=>'Events','hasMany'=>true,'class'=>EspressoAPI_events_API),
-	 *		'Datetime'=>...)
-	 * @return array as described above 
-	 */
-	protected function getFullRelatedModels(){
-		$relatedModels=array();
-		foreach($this->relatedModels as $modelName=>$relatedModel){
-			$relatedModels[$modelName]['modelName']=$modelName;
-			$relatedModels[$modelName]['modelNamePlural']=$relatedModel['modelNamePlural'];
-			$relatedModels[$modelName]['hasMany']=$relatedModel['hasMany'];
-			$relatedModels[$modelName]['class']=EspressoAPI_ClassLoader::load($relatedModel['modelNamePlural'],"Facade");
-		}
-		return $relatedModels;
-	}
-	/**
-	 * gets the required full response from the requiredFields of the current
-	 * model and related ones. For example, returns
-	 * array("events"=>array(
-	 *		array("id","name","description"...
-	 *			"Datetimes"=>array(
-	 *				array("id","event_start",...)
-	 *			)
-	 *		)
-	 * )
-	 * @return type 
-	 */
-	protected function getRequiredFullResponse(){
-		$requiredFullResponse=$this->getRequiredFields();
-		/*$relatedModelClasses=$this->getFullRelatedModels();
-		
-		foreach($relatedModelClasses as $modelNamePlural=>$modelClass){
-			$requiredFullResponse[$modelNamePlural]=$modelClass->getRequiredFields();
-		}*/
-		foreach($this->relatedModels as $modelName=>$modelInfo){
-			$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Facade');
-			if($modelInfo['hasMany']){
-				$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();
-			}else{
-				$requiredFullResponse[$modelName]=$modelClass->getRequiredFields();
-			}
-		}
-		return $this->tweakRequiredFullResponse($requiredFullResponse);;
-	}
-	
-	/**
-	 * returns the list of fields on teh current model that are required in a response
-	 * and should eb acceptable for querying on
-	 * @return type 
-	 */
-	function getRequiredFields(){
-		return $this->requiredFields;
-	}
-	/**
-	 * method for overriding in cases where the full response that's required needs to be tweaked.
-	 * @param type $rquiredFullResponse
-	 * @return type 
-	 */
-	protected function tweakRequiredFullResponse($requiredFullResponse){
-		return $requiredFullResponse;
-	}
-	/**
 	 * constructs a complete value for a where clause, inluding quotes and parentheses. eg, 123, 'monkey', (1,23), ('foo','bar','weee').
 	 * optional parameter include $mappingFromApiToDbColumn and $apiKey.
 	 * @param type $operator like 'IN','<',etc.
@@ -254,6 +192,205 @@ abstract class EspressoAPI_Generic_API_Facade{
 		}
 		return array($key,$operator);
 	}
+	/**
+	 * seperatesan input parameter like 'Event.id__lt' or 'id__like' into array('Event.id','lt') and array('id','like'), respectively
+	 * @param string $apiParam, basically a GET parameter
+	 * @return array with 2 values: frst being the queryParam, the second beign the operator 
+	 */
+	protected function seperateQueryParamAndOperator($apiParam){
+		$matches=array();
+		preg_match("~^(.*)__(.*)~",$apiParam,$matches);
+		if($matches){
+			return array($matches[1],$matches[2]);
+		}else{
+			return array($apiParam,"equals");
+		}
+	}
+	
+	/**
+	 *gets the API Facade classes for each related model and puts in an array with keys like the following:
+	 * array('Event'=>array('modelName'=>'Event','modelNamePlural'=>'Events','hasMany'=>true,'class'=>EspressoAPI_events_API),
+	 *		'Datetime'=>...)
+	 * @return array as described above 
+	 */
+	protected function getFullRelatedModels(){
+		$relatedModels=array();
+		foreach($this->relatedModels as $modelName=>$relatedModel){
+			$relatedModels[$modelName]['modelName']=$modelName;
+			$relatedModels[$modelName]['modelNamePlural']=$relatedModel['modelNamePlural'];
+			$relatedModels[$modelName]['hasMany']=$relatedModel['hasMany'];
+			$relatedModels[$modelName]['class']=EspressoAPI_ClassLoader::load($relatedModel['modelNamePlural'],"Facade");
+		}
+		return $relatedModels;
+	}
+		/**
+	 * calls 'processSqlResults' on each related model and the current one
+	 * @param array $rows results of wpdb->get_results, with lots of inner joins and renaming of tables in normal format
+	 * @param array $queryParameters like those 
+	 * @return same results as before, but with certain results filtered out as implied by queryParameters not taken
+	 * into account in the SQL
+	 */
+	protected function initiateProcessSqlResults($rows,$keyOpVals){
+		$rows=$this->processSqlResults($rows,$keyOpVals);
+		foreach($this->relatedModels as $relatedModel=>$relatedModelInfo){
+			$otherFacade=EspressoAPI_ClassLoader::load($relatedModelInfo['modelNamePlural'],"Facade");
+			$rows=$otherFacade->processSqlResults($rows,$keyOpVals);
+		}
+		return $rows;
+	}
+	
+	/**
+	 * To be overriden by subclasses that need todo more processing of the rows
+	 * before putting into API result format.
+	 * An example is filtering out results by query parameters that couldn't be take into account by simple SQL.
+	 * For example, filtering out by Datetime.tickets_left in 3.1, because there is no MYSQL column called 'tickets_left',
+	 * (although there is in 3.2).
+	 * Or adding fields that are calculated from other fields (eg, calculated_price)
+	 * @param array $rows like resutls of wpdb->get_results
+	 * @param array $keyOpVals basically like results of $this->seperateIntoKeyOperatorValues
+	 * @return array original $rows, with some fields added or removed
+	 */
+	protected function processSqlResults($rows,$keyOpVals){
+		return $rows;
+	}
+	
+	
+	 /**
+	 * for evaluating if a {op} b is true.
+	 * @param string/int $operand1, usually the result of a database query
+	 * @param string $operatorRepresentation, one of 'lt','lte','gt','gte','like','in','equals'
+	 * @param string $operand2 querystringValue. eg: '2','monkey','thing1,thing2,thing3','%mysql%like%value'
+	 * @return boolean
+	 * @throws EspressoAPI_MethodNotImplementedException
+	 * @throws EspressoAPI_BadRequestException 
+	 */
+	protected function evaluate($operand1,$operatorRepresentation,$operand2){
+		if(is_int($operand2))
+			$operand2=intval($operand2);
+		switch($operatorRepresentation){
+			case '<':
+				return $operand1<$operand2;
+			case '<=':
+				return $operand1<=$operand2;
+			case '>':
+				return $operand1>$operand2;
+			case '>=':
+				return $operand1>=$operand2;
+			case 'LIKE':
+				//create regex by converting % to .* and _ to .
+				//also remove anything in the string that could be considered regex
+				$regexFromOperand2=preg_quote($operand2,"~");//using ~ as the regex delimeter
+				$regexFromOperand2=str_replace(array('%','_'),array('.*','.'),$regexFromOperand2);
+				
+				$regexFromOperand2='~^'.$regexFromOperand2.'$~';
+				$matches=array();
+				preg_match($regexFromOperand2,strval($operand1),$matches);
+				if(empty($matches))
+					return false;
+				else
+					return true;
+			case 'IN':
+				$operand2Values=explode(",",$operand2);
+				return (in_array($operand1,$operand2Values));
+			case '=':
+				return $operand1==$operand2;
+			default:
+					throw new EspressoAPI_BadRequestException($operatorRepresentation.__(" is not a valid api operator. try one of these: lt,lte,gt,gte,like,in","event_espresso"));
+		}
+	}
+	
+	/**
+	 * takes the results acquired from a DB selection, and extracts
+	 * each instance of this model, and compiles into a nice array like
+	 * array(12=>("id"=>12,"name"=>"mike party","description"=>"all your base"...)
+	 * Also, if we're going to just be finding models that relate
+	 * to a specific foreign_key on any table in the query, we can specify
+	 * to only return those models using the $idKey and $idValue,
+	 * for example if you have a bunch of results from a query like 
+	 * "select * FROM events INNER JOIn attendees", and you just want
+	 * all the attendees for event with id 13, then you'd call this as follows:
+	 * $attendeesForEvent13=parseSQLREsultsForMyDate($results,'Event.id',13);
+	 * @param array $sqlResults
+	 * @param string/int $idKey
+	 * @param string/int $idValue 
+	 * @return array compatible with the required reutnr type for this model
+	 */
+	protected function extractMyUniqueModelsFromSqlResults($sqlResults,$idKey=null,$idValue=null){
+		$filteredResults=array();
+		foreach($sqlResults as $sqlResult){
+			if((!empty($idKey) && !empty($idValue) && $sqlResult[$idKey]!= $idValue))
+				continue;
+			$formatedResult=$this->_extractMyUniqueModelsFromSqlResults($sqlResult);
+			if(array_key_exists('id',$formatedResult) && $formatedResult['id']!==NULL)
+				$filteredResults[$formatedResult['id']]=$formatedResult;
+		}
+		return $filteredResults;
+	}	
+	/**
+	 *for taking the info in the $sql row and formatting it according
+	 * to the model
+	 * @param $sqlRow a row from wpdb->get_results
+	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
+	 */
+	abstract protected function _extractMyUniqueModelsFromSqlResults($sqlRow);
+	 /**
+	  * return first result from  extractMyUniqueModelsfromSqlResults 
+	  */
+	 protected function extractMyUniqueModelFromSqlResults($sqlResults,$idKey=null,$idValue=null){
+		 $modelRepresentations=$this->extractMyUniqueModelsFromSqlResults($sqlResults, $idKey, $idValue);
+		 return array_shift($modelRepresentations); 
+	 }
+	
+	 
+	 
+	/**
+	 * gets the required full response from the requiredFields of the current
+	 * model and related ones. For example, returns
+	 * array("events"=>array(
+	 *		array("id","name","description"...
+	 *			"Datetimes"=>array(
+	 *				array("id","event_start",...)
+	 *			)
+	 *		)
+	 * )
+	 * @return type 
+	 */
+	protected function getRequiredFullResponse(){
+		$requiredFullResponse=$this->getRequiredFields();
+		/*$relatedModelClasses=$this->getFullRelatedModels();
+		
+		foreach($relatedModelClasses as $modelNamePlural=>$modelClass){
+			$requiredFullResponse[$modelNamePlural]=$modelClass->getRequiredFields();
+		}*/
+		foreach($this->relatedModels as $modelName=>$modelInfo){
+			$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Facade');
+			if($modelInfo['hasMany']){
+				$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();
+			}else{
+				$requiredFullResponse[$modelName]=$modelClass->getRequiredFields();
+			}
+		}
+		return $this->tweakRequiredFullResponse($requiredFullResponse);;
+	}
+	
+	/**
+	 * returns the list of fields on teh current model that are required in a response
+	 * and should eb acceptable for querying on
+	 * @return type 
+	 */
+	function getRequiredFields(){
+		return $this->requiredFields;
+	}
+	
+	/**
+	 * method for overriding in cases where the full response that's required needs to be tweaked.
+	 * @param type $rquiredFullResponse
+	 * @return type 
+	 */
+	protected function tweakRequiredFullResponse($requiredFullResponse){
+		return $requiredFullResponse;
+	}
+	
 	
 	/**
 	 * ensures that the response is in the format specified.	 * 
@@ -352,13 +489,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		 return $models;
      }
 	 
-	 /**
-	  * return first result from  extractMyUniqueModelsfromSqlResults 
-	  */
-	 protected function extractMyUniqueModelFromSqlResults($sqlResults,$idKey=null,$idValue=null){
-		 $modelRepresentations=$this->extractMyUniqueModelsFromSqlResults($sqlResults, $idKey, $idValue);
-		 return array_shift($modelRepresentations); 
-	 }
+	
 	/**
 	  * gets a specific event acording to its id
 	  * @param int $id
@@ -370,128 +501,9 @@ abstract class EspressoAPI_Generic_API_Facade{
 		$model= array($this->modelName=>array_shift($fullResults[$this->modelNamePlural]));
 		return $model;
 	 }
-	/**
-	 * calls 'processSqlResults' on each related model and the current one
-	 * @param array $rows results of wpdb->get_results, with lots of inner joins and renaming of tables in normal format
-	 * @param array $queryParameters like those 
-	 * @return same results as before, but with certain results filtered out as implied by queryParameters not taken
-	 * into account in the SQL
-	 */
-	protected function initiateProcessSqlResults($rows,$keyOpVals){
-		$rows=$this->processSqlResults($rows,$keyOpVals);
-		foreach($this->relatedModels as $relatedModel=>$relatedModelInfo){
-			$otherFacade=EspressoAPI_ClassLoader::load($relatedModelInfo['modelNamePlural'],"Facade");
-			$rows=$otherFacade->processSqlResults($rows,$keyOpVals);
-		}
-		return $rows;
-	}
-	
-	/**
-	 * To be overriden by subclasses that need todo more processing of the rows
-	 * before putting into API result format.
-	 * An example is filtering out results by query parameters that couldn't be take into account by simple SQL.
-	 * For example, filtering out by Datetime.tickets_left in 3.1, because there is no MYSQL column called 'tickets_left',
-	 * (although there is in 3.2).
-	 * Or adding fields that are calculated from other fields (eg, calculated_price)
-	 * @param array $rows like resutls of wpdb->get_results
-	 * @param array $keyOpVals basically like results of $this->seperateIntoKeyOperatorValues
-	 * @return array original $rows, with some fields added or removed
-	 */
-	protected function processSqlResults($rows,$keyOpVals){
-		return $rows;
-	}
-	
-	/**
-	 * seperatesan input parameter like 'Event.id__lt' or 'id__like' into array('Event.id','lt') and array('id','like'), respectively
-	 * @param string $apiParam, basically a GET parameter
-	 * @return array with 2 values: frst being the queryParam, the second beign the operator 
-	 */
-	protected function seperateQueryParamAndOperator($apiParam){
-		$matches=array();
-		preg_match("~^(.*)__(.*)~",$apiParam,$matches);
-		if($matches){
-			return array($matches[1],$matches[2]);
-		}else{
-			return array($apiParam,"equals");
-		}
-	}
 
-	/**
-	 * for evaluating if a {op} b is true.
-	 * @param string/int $operand1, usually the result of a database query
-	 * @param string $operatorRepresentation, one of 'lt','lte','gt','gte','like','in','equals'
-	 * @param string $operand2 querystringValue. eg: '2','monkey','thing1,thing2,thing3','%mysql%like%value'
-	 * @return boolean
-	 * @throws EspressoAPI_MethodNotImplementedException
-	 * @throws EspressoAPI_BadRequestException 
-	 */
-	protected function evaluate($operand1,$operatorRepresentation,$operand2){
-		if(is_int($operand2))
-			$operand2=intval($operand2);
-		switch($operatorRepresentation){
-			case '<':
-				return $operand1<$operand2;
-			case '<=':
-				return $operand1<=$operand2;
-			case '>':
-				return $operand1>$operand2;
-			case '>=':
-				return $operand1>=$operand2;
-			case 'LIKE':
-				//create regex by converting % to .* and _ to .
-				//also remove anything in the string that could be considered regex
-				$regexFromOperand2=preg_quote($operand2,"~");//using ~ as the regex delimeter
-				$regexFromOperand2=str_replace(array('%','_'),array('.*','.'),$regexFromOperand2);
-				
-				$regexFromOperand2='~^'.$regexFromOperand2.'$~';
-				$matches=array();
-				preg_match($regexFromOperand2,strval($operand1),$matches);
-				if(empty($matches))
-					return false;
-				else
-					return true;
-			case 'IN':
-				$operand2Values=explode(",",$operand2);
-				return (in_array($operand1,$operand2Values));
-			case '=':
-				return $operand1==$operand2;
-			default:
-					throw new EspressoAPI_BadRequestException($operatorRepresentation.__(" is not a valid api operator. try one of these: lt,lte,gt,gte,like,in","event_espresso"));
-		}
-	}
 	
-	/**
-	 * takes the results acquired from a DB selection, and extracts
-	 * each instance of this model, and compiles into a nice array like
-	 * array(12=>("id"=>12,"name"=>"mike party","description"=>"all your base"...)
-	 * Also, if we're going to just be finding models that relate
-	 * to a specific foreign_key on any table in the query, we can specify
-	 * to only return those models using the $idKey and $idValue,
-	 * for example if you have a bunch of results from a query like 
-	 * "select * FROM events INNER JOIn attendees", and you just want
-	 * all the attendees for event with id 13, then you'd call this as follows:
-	 * $attendeesForEvent13=parseSQLREsultsForMyDate($results,'Event.id',13);
-	 * @param array $sqlResults
-	 * @param string/int $idKey
-	 * @param string/int $idValue 
-	 * @return array compatible with the required reutnr type for this model
-	 */
-	protected function extractMyUniqueModelsFromSqlResults($sqlResults,$idKey=null,$idValue=null){
-		$filteredResults=array();
-		foreach($sqlResults as $sqlResult){
-			if((!empty($idKey) && !empty($idValue) && $sqlResult[$idKey]!= $idValue))
-				continue;
-			$formatedResult=$this->_extractMyUniqueModelsFromSqlResults($sqlResult);
-			if(array_key_exists('id',$formatedResult) && $formatedResult['id']!==NULL)
-				$filteredResults[$formatedResult['id']]=$formatedResult;
-		}
-		return $filteredResults;
-	}	
-	/**
-	 *for taking the info in the $sql row and formatting it according
-	 * to the model
-	 * @param $sqlRow a row from wpdb->get_results
-	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
-	 */
-	abstract protected function _extractMyUniqueModelsFromSqlResults($sqlRow);
+	
+
+	
 }

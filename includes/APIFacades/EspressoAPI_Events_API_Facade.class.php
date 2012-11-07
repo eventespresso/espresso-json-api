@@ -40,13 +40,4 @@ abstract class EspressoAPI_Events_API_Facade extends EspressoAPI_Generic_API_Fac
 		'call_in_number',
 		'phone',
 		'metadata');
-	 /**
-	  * creation of event facade, calls concrete child class' _creatEvent function
-	  * @param array $createParameters
-	  * @return array 
-	  */
-     function create($createParameters){
-		return $this->_createEvent($createParameters);
-     }
-     abstract protected function _create($createParameters);
 }
