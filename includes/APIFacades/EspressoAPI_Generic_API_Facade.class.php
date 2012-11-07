@@ -325,7 +325,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 				$filteredResults[$formatedResult['id']]=$formatedResult;
 		}
 		return $filteredResults;
-	}	
+	}
 	/**
 	 *for taking the info in the $sql row and formatting it according
 	 * to the model
@@ -440,6 +440,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		return $filteredResponse;
 	}
 	
+	
 	/**
 	 * Gets events from database according ot query parameters by calling the concrete child classes' _getEvents function
 	 * @param array $queryParameters
@@ -447,10 +448,17 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 */
      function getMany($queryParameters){		 
 		 if (!empty($queryParameters)){
+			 if(array_key_exists('cacheResult',$queryParameters)){
+				 $cacheResult=true;
+				 unset($queryParameters['cacheResult']);
+			 }else{
+				 $cacheResult=false;
+			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
 			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);
 		}
 		else{
+			$cacheResult=false;
 			$keyOpVals=array();
 			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
 		}
@@ -484,9 +492,14 @@ abstract class EspressoAPI_Generic_API_Facade{
 			$completeResults[$key]=$model;
 		}
 		$models= array($this->modelNamePlural => $completeResults);
-		 $models=$this->forceResponseIntoFormat($models,
+		$models=$this->forceResponseIntoFormat($models,
 		     array($this->modelNamePlural=>array($this->getRequiredFullResponse())));
-		 return $models;
+		if($cacheResult){
+			$transientKey=EspressoAPI_Functions::generateRandomString(40);
+			set_transient($transientKey,$models,60*60);
+			return array("count"=>count($completeResults),"cachedResult"=>$transientKey);
+		}else
+			return $models;
      }
 	 
 	

@@ -22,3 +22,4 @@ require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Exceptions.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_ClassLoader.class.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Permissions_Wrapper.class.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_SessionKey_Manager.class.php');
+require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Functions.class.php');
