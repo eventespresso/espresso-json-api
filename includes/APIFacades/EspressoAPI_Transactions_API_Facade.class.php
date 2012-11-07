@@ -35,17 +35,6 @@ abstract class EspressoAPI_Transactions_API_Facade extends EspressoAPI_Generic_A
 		'tax_data',
 		'session_data',
 		'registrations_on_transaction');
-		
-	/**
-	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set
-	 * @var type 
-	 */
-	
-	 function create($createParameters){
-         return $this->_createAttendee($createParameters);
-     }
-     abstract protected function _create($createParameters);
-	 
 }
 
 //$html .= '<script type="text/javascript">$jaer = jQuery.noConflict();var attendee_num = 0;var additional_limit = '.$additional_limit.';var first_add_button = null;var selector = \'div#additional_attendee_\' + attendee_num;function markup(attendee_num) {return \''.stripslashes($htm).'\';}function remove_add() {attendee_num -= 1;selector = \'div#additional_attendee_\' + attendee_num;$jaer(selector).remove();if (attendee_num != 0) {var temp_selector = \'div#additional_attendee_\' + (attendee_num - 1);$jaer(temp_selector + \' a.add\').on(\'click\',add_add);$jaer(temp_selector + \' a.remove\').on(\'click\',remove_add);} else {first_add_button.on(\'click\',add_add);}}function add_add() {if (attendee_num == additional_limit) return;$jaer(this).parent().parent().after(markup(attendee_num));$jaer(selector + \' a.add\').on(\'click\',add_add);$jaer(selector + \' a.remove\').on(\'click\',remove_add);$jaer(this).off(\'click\', add_add);if (attendee_num != 0) {var temp_selector = \'div#additional_attendee_\' + (attendee_num - 1);$jaer(temp_selector + \' a.remove\').off(\'click\', remove_add);}attendee_num += 1;selector = \'div#additional_attendee_\' + attendee_num;}jQuery(do cument).ready(function($jaer) {$jaer(\'a.add\').on(\'click\',add_add);first_add_button = $jaer(\'a.add\');});</script>';

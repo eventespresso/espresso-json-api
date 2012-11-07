@@ -62,7 +62,7 @@ class EspressoAPI_Router{
 				$controller=EspressoAPI_ClassLoader::load('Authentication',"Controller");
 				$response=$controller->authenticate();
 			}else{
-				if(!empty($sessionkey) && empty($apiParam1))
+				if(!empty($sessionKey) && empty($apiParam1))
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
 				global $current_user;
 				$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);

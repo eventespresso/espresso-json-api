@@ -8,7 +8,6 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 		'timestamp'=>'Attendee.date',
 		'total'=>'Attendee.total_cost',
 		'amount_paid'=>'Attendee.amount_pd',
-		'status'=>'Transaction.payment_status.PROCESS',
 		'registrations_on_transaction'=>'Attendee.quantity');
 		
 	
@@ -22,6 +21,15 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 	var $relatedModels=array();
 	
 	/**
+	 * used for converting between api version of Transaction.status and the DB version
+	 * keys are DB versions, valuesare teh api versions
+	 * @var type 
+	 */
+	private $statusMapping=array(
+				'Completed'=>'complete',
+				'Pending'=>'pending',
+				'Incomplete'=>'open');
+	/**
 	 *for taking the info in the $sql row and formatting it according
 	 * to the model
 	 * @param $sqlRow a row from wpdb->get_results
@@ -29,11 +37,8 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 			
-			$statusMapping=array(
-				'Completed'=>'complete',
-				'Pending'=>'pending',
-				'Incomplete'=>'pending');
-			$status=$statusMapping[$sqlResult['Transaction.status.PROCESS']];
+			
+			$status=$this->statusMapping[$sqlResult['Transaction.status.PROCESS']];
 			$transaction=array(
 				'id'=>$sqlResult['Transaction.id'],
 				'timestamp'=>$sqlResult['Transaction.timestamp'],
@@ -48,23 +53,14 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 			return $transaction;
 	}
 	
-    function _create($createParameters){
-        return array("status"=>"Not Yet Implemented","status_code"=>"500");
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
-	protected function _getOne($id) {
-		global $wpdb;
-		$result=$wpdb->get_row("SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'",ARRAY_A);
-		if(empty($result))
-			throw new EspressoAPI_ObjectDoesNotExist($id);
-		if(EspressoAPI_Permissions_Wrapper::espresso_is_my_event($result['event_id']))
-			return array("attendee"=>$result);
-		else
-			throw new EspressoAPI_UnauthorizedException();
-	
+	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		switch($columnName){
+			case 'Transaction.status':
+				$apiStatusToDbStatus=array_flip($this->statusMapping);
+				$value=$this->constructValueInWhereClause($operator,$value,$apiStatusToDbStatus,'Transaction.status');
+				return "Attendee.payment_status $operator $value";	
+		}
+		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
 }
 //new Events_Controller();

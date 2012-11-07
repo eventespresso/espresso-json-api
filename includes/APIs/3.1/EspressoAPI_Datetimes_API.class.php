@@ -93,25 +93,6 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
-	/**
-     * gets all events in the database, according to query parmeters
-     * @global type $wpdb
-     * @param array $queryParameters of key=>values. eg: "array("start_date"=>"2012-04-23","name"=>"Mike Party").
-     * @return type 
-     */
-    function _getMany($queryParameters){
-		return new EspressoAPI_MethodNotImplementedException();
-    }
-    function _create($createParameters){
-       return new EspressoAPI_MethodNotImplementedException();
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
-	protected function _getOne($id) {
-		return new EspressoAPI_MethodNotImplementedException();
-	}
 	
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;

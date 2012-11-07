@@ -31,6 +31,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 */
 	var $APIqueryParamsToDbColumns=array();
 	
+	//protected function mapValuesToDbValues()
 	protected function convertApiParamToDBColumn($apiParam){
 		$apiParamParts=explode(".",$apiParam,2);
 		if(count($apiParamParts)!=2){
@@ -175,29 +176,52 @@ abstract class EspressoAPI_Generic_API_Facade{
 	protected function tweakRequiredFullResponse($requiredFullResponse){
 		return $requiredFullResponse;
 	}
-	protected function constructValueInWhereClause($operator,$valueInput){
+	/**
+	 * constructs a complete value for a where clause, inluding quotes and parentheses. eg, 123, 'monkey', (1,23), ('foo','bar','weee').
+	 * optional parameter include $mappingFromApiToDbColumn and $apiKey.
+	 * @param type $operator like 'IN','<',etc.
+	 * @param type $valueInput value from $_GET 
+	 * @param type $mappingFromApiToDbColumn eg array('true'=>'Y','false'=>'N')
+	 * @param type $apiKey eg 'Event.name'
+	 * @return type 
+	 */
+	protected function constructValueInWhereClause($operator,$valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
 		if($operator=='IN'){
 			$values=explode(",",$valueInput);
 			$valuesProcessed=array();
 			foreach($values as $value){
-				$valuesProcessed[]=$this->constructSimpleValueInWhereClause($value);
+				$valuesProcessed[]=$this->constructSimpleValueInWhereClause($value,$mappingFromApiToDbColumn,$apiKey);
 			}
 			$value=implode(",",$valuesProcessed);
 			return "($value)";
 		}else{
-			return $this->constructSimpleValueInWhereClause($valueInput);
+			return $this->constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn,$apiKey);
 		}
 	}
-	protected function constructSimpleValueInWhereClause($valueInput){
-		if($valueInput=='true'){
-			return 'true';
-		}elseif($valueInput=='false'){
-			return 'false';
-		}elseif(is_numeric($valueInput)){
+	/**
+	 * takes the api param value and produces a db value for using in a mysql WHERE clause.
+	 * also takes an option $mappingFromApiToDbColumn and $key, which, if value is 
+	 * a key in the array, convert the db value into the associated value in $mappingFromApiToDbColumn
+	 * @param type $valueInput
+	 * @param type $mappingFromApiToDbColumn eg array('true'=>'Y','false'=>'N')
+	 * @param type $apiKey
+	 * @throws EspressoAPI_BadRequestException 
+	 */
+	private function constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
+		if(isset($mappingFromApiToDbColumn)){
+			if(array_key_exists($valueInput,$mappingFromApiToDbColumn)){
+				$valueInput=$mappingFromApiToDbColumn[$valueInput];
+			}else{
+				$validInputs=implode(",",array_keys($mappingFromApiToDbColumn));
+				throw new EspressoAPI_BadRequestException(__("The key/value pair you specified in your query is invalid:","event-espresso").$apiKey."/".$valueInput.__(". Valid inputs would be :","event-espresso").$validInputs);
+			}
+		}
+		if(is_numeric($valueInput) || in_array($valueInput,array('true','false'))){
 			return $valueInput;
 		}else{
 			return "'$valueInput'";
 		}
+
 	}
 	protected function getSQLOperatorAndCorrectAPIParam($apiParam){
 		list($key,$operatorRepresentation)=$this->seperateQueryParamAndOperator($apiParam);

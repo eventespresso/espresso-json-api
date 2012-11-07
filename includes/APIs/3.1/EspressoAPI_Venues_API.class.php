@@ -13,7 +13,7 @@ class EspressoAPI_Venues_API extends EspressoAPI_Venues_API_Facade{
 		'state'=>'Venue.state',
 		'zip'=>'Venue.zip',
 		'country'=>'Venue.country',
-		'user'=>'Venue.user'
+		'user'=>'Venue.wp_user'
 	);
 	var $selectFields="
 		Venue.id AS 'Venue.id',
@@ -28,25 +28,6 @@ class EspressoAPI_Venues_API extends EspressoAPI_Venues_API_Facade{
 		Venue.meta AS 'Venue.metas',
 		Venue.wp_user AS 'Venue.user'";
 	var $relatedModels=array();
-	/**
-     * gets all events in the database, according to query parmeters
-     * @global type $wpdb
-     * @param array $queryParameters of key=>values. eg: "array("start_date"=>"2012-04-23","name"=>"Mike Party").
-     * @return type 
-     */
-    function _getMany($queryParameters){
-		return new EspressoAPI_MethodNotImplementedException();
-    }
-    function _create($createParameters){
-       return new EspressoAPI_MethodNotImplementedException();
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
-	protected function _getOne($id) {
-		return new EspressoAPI_MethodNotImplementedException();
-	}
 	
 	/**
 	 * takes the results acquired from a DB selection, and extracts
