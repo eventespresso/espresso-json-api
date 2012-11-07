@@ -448,9 +448,9 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 */
      function getMany($queryParameters){		 
 		 if (!empty($queryParameters)){
-			 if(array_key_exists('cacheResult',$queryParameters)){
+			 if(array_key_exists('cache_result',$queryParameters)){
 				 $cacheResult=true;
-				 unset($queryParameters['cacheResult']);
+				 unset($queryParameters['cache_result']);
 			 }else{
 				 $cacheResult=false;
 			 }
@@ -497,7 +497,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		if($cacheResult){
 			$transientKey=EspressoAPI_Functions::generateRandomString(40);
 			set_transient($transientKey,$models,60*60);
-			return array("count"=>count($completeResults),"cachedResult"=>$transientKey);
+			return array("count"=>count($completeResults),"cached_result_key"=>$transientKey);
 		}else
 			return $models;
      }

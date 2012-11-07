@@ -23,7 +23,7 @@ class EspressoAPI_Authentication_Controller {
 			throw new EspressoAPI_BadCredentials();
 		}
 		$sessionKey=EspressoAPI_SessionKey_Manager::getSessionKeyForUser($user->ID);
-		return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY=>array('sessionKey'=>$sessionKey));
+		return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY=>array('session_key'=>$sessionKey));
 	}
 }
 
