@@ -8,6 +8,7 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 		'coupon_code'=>'Promocode.coupon_code',
 		'amount'=>'Promocode.coupon_code_price',
 		'use_percentage'=>'Promocode.use_percentage',
+		'description'=>'Promocode.coupon_code_description',
 		'apply_to_each_attendee'=>'Promocode.each_attendee',
 		'user'=>'Promocode.wp_user',
 	);
@@ -20,26 +21,16 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 		Promocode.each_attendee AS 'Promocode.apply_to_each_attendee',
 		Promocode.wp_user AS 'Promocode.user'";
 	var $relatedModels=array();
-	/**
-     * gets all events in the database, according to query parmeters
-     * @global type $wpdb
-     * @param array $queryParameters of key=>values. eg: "array("start_date"=>"2012-04-23","name"=>"Mike Party").
-     * @return type 
-     */
-    function _getMany($queryParameters){
-		return new EspressoAPI_MethodNotImplementedException();
-    }
-    function _create($createParameters){
-       return new EspressoAPI_MethodNotImplementedException();
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
-	protected function _getOne($id) {
-		return new EspressoAPI_MethodNotImplementedException();
+
+
+	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+		switch($columnName){
+			case 'Promocode.expiration_date':
+			case 'Promocode.quantity_available':
+				return null;
+		}
+		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
-	
 	/**
 	 * takes the results acquired from a DB selection, and extracts
 	 * each instance of this model, and compiles into a nice array like
@@ -57,7 +48,6 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		$metas=unserialize($sqlResult['Venue.metas']);
 		$promocode=array(
 		'id'=>$sqlResult['Promocode.id'],
 		'coupon_code'=>$sqlResult['Promocode.coupon_code'],
@@ -72,4 +62,3 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 		return $promocode; 
 	}
 }
-//new Events_Controller();
