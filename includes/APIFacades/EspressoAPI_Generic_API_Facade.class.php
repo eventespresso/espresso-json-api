@@ -151,7 +151,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 				$valueInput=$mappingFromApiToDbColumn[$valueInput];
 			}else{
 				$validInputs=implode(",",array_keys($mappingFromApiToDbColumn));
-				throw new EspressoAPI_BadRequestException(__("The key/value pair you specified in your query is invalid:","event-espresso").$apiKey."/".$valueInput.__(". Valid inputs would be :","event-espresso").$validInputs);
+				throw new EspressoAPI_BadRequestException(__("The key/value pair you specified in your query is invalid:","event_espresso").$apiKey."/".$valueInput.__(". Valid inputs would be :","event_espresso").$validInputs);
 			}
 		}
 		if(is_numeric($valueInput) || in_array($valueInput,array('true','false'))){

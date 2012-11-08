@@ -66,6 +66,7 @@ class EspressoAPI_Router{
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
 				global $current_user;
 				$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
+				EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
 				//basic authentication: only logged-in users can do anything, and only those with basic event manager admin permissions
 				if(!$this->currentUserCanUseAPI())
 					throw new EspressoAPI_UnauthorizedException();
