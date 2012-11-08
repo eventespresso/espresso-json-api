@@ -16,8 +16,8 @@ class EspressoAPI_SessionKey_Manager {
 		if(empty($sessionKey)){
 			$sessionKey=EspressoAPI_Functions::generateRandomString();
 			update_user_meta($userId,EspressoAPI_SessionKey_MetaKey,$sessionKey);
-			EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($userId);
 		}
+		EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($userId);
 		return $sessionKey;
 	}
 	//flush a single sessionkey
@@ -52,7 +52,6 @@ class EspressoAPI_SessionKey_Manager {
 		$currentTime=time();
 		if($sessionTimeout>0 && $lastActivity+$sessionTimeout<$currentTime){
 			EspressoAPI_SessionKey_Manager::regenerateSessionKeyForUser($userId);
-			echo "regenerate";
 			throw new EspressoAPI_UnauthorizedException();
 		}
 		if(empty($userId)){//we couldn't find a user to match that session key, so they must not be authorized

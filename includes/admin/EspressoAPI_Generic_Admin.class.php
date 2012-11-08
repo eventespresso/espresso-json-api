@@ -39,14 +39,14 @@ class EspressoAPI_Generic_Admin {
 		}
 		$templateVars=array();
 		$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT]=get_option(EspressoAPI_ADMIN_SESSION_TIMEOUT);
-		$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS]=apply_filters(EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS,
+		$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS]=apply_filters("filter_hook_espresso_api_session_timeout_options",
 					array(
-						'Every Minute'=>60,
-						'Every 20 Minutes'=>60*20,
-						'Every Hour'=>60*60,
-						'Every 6 hours'=>60*60*6,
-						'Every Day'=>60*60*24,
-						'Every Week'=>60*60*24*7,
+						'1 Minute'=>60,
+						'5 Minutes'=>60*20,
+						'10 Minutes'=>60*60,
+						'20 Minutes'=>60*60*6,
+						'An Hour'=>60*60*24,
+						'6 Hours'=>60*60*24*7,
 						'Never'=>-1));
 		$this->includeVersionedTemplate('settings.php',$templateVars);
 	}

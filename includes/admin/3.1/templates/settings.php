@@ -37,14 +37,14 @@
 									fallen into the hands of someone who shouldn't be allowed to access your private data",'event_espresso')?></p>
 								</form>
 								<form method='post'>
-									<label>API Session Timeout:</label>
-									<select name="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>">
+									<label for="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>">API Session Timeout After </label>
+									<select name="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>" id="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>"> 
 										<?php foreach($templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS] as $optionLabel=>$optionTime){
 											$selectedHTML=$optionTime==$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT]?'selected':'';?>
 										<option value="<?php echo $optionTime?>" <?php echo $selectedHTML?>><?php echo $optionLabel?></option>
 										<?php }?>
 									</select>
-									<p><?php _e("Force API users to re-authenticate (login) at the stated time interval. Requiring users to login more frequently 
+									<p><?php _e("Force API users to re-authenticate (login) after this much time of inactivity. Requiring users to login more frequently 
 									may help improve security, but may also be tedious for API users.","event_espresso")?></p>
 									<input type='submit' class='button'value='Save'>
 								</form>
@@ -72,9 +72,9 @@
 espresso_choose_layout($main_post_content, event_espresso_display_right_column());?>
 </div>
 <script type="text/javascript" charset="utf-8">
-		//<![CDATA[
-		jQuery(document).ready(function() {
-			postboxes.add_postbox_toggles('<?php echo EspressoAPI_ADMIN_SETTINGS_PAGE_SLUG?>');
-		}); 
-		//]]>
-	</script>
+	//<![CDATA[
+	jQuery(document).ready(function() {
+		postboxes.add_postbox_toggles('<?php echo EspressoAPI_ADMIN_SETTINGS_PAGE_SLUG?>');
+	}); 
+	//]]>
+</script>
