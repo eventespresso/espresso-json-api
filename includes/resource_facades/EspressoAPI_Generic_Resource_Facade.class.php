@@ -16,12 +16,12 @@
  * Generic API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Generic_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Generic_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-abstract class EspressoAPI_Generic_API_Facade{
+abstract class EspressoAPI_Generic_Resource_Facade{
 	/**
 	 * array for converting between object parameters the API expects and DB columns (modified DB columns, see each API's $selectFields).
 	 * keys are the API-expected parameters, and values are teh DB columns
@@ -40,7 +40,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			
 			return $this->APIqueryParamsToDbColumns[$apiParamParts[1]];
 		}elseif(count($apiParamParts)==2 && array_key_exists($apiParamParts[0],$this->relatedModels)){
-			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],"Facade");
+			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],'Resource');
 			$columnName=$otherFacade->convertApiParamToDBColumn($apiParamParts[1]);
 			return $columnName;
 		//}elseif(count($apiParamParts)==1){//th
@@ -109,7 +109,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			$formattedValue=$this->constructValueInWhereClause($operator,$value);
 			return "$dbColumn $operator $formattedValue";
 		}else{//this should be handled by the model to whom this attribute belongs, in case there's associated special logic
-			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$modelName]['modelNamePlural'],"Facade");
+			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$modelName]['modelNamePlural'],'Resource');
 			return $otherFacade->constructSQLWhereSubclause($columnName,$operator,$value);
 		}
 		
@@ -209,7 +209,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 	
 	/**
 	 *gets the API Facade classes for each related model and puts in an array with keys like the following:
-	 * array('Event'=>array('modelName'=>'Event','modelNamePlural'=>'Events','hasMany'=>true,'class'=>EspressoAPI_events_API),
+	 * array('Event'=>array('modelName'=>'Event','modelNamePlural'=>'Events','hasMany'=>true,'class'=>EspressoAPI_events_Resource),
 	 *		'Datetime'=>...)
 	 * @return array as described above 
 	 */
@@ -219,7 +219,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			$relatedModels[$modelName]['modelName']=$modelName;
 			$relatedModels[$modelName]['modelNamePlural']=$relatedModel['modelNamePlural'];
 			$relatedModels[$modelName]['hasMany']=$relatedModel['hasMany'];
-			$relatedModels[$modelName]['class']=EspressoAPI_ClassLoader::load($relatedModel['modelNamePlural'],"Facade");
+			$relatedModels[$modelName]['class']=EspressoAPI_ClassLoader::load($relatedModel['modelNamePlural'],'Resource');
 		}
 		return $relatedModels;
 	}
@@ -233,7 +233,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 	protected function initiateProcessSqlResults($rows,$keyOpVals){
 		$rows=$this->processSqlResults($rows,$keyOpVals);
 		foreach($this->relatedModels as $relatedModel=>$relatedModelInfo){
-			$otherFacade=EspressoAPI_ClassLoader::load($relatedModelInfo['modelNamePlural'],"Facade");
+			$otherFacade=EspressoAPI_ClassLoader::load($relatedModelInfo['modelNamePlural'],'Resource');
 			$rows=$otherFacade->processSqlResults($rows,$keyOpVals);
 		}
 		return $rows;
@@ -361,7 +361,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 			//only require the related model's attributes as part of the response 
 			//if the current user should eb able to see them anyway
 			if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$modelInfo['modelNamePlural'])){
-				$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Facade');
+				$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Resource');
 				if($modelInfo['hasMany']){
 					$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();
 				}else{

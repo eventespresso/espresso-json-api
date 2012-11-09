@@ -16,28 +16,36 @@
  * Events API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Events_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Events_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-//require_once("EspressoAPI_Generic_API_Facade.class.php");
-abstract class EspressoAPI_Datetimes_API_Facade extends EspressoAPI_Generic_API_Facade{
-	var $modelName="Datetime";
-	var $modelNamePlural="Datetimes";
+//require_once("EspressoAPI_Generic_Resource_Facade.class.php");
+abstract class EspressoAPI_Attendees_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
+	var $modelName="Attendee";
+	var $modelNamePlural="Attendees";
+	var $requiredFields=array(
+		'id',
+		'firstname',
+		'lastname',
+		'address',
+		'address2',
+		'city',
+		'state',
+		'country',
+		'zip',
+		'email',
+		'phone'
+		);
 	/**
 	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set
 	 * @var type 
 	 */
-	var $requiredFields=array(
-		'id',
-		'is_primary',
-		'event_start',
-		'event_end',
-		'registration_start',
-		'registration_end',
-		'limit',
-		'tickets_left'
-	);
 	
+	 function create($createParameters){
+         return $this->_createAttendee($createParameters);
+     }
+     abstract protected function _create($createParameters);
+	 
 }

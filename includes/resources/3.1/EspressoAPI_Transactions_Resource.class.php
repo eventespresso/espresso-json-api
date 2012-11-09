@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
+class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Attendee.id',
 		'timestamp'=>'Attendee.date',

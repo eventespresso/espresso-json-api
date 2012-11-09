@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade{
+class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		"id"=>"Attendee.id",
 		"date_of_registration"=>"Attendee.date_of_registration",

@@ -16,25 +16,28 @@
  * Events API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Events_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Events_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-//require_once("EspressoAPI_Generic_API_Facade.class.php");
-abstract class EspressoAPI_Categories_API_Facade extends EspressoAPI_Generic_API_Facade{
-	var $modelName="Category";
-	var $modelNamePlural="Categories";
-	/**
-	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set
-	 * @var type 
-	 */
-	var $requiredFields=array(
+//require_once("EspressoAPI_Generic_Resource_Facade.class.php");
+abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
+	var $modelName="Event";
+	var $modelNamePlural="Events";
+	
+	var $requiredFields = array(
 		'id',
 		'name',
-		'identifier',
 		'description',
-		'user'
-	);
-
+		'status',
+		'limit',
+		'group_registrations_allowed',
+		'group_registrations_max',
+		'active',
+		'member_only',
+		'virtual_url',
+		'call_in_number',
+		'phone',
+		'metadata');
 }

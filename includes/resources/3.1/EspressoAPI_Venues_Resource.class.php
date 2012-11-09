@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Venues_API extends EspressoAPI_Venues_API_Facade{
+class EspressoAPI_Venues_Resource extends EspressoAPI_Venues_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Venue.id',
 		'name'=>'Venue.name',

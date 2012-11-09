@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
+class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'StartEnd.id',
 		'limit'=>'StartEnd.reg_limit'
@@ -134,7 +134,7 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	 * "select * FROM events INNER JOIn attendees", and you just want
 	 * all the attendees for event with id 13, then you'd call this as follows:
 	 * $attendeesForEvent13=parseSQLREsultsForMyDate($results,'Event.id',13);
-	 * @param array $sqlResults single row from a big inner-joined query, such as constructed in EventEspressoAPI_Events_API->getManyConstructQuery or EventEspressoAPI_Registrations_API->getManyConstructQuery
+	 * @param array $sqlResults single row from a big inner-joined query, such as constructed in EventEspressoAPI_Events_Resource->getManyConstructQuery or EventEspressoAPI_Registrations_Resource->getManyConstructQuery
 	 * @param string/int $idKey
 	 * @param string/int $idValue 
 	 * @return array compatible with the required reutnr type for this model

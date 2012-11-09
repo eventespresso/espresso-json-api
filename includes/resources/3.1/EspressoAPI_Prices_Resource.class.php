@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
+class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Price.id',
 		'name'=>'Price.price_type',
@@ -104,7 +104,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		$pricesToReturn=array();
-		$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes","Facade");
+		$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 		$pricesToReturn['base']=array(
 		'id'=>$sqlResult['Price.id'].".0",
 		'amount'=>$sqlResult['Price.event_cost'],
@@ -185,7 +185,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		if($foundOrigPrice && isset($priceWhichMatchesOrigPrice))
 			return $priceWhichMatchesOrigPrice;
 		else{
-			$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes","Facade");
+			$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 			return array(
 			'id'=>"0",
 			'amount'=>$origPrice,

@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Pricetypes_API extends EspressoAPI_Pricetypes_API_Facade{
+class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>null,
 		'name'=>null,

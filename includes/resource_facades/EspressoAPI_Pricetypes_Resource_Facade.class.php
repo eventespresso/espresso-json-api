@@ -16,15 +16,15 @@
  * Events API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Events_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Events_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-//require_once("EspressoAPI_Generic_API_Facade.class.php");
-abstract class EspressoAPI_Prices_API_Facade extends EspressoAPI_Generic_API_Facade{
-	var $modelName="Price";
-	var $modelNamePlural="Prices";
+//require_once("EspressoAPI_Generic_Resource_Facade.class.php");
+abstract class EspressoAPI_Pricetypes_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
+	var $modelName="Pricetype";
+	var $modelNamePlural="Pricetypes";
 	/**
 	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set
 	 * @var type 
@@ -32,23 +32,32 @@ abstract class EspressoAPI_Prices_API_Facade extends EspressoAPI_Generic_API_Fac
 	var $requiredFields=array(
 		'id',
 		'name',
-		'amount',
-		'description',
-		'limit',
-		'remaining',
-		'start_date',
-		'end_date',
-		'Pricetype'=>array(
-			'id',
-			'name',
-			'is_member',
-			'is_discount',
-			'is_tax',
-			'is_percent',
-			'is_global',
-			'order')
+		'is_member',
+		'is_discount',
+		'is_tax',
+		'is_percent',
+		'is_global',
+		'order'
 	);
-	
+	/**
+	 * Gets events from database according ot query parameters by calling the concrete child classes' _getEvents function
+	 * @param array $queryParameters
+	 * @return array  
+	 */
+     function getMany($queryParameters){
+		 return $this->forceResponseIntoFormat($this->_getDatetimes($queryParameters),
+		     array("attendees"=>array($this->requiredFields)));
+     }
+	 /**
+	  * implemented in concrete child class for getting events from db
+	  */
+     abstract protected  function _getMany($queryParameters);
+     
+	 function getOne($id){
+		   return $this->forceResponseIntoFormat($this->_getDatetime($id),
+		     array("attendee"=>$this->requiredFields));
+	 }
+	 abstract protected function _getOne($id);
 	 /**
 	  * creation of event facade, calls concrete child class' _creatEvent function
 	  * @param array $createParameters

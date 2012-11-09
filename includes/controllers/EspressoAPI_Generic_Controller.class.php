@@ -31,11 +31,11 @@ abstract class EspressoAPI_Generic_Controller {
 	function __construct() {
 		//@todo while in development, use local API implementations. but once we're done, w
 		//we should start using the API implementations in teh core EE plugin
-		//they should be hooked with a do_action("include_API_{controlelrName}")
+		//they should be hooked with a do_action("include_Resource_{controlelrName}")
 		//echo "espressoeventscontroller32:";var_dump(get_class($this));
 		preg_match('~^EspressoAPI_(.*)_Controller~', get_class($this), $matches);
 		$apiModel = $matches[1];
-		$this->apiFacade = EspressoAPI_ClassLoader::load($apiModel, "Facade");//new $apiFacadeName;
+		$this->apiFacade = EspressoAPI_ClassLoader::load($apiModel, 'Resource');//new $apiFacadeName;
 	}
 
 	function handleRequest($param1, $param2) {

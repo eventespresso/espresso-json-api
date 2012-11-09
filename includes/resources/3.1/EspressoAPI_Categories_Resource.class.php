@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Categories_API extends EspressoAPI_Categories_API_Facade{
+class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Category.id',
 		'name'=>'Category.category_name',

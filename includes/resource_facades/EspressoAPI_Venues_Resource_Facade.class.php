@@ -16,13 +16,13 @@
  * Events API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Events_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Events_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-//require_once("EspressoAPI_Generic_API_Facade.class.php");
-abstract class EspressoAPI_Venues_API_Facade extends EspressoAPI_Generic_API_Facade{
+//require_once("EspressoAPI_Generic_Resource_Facade.class.php");
+abstract class EspressoAPI_Venues_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
 	var $modelName="Venue";
 	var $modelNamePlural="Venues";
 	/**

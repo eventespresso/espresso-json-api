@@ -16,12 +16,12 @@
  * Registrations API Facade class
  *
  * @package			Espresso REST API
- * @subpackage	includes/APIFacades/Espresso_Events_API_Facade.class.php
+ * @subpackage	includes/APIFacades/Espresso_Events_Resource_Facade.class.php
  * @author				Mike Nelson
  *
  * ------------------------------------------------------------------------
  */
-abstract class EspressoAPI_Registrations_API_Facade extends EspressoAPI_Generic_API_Facade{
+abstract class EspressoAPI_Registrations_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
 	var $modelName="Registration";
 	var $modelNamePlural="Registrations";
 	var $requiredFields=array("id",

@@ -2,7 +2,7 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
-class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
+class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Promocode.id',
 		'coupon_code'=>'Promocode.coupon_code',
