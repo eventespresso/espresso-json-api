@@ -32,7 +32,7 @@ define('EspressoAPI_STATUS_CODE','status_code');
 define('EspressoAPI_USER_FRIENDLY_STATUS','user_friendly_status');
 define('EspressoAPI_RESPONSE_BODY','body');
 define('EspressoAPI_ADMIN_SESSION_TIMEOUT','espressoapi_admin_session_timeout');
-
+define('EspressoAPI_ALLOW_PUBLIC_API_ACCESS','EspressoAPI_allow_public_api_access');
 
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Exceptions.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_ClassLoader.class.php');

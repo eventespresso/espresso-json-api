@@ -74,12 +74,7 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 	 * which will ensure the prices found match the ones the attendees purchased
 	 */
 	protected function constructSQLWhereSubclauses($keyOpVals){
-		$whereSqlArray=array();
-		foreach($keyOpVals as $key=>$OpAndVal){
-			$whereSubclause=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
-			if(!empty($whereSubclause))
-				$whereSqlArray[]=$whereSubclause;
-		}
+		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
 		$whereSqlArray[]="
 		(
 			(Price.surcharge_type='flat_rate'
@@ -164,6 +159,9 @@ protected function processSqlResults($rows,$keyOpVals){
 	}
 	function _checkin($id,$queryParameters=array()){
 		global $wpdb;
+		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
+			 throw new EspressoAPI_UnauthorizedException();
+		}
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
@@ -190,6 +188,9 @@ protected function processSqlResults($rows,$keyOpVals){
 	}
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb;
+		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
+			 throw new EspressoAPI_UnauthorizedException();
+		}
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);

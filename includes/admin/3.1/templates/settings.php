@@ -46,6 +46,16 @@
 									</select>
 									<p><?php _e("Force API users to re-authenticate (login) after this much time of inactivity. Requiring users to login more frequently 
 									may help improve security, but may also be tedious for API users.","event_espresso")?></p>
+									<br/>
+									<label for='<?php EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'>Allow Public API Access?</label>
+									
+									<select name="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>" id="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>">
+										<option value="1" <?php echo $templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Allow</option>
+										<option value="0" <?php echo !$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Don't Allow</option>
+									</select>
+									<p>Enabling will allow non-logged-in api clients to get certain information from your website via the API. Accessible information consists of:
+									events, event categories, dates and times of events, prices, price types, venues and questions. However, they will NOT be able to see: promocodes, attendees,
+									registrations, transactions, or answers</p>
 									<input type='submit' class='button'value='Save'>
 								</form>
 							</div>

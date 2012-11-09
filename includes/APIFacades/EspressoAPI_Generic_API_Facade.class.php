@@ -357,17 +357,16 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 */
 	protected function getRequiredFullResponse(){
 		$requiredFullResponse=$this->getRequiredFields();
-		/*$relatedModelClasses=$this->getFullRelatedModels();
-		
-		foreach($relatedModelClasses as $modelNamePlural=>$modelClass){
-			$requiredFullResponse[$modelNamePlural]=$modelClass->getRequiredFields();
-		}*/
 		foreach($this->relatedModels as $modelName=>$modelInfo){
-			$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Facade');
-			if($modelInfo['hasMany']){
-				$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();
-			}else{
-				$requiredFullResponse[$modelName]=$modelClass->getRequiredFields();
+			//only require the related model's attributes as part of the response 
+			//if the current user should eb able to see them anyway
+			if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$modelInfo['modelNamePlural'])){
+				$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Facade');
+				if($modelInfo['hasMany']){
+					$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();
+				}else{
+					$requiredFullResponse[$modelName]=$modelClass->getRequiredFields();
+				}
 			}
 		}
 		return $this->tweakRequiredFullResponse($requiredFullResponse);;
@@ -446,7 +445,10 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 * @param array $queryParameters
 	 * @return array  
 	 */
-     function getMany($queryParameters){		 
+     function getMany($queryParameters){
+		 if(!EspressoAPI_Permissions_Wrapper::current_user_can('get', $this->modelNamePlural)){
+			 throw new EspressoAPI_UnauthorizedException();
+		 }
 		 if (!empty($queryParameters)){
 			 if(array_key_exists('cache_result',$queryParameters)){
 				 $cacheResult=true;
@@ -482,11 +484,14 @@ abstract class EspressoAPI_Generic_API_Facade{
 		$completeResults=array();
 		foreach($topLevelModels as $key=>$model){
 			foreach($relatedModelInfos as $relatedModelInfo){
-				$modelClass=$relatedModelInfo['class'];
-				if($relatedModelInfo['hasMany']){
-					$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
-				}else{
-					$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+				//only add the related model's info if the current user has permission to access it
+				if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
+					$modelClass=$relatedModelInfo['class'];
+					if($relatedModelInfo['hasMany']){
+						$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+					}else{
+						$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+					}
 				}
 			}
 			$completeResults[$key]=$model;

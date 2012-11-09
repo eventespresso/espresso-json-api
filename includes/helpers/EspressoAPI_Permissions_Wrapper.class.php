@@ -52,4 +52,53 @@ class EspressoAPI_Permissions_Wrapper{
 			return current_user_can('administrator');
 		}
 	}
+	
+	/**
+	 * wrapper for checking if the current user has the necessary permission to
+	 * access/edit this resource.
+	 * initially though, we've just hard-coded the permissions
+	 * @param $httpMethod like get,post,put,delete
+	 * @param $resource name of API Model pluralized which user is trying to access,eg 'Events','Categories', etc.
+	 * @param $id of the resource if they're wanting access to a particular resource. 
+	 */
+	static function current_user_can($httpMethod='get',$resource='Events',$id=null){
+		global $current_user;
+		if(isset($current_user) && $current_user->ID==0){//no user logged in, only allow for access to public stuff
+			//as some point in the future, we may wish to have more permissions
+			switch($httpMethod){
+				case'get':
+				case'GET':
+				case'post':
+				case'POST':
+				case'put':
+				case'PUT':
+				case'delete':
+				case'DELETE':
+				default:
+					switch($resource){
+						case 'Events':
+						case 'Categories':
+						case 'Datetimes':
+						case 'Prices':
+						case 'Pricetypes':
+						case 'Venues':
+						case 'Questions':
+							return true;
+							break;
+						case 'Promocodes':
+						case 'Attendees':
+						case 'Registrations':
+						case 'Transactions':
+						case 'Answers':
+							return false;
+							break;
+						default:
+							return true;
+					}
+			}
+			
+		}else{
+			return true;
+		}
+	}
 }

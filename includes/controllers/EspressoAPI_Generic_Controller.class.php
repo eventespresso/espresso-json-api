@@ -34,8 +34,8 @@ abstract class EspressoAPI_Generic_Controller {
 		//they should be hooked with a do_action("include_API_{controlelrName}")
 		//echo "espressoeventscontroller32:";var_dump(get_class($this));
 		preg_match('~^EspressoAPI_(.*)_Controller~', get_class($this), $matches);
-		$model = $matches[1];
-		$this->apiFacade = EspressoAPI_ClassLoader::load($model, "Facade");//new $apiFacadeName;
+		$apiModel = $matches[1];
+		$this->apiFacade = EspressoAPI_ClassLoader::load($apiModel, "Facade");//new $apiFacadeName;
 	}
 
 	function handleRequest($param1, $param2) {
@@ -57,7 +57,7 @@ abstract class EspressoAPI_Generic_Controller {
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestPost());
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {//technically this oen should only be used for updates, but we'll be generous
-			return array(EspressoAPI_STATUS => __("PUT on all items does not apply. You probably meant to POST.","event_espresso"), EspressoAPI_STATUS_CODE => 405);
+			return array(EspressoAPI_STATUS => __("PUT (update) on all items does not apply. You probably meant to POST.","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
 			return array(EspressoAPI_STATUS => __("Denied. You requested to delete all events, and we don't think you meant to do that","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		}
@@ -91,7 +91,7 @@ abstract class EspressoAPI_Generic_Controller {
 			else
 				return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $object);
 		}elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
-			return array(EspressoAPI_STATUS => __("POST on a specific item is not supported. You probably meant to PUT:","event_espresso"), EspressoAPI_STATUS_CODE => 405);
+			return array(EspressoAPI_STATUS => __("POST (create) on a specific item is not supported. You probably meant to PUT:","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 			$object = $this->specificRequestPut($id);
 			if (empty($object))

@@ -42,6 +42,13 @@ class EspressoAPI_Router{
 			return false;
 		}
 	}
+	protected function  publicAccessQuery($sessionKey){
+		$allowPublicAccess=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
+		if($sessionKey=='public' && $allowPublicAccess)
+			return true;
+		else
+			return false;
+	}
     /**
      *intercepts requests, and finds ones for the espresso API, and routes them to the appropriate controller, if there is one
      * @return type 
@@ -65,11 +72,15 @@ class EspressoAPI_Router{
 				if(!empty($sessionKey) && empty($apiParam1))
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
 				global $current_user;
-				$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
-				EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
+				if($this->publicAccessQuery($sessionKey)){
+					$current_user->ID=0;
+				}else{				
+					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
+					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
+				}
 				//basic authentication: only logged-in users can do anything, and only those with basic event manager admin permissions
-				if(!$this->currentUserCanUseAPI())
-					throw new EspressoAPI_UnauthorizedException();
+				//if(!$this->currentUserCanUseAPI())
+				//	throw new EspressoAPI_UnauthorizedException();
 				$controller=EspressoAPI_ClassLoader::load(ucwords($this->stripFormat($apiParam1)),"Controller");
 				$response=$controller->handleRequest($this->stripFormat($apiParam2),$this->stripFormat($apiParam3));
 			}

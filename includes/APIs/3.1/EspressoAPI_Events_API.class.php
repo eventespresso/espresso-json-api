@@ -46,6 +46,18 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 				'O'=>'ongoing',
 				'P'=>'pending',
 				'R'=>'draft');
+	/*
+	 * overrides parent constructSQLWherSubclauses in order to attach an additional wherecaluse
+	 * which will ensure the prices found match the ones the attendees purchased
+	 */
+	protected function constructSQLWhereSubclauses($keyOpVals){
+		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
+		global $current_user;
+		if($current_user->ID==0){
+			$whereSqlArray[]="Event.event_status IN ('A','O','S') AND Event.is_active='Y'";
+		}
+		return $whereSqlArray;
+	}
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
