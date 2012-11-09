@@ -10,7 +10,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade{
 		"slug"=>"slug",
 		"event_desc"=>"event_desc",
 	   "display_desc"=>,
-	   "event_identifier"=>,
+	   "event_identifier"=>, 
 	   "start_date"=>,
 	   "end_date"=>,	
 	   "registration_start"=>,
