@@ -38,7 +38,7 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 		'Promocode'=>array('modelNamePlural'=>'Promocodes','hasMany'=>true),
 		'Price'=>array('modelNamePlural'=>'Prices','hasMany'=>true));
 	var $statusConversions=array(
-				'S'=>'seconary/waitlist',
+				'S'=>'secondary/waitlist',
 				'X'=>'expired',
 				'A'=>'active',
 				'D'=>'denied',
@@ -95,12 +95,14 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 		return $resultsICanView;
 	}
 	
-	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+	protected function constructSQLWhereSubclause($paramName,$operator,$value){
 		
-		switch($columnName){
+		switch($paramName){
 			case 'Event.status':
 				$apiParamToDbStatus=array_flip($this->statusConversions);
-				if($operator=="IN"){
+				
+				$value=$this->constructValueInWhereClause($operator,$value,$apiParamToDbStatus,'Transaction.status');
+				/*if($operator=="IN"){
 					$valuesSeperated=explode(",",$value);
 					$valuesConverted=array();
 					foreach($valuesSeperated as $singleValueInIn){
@@ -109,11 +111,12 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 					$value=implode(",",$valuesConverted);
 				}else{
 					$value=$apiParamToDbStatus[$value];
-				}
+				}*/
 				//now we've converted the status from something like 'Active' to 'A', handle the value as usual
-				break;
+				return "Event.event_status $operator $value";
 			case 'Event.active':
 			case 'Event.member_only':
+			case 'Event.allow_multiple':
 				if($value=='true'){
 					$value='Y';
 				}else{
@@ -121,7 +124,7 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 				}
 		}
 				
-		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
+		return parent::constructSQLWhereSubclause($paramName, $operator, $value);		
 	}
 	
 
@@ -155,13 +158,6 @@ class EspressoAPI_Events_API extends EspressoAPI_Events_API_Facade {
 				'phone'=>$sqlResult['Event.phone']
 				);
 			return $event;
-	}
-
-	function _create($createParameters) {
-		if (EspressoAPI_Permissions_Wrapper::espresso_is_admin())
-			throw new EspressoAPI_MethodNotImplementedException();
-		else
-			throw new EspressoAPI_UnauthorizedException();
 	}
 
 

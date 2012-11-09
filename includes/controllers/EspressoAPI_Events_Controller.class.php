@@ -52,11 +52,11 @@ class EspressoAPI_Events_Controller extends EspressoAPI_Generic_Controller{
 	 */
 	 protected function specificAttributeRequestGet($id,$attribute){
 		 switch($attribute){
-			 case 'attendees':
-				$attendeesFacade=EspressoAPI_ClassLoader::load('Attendees','Facade');
+			 case 'registrations':
+				$attendeesFacade=EspressoAPI_ClassLoader::load('Registrations','Facade');
 				 $queryParameters=$this->realQueryString();
-				 $queryParameters['event_id']=$id;
-				return $attendeesFacade->getAttendees($queryParameters);
+				 $queryParameters['Event.id']=$id;
+				return $attendeesFacade->getMany($queryParameters);
 				break;
 			 default:
 				 throw new EspressoAPI_MethodNotImplementedException();
