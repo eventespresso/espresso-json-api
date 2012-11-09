@@ -516,7 +516,11 @@ abstract class EspressoAPI_Generic_API_Facade{
 	 function getOne($id){
 		$queryParam=array('id'=>$id);
 		$fullResults=$this->getMany($queryParam);
-		$model= array($this->modelName=>array_shift($fullResults[$this->modelNamePlural]));
+		$singleResult=array_shift($fullResults[$this->modelNamePlural]);
+		if(empty($singleResult)){
+			throw new EspressoAPI_ObjectDoesNotExist($id);
+		}
+		$model= array($this->modelName=>$singleResult);
 		return $model;
 	 }
 
