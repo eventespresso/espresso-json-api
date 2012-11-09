@@ -13,11 +13,12 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 	
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
-		Attendee.date as 'Transaction.timestamp',
-		Attendee.total_cost as 'Transaction.total',
-		Attendee.amount_pd as 'Transaction.amount_pd',
-		Attendee.payment_status as 'Transaction.status.PROCESS',
-		Attendee.quantity as 'Transaction.registrations_on_transaction'";
+		Attendee.id as 'Attendee.id',
+		Attendee.date as 'Attendee.date',
+		Attendee.total_cost as 'Attendee.total_cost',
+		Attendee.amount_pd as 'Attendee.amount_pd',
+		Attendee.payment_status as 'Attendee.payment_status',
+		Attendee.quantity as 'Attendee.quantity'";
 	var $relatedModels=array();
 	
 	/**
@@ -38,13 +39,13 @@ class EspressoAPI_Transactions_API extends EspressoAPI_Transactions_API_Facade{
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 			
 			
-			$status=$this->statusMapping[$sqlResult['Transaction.status.PROCESS']];
+			$status=$this->statusMapping[$sqlResult['Attendee.payment_status']];
 			$transaction=array(
 				'id'=>$sqlResult['Transaction.id'],
-				'timestamp'=>$sqlResult['Transaction.timestamp'],
-				'total'=>$sqlResult['Transaction.total'],
-				'paid'=>$sqlResult['Transaction.amount_pd'],
-				'registrations_on_transaction'=>$sqlResult['Transaction.registrations_on_transaction'],
+				'timestamp'=>$sqlResult['Attendee.date'],
+				'total'=>$sqlResult['Attendee.total_cost'],
+				'paid'=>$sqlResult['Attendee.amount_pd'],
+				'registrations_on_transaction'=>$sqlResult['Attendee.quantity'],
 				'status'=>$status,
 				'details'=>null,
 				'tax_data'=>null,

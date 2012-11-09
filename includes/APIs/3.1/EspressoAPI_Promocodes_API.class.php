@@ -15,11 +15,11 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 	var $selectFields="
 		Promocode.id AS 'Promocode.id',
 		Promocode.coupon_code AS 'Promocode.coupon_code',
-		Promocode.coupon_code_price AS 'Promocode.price',
+		Promocode.coupon_code_price AS 'Promocode.coupon_code_price',
 		Promocode.use_percentage AS 'Promocode.use_percentage',
-		Promocode.coupon_code_description AS 'Promocode.description',
-		Promocode.each_attendee AS 'Promocode.apply_to_each_attendee',
-		Promocode.wp_user AS 'Promocode.user'";
+		Promocode.coupon_code_description AS 'Promocode.coupon_code_description',
+		Promocode.each_attendee AS 'Promocode.each_attendee',
+		Promocode.wp_user AS 'Promocode.wp_user'";
 	var $relatedModels=array();
 
 
@@ -51,13 +51,13 @@ class EspressoAPI_Promocodes_API extends EspressoAPI_Promocodes_API_Facade{
 		$promocode=array(
 		'id'=>$sqlResult['Promocode.id'],
 		'coupon_code'=>$sqlResult['Promocode.coupon_code'],
-		'amount'=>$sqlResult['Promocode.price'],
+		'amount'=>$sqlResult['Promocode.coupon_code_price'],
 		'use_percentage'=>$sqlResult['Promocode.use_percentage'],
-		'description'=>$sqlResult['Promocode.description'],
-		'apply_to_each_attendee'=>$sqlResult['Promocode.apply_to_each_attendee'],
+		'description'=>$sqlResult['Promocode.coupon_code_description'],
+		'apply_to_each_attendee'=>$sqlResult['Promocode.each_attendee'],
 		'quantity_available'=>999999,
 		'expiration_date'=>'9999-01-01 01:01:01',
-		'user'=>$sqlResult['Promocode.user']
+		'user'=>$sqlResult['Promocode.wp_user']
 		);
 		return $promocode; 
 	}

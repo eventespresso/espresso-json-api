@@ -6,14 +6,14 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Price.id',
 		'name'=>'Price.price_type',
-		'amount'=>'Price.amount',
+		'amount'=>'Price.event_cost',
 		'limit'=>'Event.reg_limit'
 	);
 	var $selectFields="
 		Price.id AS 'Price.id',
 		Price.event_id AS 'Price.event_id',
-		Price.event_cost AS 'Price.amount',
-		Price.price_type AS 'Price.name',
+		Price.event_cost AS 'Price.event_cost',
+		Price.price_type AS 'Price.price_type',
 		Event.reg_limit AS 'Price.limit',
 		Price.surcharge AS 'Price.surcharge',
 		Price.surcharge_type AS 'Price.surcharge_type',
@@ -71,8 +71,8 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 				}
 				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
-			$row['Price.limit']=intval($row['Event.limit']);
-			$row['Price.remaining.POST_PROCESSED']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['Datetime.limit']-$attendeesPerEvent[$row['Event.id']];
+			$row['Price.limit']=intval($row['Event.reg_limit']);
+			$row['Price.remaining.POST_PROCESSED']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
 			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(array_key_exists('Price.remaining',$keyOpVals)){
 				$opAndVal=$keyOpVals['Price.remaining'];
@@ -107,8 +107,8 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes","Facade");
 		$pricesToReturn['base']=array(
 		'id'=>$sqlResult['Price.id'].".0",
-		'amount'=>$sqlResult['Price.amount'],
-		'name'=>$sqlResult['Price.name'],
+		'amount'=>$sqlResult['Price.event_cost'],
+		'name'=>$sqlResult['Price.price_type'],
 		'description'=>null,
 		'limit'=>$sqlResult['Price.limit'],
 		'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
@@ -125,7 +125,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 			$pricesToReturn['surcharge']=array(
 			'id'=>$sqlResult['Price.id'].".1",
 			'amount'=>$sqlResult['Price.surcharge'],
-			'name'=>"Surcharge for ".$sqlResult['Price.name'],
+			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
 			'description'=>null,
 			'limit'=>$sqlResult['Price.limit'],
 			'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
@@ -156,7 +156,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 	 * invents one with some filled-in info, but with the orig_price set to
 	 * be teh amount
 	 * @param array $sqlResults
-	 * @param string $idKey like 'Registration.id'
+	 * @param string $idKey like 'Attendee.id'
 	 * @param string $idValue
 	 * @return type 
 	 */
@@ -164,7 +164,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 		$foundOrigPrice=false;
 		foreach($sqlResults as $sqlResult){
 			if($sqlResult[$idKey]==$idValue){
-				$origPrice=$sqlResult['Registration.orig_price.PROCESS'];
+				$origPrice=$sqlResult['Attendee.orig_price'];
 				$rowWithOrigPrice=$sqlResult;
 				$foundOrigPrice=true;
 				break;
@@ -189,7 +189,7 @@ class EspressoAPI_Prices_API extends EspressoAPI_Prices_API_Facade{
 			return array(
 			'id'=>"0",
 			'amount'=>$origPrice,
-			'name'=>isset($rowWithOrigPrice['$Registration.price_option.PROCESS'])?$rowWithOrigPrice['$Registration.price_option.PROCESS']:'Unknown',
+			'name'=>isset($rowWithOrigPrice['$Attendee.price_option'])?$rowWithOrigPrice['$Attendee.price_option']:'Unknown',
 			'description'=>null,
 			'limit'=>9999999,
 			'remaining'=>999999,//$sqlResult['Event.remaining'],

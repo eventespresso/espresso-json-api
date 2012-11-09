@@ -99,7 +99,7 @@ abstract class EspressoAPI_Generic_API_Facade{
 		//determine which model its referring to ("Datetime" in teh first case, in the second case it's $this->modelName)
 		if(count($apiParamParts)==1){//if it's an api param with no ".", like "name" (as opposed to "Event.name")
 			$modelName=$this->modelName;
-		}else{//it's an api param like "Datetime.start_time"
+		}else{//it's an api param like "StartEnd.start_timeh"
 			$modelName=$apiParamParts[0];
 		}
 		//construct sqlSubWhereclause, or get the related model (to whom the attribute belongs)to do it.

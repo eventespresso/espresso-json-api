@@ -97,10 +97,10 @@ class EspressoAPI_Pricetypes_API extends EspressoAPI_Pricetypes_API_Facade{
 		
 		$price=array(
 		'id'=>$sqlResult['Price.id'],
-		'amount'=>$sqlResult['Price.amount'],
-		'name'=>$sqlResult['Price.name'],
+		'amount'=>$sqlResult['Price.event_cost'],
+		'name'=>$sqlResult['Price.price_type'],
 		'description'=>null,
-		'limit'=>$sqlResult['Price.limit'],
+		'limit'=>$sqlResult['Price.reg_limit'],
 		'remaining'=>99999,//$sqlResult['Event.remaining'],
 		'start_date'=>null,
 		'end_date'=>null,

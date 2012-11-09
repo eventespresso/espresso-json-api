@@ -4,10 +4,10 @@ Plugin Name: Event Espresso API Plugin
 Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
 Version: 2.0.0
-Author: Mike Nelson
+Author: Event Espresso, (Mike Nelson)
  *  For Developers: How this plugin generally works:
  *  /includes/EspressoAPI_URL_Rewrite.class.php hooks in our URLs into wordpress, so that 
- * if a URL like /espresso-api/v1/ is requested, the /includes/EspressoAPI_Router.class.php will detect that request and generate a response.
+ * if a URL like /espresso-api/v1/ is requested, the /includes/EspressoAPI_Router.class.php will detect that request and hook in our code to generate a response.
  * The EspressoAPI_Router takes care of including the proper Espresso API Controller per request. Eg, if /espresso-api/v1/events is requested
  * the router will load /includes/controllers/EspressoAPI_Events_COntroller.class.php, and hand the request to it.
  * Most controllers extend /includes/controllers/EspressoAPI_Generic_Controller.class.php, and mostly only differ in terms of which

@@ -20,8 +20,8 @@ class EspressoAPI_Attendees_API extends EspressoAPI_Attendees_API_Facade{
 	
 	var $selectFields="
 		Attendee.id AS 'Attendee.id',
-		Attendee.fname as 'Attendee.firstname',
-		Attendee.lname as 'Attendee.lastname',
+		Attendee.fname as 'Attendee.fname',
+		Attendee.lname as 'Attendee.lname',
 		Attendee.address as 'Attendee.address',
 		Attendee.address2 as 'Attendee.address2',
 		Attendee.city as 'Attendee.city',
@@ -41,8 +41,8 @@ class EspressoAPI_Attendees_API extends EspressoAPI_Attendees_API_Facade{
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 			$attendee=array(
 				'id'=>$sqlResult['Attendee.id'],
-				'firstname'=>$sqlResult['Attendee.firstname'],
-				'lastname'=>$sqlResult['Attendee.lastname'],
+				'firstname'=>$sqlResult['Attendee.fname'],
+				'lastname'=>$sqlResult['Attendee.lname'],
 				'address'=>$sqlResult['Attendee.address'],
 				'address2'=>$sqlResult['Attendee.address2'],
 				'city'=>$sqlResult['Attendee.city'],

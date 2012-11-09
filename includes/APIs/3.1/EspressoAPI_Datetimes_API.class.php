@@ -9,15 +9,16 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	);
 	var $selectFields="
 		StartEnd.id AS 'Datetime.id',
-		StartEnd.start_time AS 'Datetime.start_time.PROCESS',
-		StartEnd.end_time AS 'Datetime.end_time.PROCESS',
-		Event.start_date AS 'Datetime.start_date.PROCESS',
-		Event.end_date AS 'Datetime.end_date.PROCESS',
-		Event.registration_start AS 'Datetime.registration_start.PROCESS',
-		Event.registration_end AS 'Datetime.registration_end.PROCESS',
-		StartEnd.reg_limit AS 'Datetime.limit',
-		Event.registration_startT AS 'Datetime.registration_startT.PROCESS',
-		Event.registration_endT AS 'Datetime.registration_endT.PROCESS'
+		StartEnd.id AS 'StartEnd.id',
+		StartEnd.start_time AS 'StartEnd.start_time',
+		StartEnd.end_time AS 'Startend.end_time',
+		Event.start_date AS 'Event.start_date',
+		Event.end_date AS 'Event.end_date',
+		Event.registration_start AS 'Event.registration_start',
+		Event.registration_end AS 'Event.registration_end',
+		StartEnd.reg_limit AS 'StartEnd.reg_limit',
+		Event.registration_startT AS 'Event.registration_startT',
+		Event.registration_endT AS 'Event.registration_endT'
 	";
 	var $relatedModels=array();
 	
@@ -83,7 +84,7 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_end',$date,'Event.registration_endT',$hourAndMinute);
-			case 'Datetime.limit':
+			case 'StartEnd.reg_limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
 			case 'Datetime.is_primary'://ignore, doesn't apply to 3.1
@@ -108,8 +109,8 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 				}
 				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
-			$row['Datetime.limit']=intval($row['Event.limit']);
-			$row['Datetime.tickets_left']=intval($row['Event.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['Datetime.limit']-$attendeesPerEvent[$row['Event.id']];
+			$row['StartEnd.reg_limit']=intval($row['Event.reg_limit']);
+			$row['Datetime.tickets_left']=intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
 			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(array_key_exists('Datetime.tickets_left',$keyOpVals)){
 				$opAndVal=$keyOpVals['Datetime.tickets_left'];
@@ -139,15 +140,15 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		// if the user signs up for a time, and then the time changes,  Datetime.start_time won't be set! So 
+		// if the user signs up for a time, and then the time changes,  StartEnd.start_time won't be set! So 
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
-		if(empty($sqlResult['Datetime.start_time.PROCESS']) || empty($sqlResult['Datetime.end_time.PROCESS'])){
-			$sqlResult['Datetime.id']="0";
-			$myTimeToStart=$sqlResult['Registration.event_time.PROCESS'];
-			$myTimeToEnd=$sqlResult['Registration.end_time.PROCESS'];
+		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['Startend.end_time'])){
+			$sqlResult['StartEnd.id']="0";
+			$myTimeToStart=$sqlResult['Attendee.event_time'];
+			$myTimeToEnd=$sqlResult['Attendee.end_time'];
 		}else{
-			$myTimeToStart=$sqlResult['Datetime.start_time.PROCESS'];
-			$myTimeToEnd=$sqlResult['Datetime.end_time.PROCESS'];
+			$myTimeToStart=$sqlResult['StartEnd.start_time'];
+			$myTimeToEnd=$sqlResult['Startend.end_time'];
 		}
 		//if we can't get teh time from either, just default to midnight. or we could just return null
 		if(empty($myTimeToEnd) || empty($myTimeToStart)){
@@ -155,20 +156,20 @@ class EspressoAPI_Datetimes_API extends EspressoAPI_Datetimes_API_Facade{
 			$myTimeToStart="00:00";
 		}
 		
-		$eventStart=$sqlResult['Datetime.start_date.PROCESS']." $myTimeToStart:00";
-		$eventEnd=$sqlResult['Datetime.end_date.PROCESS']." $myTimeToEnd:00";
-		$registrationStart=$sqlResult['Datetime.registration_start.PROCESS']." ".$sqlResult['Datetime.registration_startT.PROCESS'].":00";
-		$registrationEnd=$sqlResult['Datetime.registration_end.PROCESS']." ".$sqlResult['Datetime.registration_endT.PROCESS'].":00";
+		$eventStart=$sqlResult['Event.start_date']." $myTimeToStart:00";
+		$eventEnd=$sqlResult['Event.end_date']." $myTimeToEnd:00";
+		$registrationStart=$sqlResult['Event.registration_start']." ".$sqlResult['Event.registration_startT'].":00";
+		$registrationEnd=$sqlResult['Event.registration_end']." ".$sqlResult['Event.registration_endT'].":00";
 
 			
 		$datetime=array(
-			'id'=>$sqlResult['Datetime.id'],
+			'id'=>$sqlResult['StartEnd.id'],
 			'is_primary'=>true,
 			'event_start'=>$eventStart,
 			'event_end'=>$eventEnd,
 			'registration_start'=>$registrationStart,
 			'registration_end'=>$registrationEnd,
-			'limit'=>$sqlResult['Datetime.limit'],
+			'limit'=>$sqlResult['StartEnd.reg_limit'],
 			'tickets_left'=>$sqlResult['Datetime.tickets_left']
 			);
 		return $datetime; 

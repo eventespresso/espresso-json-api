@@ -13,16 +13,17 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 	
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
-		Attendee.date AS 'Registration.date_of_registration',
-		Attendee.final_price as 'Registration.final_price',
-		Attendee.orig_price as 'Registration.orig_price.PROCESS',
-		Attendee.registratioN_id as 'Registration.code',
-		Attendee.is_primary as 'Registration.is_primary',
-		Attendee.quantity as 'Registration.is_group_registration.PROCESS',
-		Attendee.checked_in as 'Registration.is_checked_in',
-		Attendee.price_option as 'Registration.price_option.PROCESS',
-		Attendee.event_time as 'Registration.event_time.PROCESS',
-		Attendee.end_time as 'Registration.end_time.PROCESS'";
+		Attendee.id AS 'Attendee.id',
+		Attendee.date AS 'Attendee.date',
+		Attendee.final_price as 'Attendee.final_price',
+		Attendee.orig_price as 'Attendee.orig_price',
+		Attendee.registration_id as 'Attendee.registration_id',
+		Attendee.is_primary as 'Attendee.is_primary',
+		Attendee.quantity as 'Attendee.quantity',
+		Attendee.checked_in as 'Attendee.checked',
+		Attendee.price_option as 'Attendee.price_option',
+		Attendee.event_time as 'Attendee.event_time',
+		Attendee.end_time as 'Attendee.end_time'";
 	var $relatedModels=array(
 		"Event"=>array('modelNamePlural'=>"Events",'hasMany'=>false),
 		"Attendee"=>array('modelNamePlural'=>"Attendees",'hasMany'=>false),
@@ -55,7 +56,7 @@ class EspressoAPI_Registrations_API extends EspressoAPI_Registrations_API_Facade
 		switch($columnName){
 			case 'Registration.status':
 			case 'Registration.url_link':
-			case 'Registration.is_primary':
+			case 'Attendee.is_primary':
 			case 'Registration.is_going':
 				return null;
 			case 'Registration.is_group_registration':
@@ -113,12 +114,12 @@ protected function processSqlResults($rows,$keyOpVals){
 		$attendeeStatuses=array();
 		$processedRows=array();
 		foreach($rows as $row){
-			if(!array_key_exists($row['Registration.id'],$attendeeStatuses)){
-				$isApproved=is_attendee_approved(intval($row['Event.id']),intval($row['Registration.id']));
+			if(!array_key_exists($row['Attendee.id'],$attendeeStatuses)){
+				$isApproved=is_attendee_approved(intval($row['Event.id']),intval($row['Attendee.id']));
 				$status=$isApproved?'approved':'not_approved';
-				$attendeeStatuses[$row['Registration.id']]=$status;
+				$attendeeStatuses[$row['Attendee.id']]=$status;
 			}
-			$attendeeStatus=$attendeeStatuses[$row['Registration.id']];
+			$attendeeStatus=$attendeeStatuses[$row['Attendee.id']];
 			$row['Registration.status.POST_PROCESSED']=$attendeeStatus;
 			
 			//perform filtering that couldn't be done in sql
@@ -140,15 +141,15 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		$isGroupRegistration=$sqlResult['Registration.is_group_registration.PROCESS']>1?true:false;
-		$isPrimary=$sqlResult['Registration.is_primary']?true:false;
-		$isCheckedIn=$sqlResult['Registration.is_checked_in']?true:false;
+		$isGroupRegistration=$sqlResult['Attendee.quantity']>1?true:false;
+		$isPrimary=$sqlResult['Attendee.is_primary']?true:false;
+		$isCheckedIn=$sqlResult['Attendee.checked']?true:false;
 		$transaction=array(
-			'id'=>$sqlResult['Registration.id'],
+			'id'=>$sqlResult['Attendee.id'],
 			'status'=>$sqlResult['Registration.status.POST_PROCESSED'],
-			'date_of_registration'=>$sqlResult['Registration.date_of_registration'],
-			'final_price'=>$sqlResult['Registration.final_price'],
-			'code'=>$sqlResult['Registration.code'],
+			'date_of_registration'=>$sqlResult['Attendee.date'],
+			'final_price'=>$sqlResult['Attendee.final_price'],
+			'code'=>$sqlResult['Attendee.registration_id'],
 			'url_link'=>null,
 			'is_primary'=>$isPrimary,
 			'is_group_registration'=>$isGroupRegistration,

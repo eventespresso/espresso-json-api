@@ -12,10 +12,10 @@ class EspressoAPI_Categories_API extends EspressoAPI_Categories_API_Facade{
 	);
 	var $selectFields="
 		Category.id AS 'Category.id',
-		Category.category_name AS 'Category.name',
+		Category.category_name AS 'Category.category_name',
 		Category.category_identifier AS 'Category.identifier',
 		Category.category_desc AS 'Category.description',
-		Category.wp_user AS 'Category.user'";
+		Category.wp_user AS 'Category.wp_user'";
 	var $relatedModels=array();
 	
 	/**
@@ -38,10 +38,10 @@ class EspressoAPI_Categories_API extends EspressoAPI_Categories_API_Facade{
 		$metas=unserialize($sqlResult['Venue.metas']);
 		$category=array(
 		'id'=>$sqlResult['Category.id'],
-		'name'=>$sqlResult['Category.name'],
+		'name'=>$sqlResult['Category.category_name'],
 		'identifier'=>$sqlResult['Category.identifier'],
 		'description'=>$sqlResult['Category.description'],
-		'user'=>$sqlResult['Category.user']
+		'user'=>$sqlResult['Category.wp_user']
 		);
 		return $category; 
 	}
