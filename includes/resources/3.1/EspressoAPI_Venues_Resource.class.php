@@ -15,6 +15,7 @@ class EspressoAPI_Venues_Resource extends EspressoAPI_Venues_Resource_Facade{
 		'country'=>'Venue.country',
 		'user'=>'Venue.wp_user'
 	);
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Venue.id AS 'Venue.id',
 		Venue.name AS 'Venue.name',

@@ -10,6 +10,7 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 		'description'=>'Category.category_desc',
 		'user'=>'Category.wp_user'
 	);
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Category.id AS 'Category.id',
 		Category.category_name AS 'Category.category_name',

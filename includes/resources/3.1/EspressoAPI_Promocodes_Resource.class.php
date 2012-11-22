@@ -12,6 +12,7 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		'apply_to_each_attendee'=>'Promocode.each_attendee',
 		'user'=>'Promocode.wp_user',
 	);
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Promocode.id AS 'Promocode.id',
 		Promocode.coupon_code AS 'Promocode.coupon_code',

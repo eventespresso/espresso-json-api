@@ -10,7 +10,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		'amount_paid'=>'Attendee.amount_pd',
 		'registrations_on_transaction'=>'Attendee.quantity');
 		
-	
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
 		Attendee.id as 'Attendee.id',

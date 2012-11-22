@@ -17,7 +17,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 		'phone'=>'Attendee.phone'
 		);
     
-	
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Attendee.id AS 'Attendee.id',
 		Attendee.fname as 'Attendee.fname',

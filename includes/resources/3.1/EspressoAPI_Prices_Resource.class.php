@@ -9,6 +9,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'amount'=>'Price.event_cost',
 		'limit'=>'Event.reg_limit'
 	);
+	var $calculatedColumnsToFilterOn=array('Price.remaining');
 	var $selectFields="
 		Price.id AS 'Price.id',
 		Price.event_id AS 'Price.event_id',
@@ -72,15 +73,10 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
 			$row['Price.limit']=intval($row['Event.reg_limit']);
-			$row['Price.remaining.POST_PROCESSED']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
+			$row['Price.remaining']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
 			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
-			if(array_key_exists('Price.remaining',$keyOpVals)){
-				$opAndVal=$keyOpVals['Price.remaining'];
-			
-				if(!$this->evaluate($row['Price.remaining.POST_PROCESSED'],$opAndVal['operator'],$opAndVal['value'])){
-					continue;//this condiiton failed, don't include this row in the results!!
-				}
-			}
+			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
+				continue;
 			$processedRows[]=$row;
 		}
 		return $processedRows;
@@ -111,7 +107,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'name'=>$sqlResult['Price.price_type'],
 		'description'=>null,
 		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
+		'remaining'=>$sqlResult['Price.remaining'],
 		'start_date'=>null,
 		'end_date'=>null,
 		'Pricetype'=>$priceTypeModel->fakeDbTable[1]
@@ -128,7 +124,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
 			'description'=>null,
 			'limit'=>$sqlResult['Price.limit'],
-			'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
+			'remaining'=>$sqlResult['Price.remaining'],
 			'start_date'=>null,
 			'end_date'=>null,
 			"Pricetype"=>$priceType
@@ -140,7 +136,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'name'=>$sqlResult['Price.member_price_type'],
 		'description'=>null,
 		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>$sqlResult['Price.remaining.POST_PROCESSED'],
+		'remaining'=>$sqlResult['Price.remaining'],
 		'start_date'=>null,
 		'end_date'=>null,
 		"Pricetype"=>$priceTypeModel->fakeDbTable[4]

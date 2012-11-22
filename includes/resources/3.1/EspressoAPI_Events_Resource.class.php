@@ -17,6 +17,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		'virtual_url'=>'Event.virtual_url',
 		'call_in_number'=>'Event.virtual_phone',
 		'phone'=>'Event.phone');
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Event.id AS 'Event.id',
 		Event.event_name AS 'Event.event_name',
@@ -89,7 +90,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	protected function processSqlResults($results,$keyOpVals){
 		$resultsICanView = array();
 		foreach ($results as $event) {
-			if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event['Event.id']))
+			//if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event['Event.id']))//allow all users to at least 'see' an event, but probably not moredetails
 				$resultsICanView[] = $event;
 		}
 		return $resultsICanView;

@@ -13,6 +13,7 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 		'is_global'=>null,
 		'order'=>null
 	);
+	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="";
 	var $relatedModels=array();
 	/**

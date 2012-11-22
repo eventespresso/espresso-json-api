@@ -58,8 +58,8 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 	 */
 	protected function constructSQLWhereSubclauses($keyOpVals){
 		$whereSqlArray=array();
-		foreach($keyOpVals as $key=>$OpAndVal){
-			$whereSubclause=$this->constructSQLWhereSubclause($key,$OpAndVal['operator'],$OpAndVal['value']);
+		foreach($keyOpVals as $keyOpAndVal){
+			$whereSubclause=$this->constructSQLWhereSubclause($keyOpAndVal['key'],$keyOpAndVal['operator'],$keyOpAndVal['value']);
 			if(!empty($whereSubclause)){
 				$whereSqlArray[]=$whereSubclause;
 			}
@@ -81,7 +81,7 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 			if(strpos($modelAndApiParam,".")===FALSE){
 				$modelAndApiParam=$this->modelName.".$modelAndApiParam";
 			}
-			$keyOperatorValues[$modelAndApiParam]=array('operator'=>$operator,'value'=>$value);
+			$keyOperatorValues[]=array('key'=>$modelAndApiParam, 'operator'=>$operator,'value'=>$value);
 		}
 		return $keyOperatorValues;
 	}
@@ -252,6 +252,28 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 	 */
 	protected function processSqlResults($rows,$keyOpVals){
 		return $rows;
+	}
+	
+	/**
+	 * for filtering out rows from sqlresults that don't meet the criteria expressed
+	 * in keyOpVal, where the key is a post-db-query-calculated column.
+	 * Eg, in 3.1, 'Datetime.tickets_left' doesn't exist in the db, and
+	 * is calculated in processSqlResults(). An api query param of 
+	 * 'Datetime.tickets_left__lt=10' would be handled in this function.
+	 * @param array $row single row from wpdb->get_results
+	 * @param array $keyOpVals like array(0=>array('key'=>'Datetime.tickets_left','operator'=>'<','value'=>10))
+	 */
+	protected function rowPassesFilterByCalculatedColumns($row,$keyOpVals){
+		foreach($keyOpVals as $keyOpVal){
+			foreach($this->calculatedColumnsToFilterOn as $postSqlFilterParam){
+				if($keyOpVal['key']==$postSqlFilterParam){
+					if(!$this->evaluate($row[$postSqlFilterParam],$keyOpVal['operator'],$keyOpVal['value'])){
+						return false;//this condiiton failed, don't include this row in the results!!
+					}
+				}
+			}
+		}
+		return true;
 	}
 	
 	

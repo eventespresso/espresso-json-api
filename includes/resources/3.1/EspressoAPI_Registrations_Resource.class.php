@@ -10,7 +10,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		'code'=>'Attendee.registration_id',
 		'is_primary'=>'Attendee.is_primary',
 		'is_checked_in'=>'Attendee.checked_in');
-	
+	var $calculatedColumnsToFilterOn=array('Registration.status');
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
 		Attendee.id AS 'Attendee.id',
@@ -120,15 +120,9 @@ protected function processSqlResults($rows,$keyOpVals){
 				$attendeeStatuses[$row['Attendee.id']]=$status;
 			}
 			$attendeeStatus=$attendeeStatuses[$row['Attendee.id']];
-			$row['Registration.status.POST_PROCESSED']=$attendeeStatus;
-			
-			//perform filtering that couldn't be done in sql
-			if(array_key_exists('Registration.status',$keyOpVals)){
-				$opAndVal=$keyOpVals['Registration.status'];
-				if(!$this->evaluate($row['Registration.status.POST_PROCESSED'],$opAndVal['operator'],$opAndVal['value'])){
-					continue;//this condiiton failed, don't include this row in the results!!
-				}
-			}			
+			$row['Registration.status']=$attendeeStatus;
+			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
+				continue;			
 			$processedRows[]=$row;
 			
 		}
@@ -146,7 +140,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		$isCheckedIn=$sqlResult['Attendee.checked']?true:false;
 		$transaction=array(
 			'id'=>$sqlResult['Attendee.id'],
-			'status'=>$sqlResult['Registration.status.POST_PROCESSED'],
+			'status'=>$sqlResult['Registration.status'],
 			'date_of_registration'=>$sqlResult['Attendee.date'],
 			'final_price'=>$sqlResult['Attendee.final_price'],
 			'code'=>$sqlResult['Attendee.registration_id'],
