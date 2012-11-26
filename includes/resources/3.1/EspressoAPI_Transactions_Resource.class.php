@@ -44,7 +44,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'id'=>$sqlResult['Transaction.id'],
 				'timestamp'=>$sqlResult['Attendee.date'],
 				'total'=>$sqlResult['Attendee.total_cost'],
-				'paid'=>$sqlResult['Attendee.amount_pd'],
+				'amount_paid'=>$sqlResult['Attendee.amount_pd'],
 				'registrations_on_transaction'=>$sqlResult['Attendee.quantity'],
 				'status'=>$status,
 				'details'=>null,

@@ -15,7 +15,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 		'zip'=>'Attendee.zip',
 		'email'=>'Attendee.email',
 		'phone'=>'Attendee.phone'
-		);
+		); 
     
 	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="

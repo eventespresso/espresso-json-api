@@ -29,7 +29,7 @@ abstract class EspressoAPI_Transactions_Resource_Facade extends EspressoAPI_Gene
 		'id',
 		'timestamp',
 		'total',
-		'paid',
+		'amount_paid',
 		'status',
 		'details',
 		'tax_data',
