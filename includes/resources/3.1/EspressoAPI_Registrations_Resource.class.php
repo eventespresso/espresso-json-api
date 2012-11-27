@@ -4,13 +4,13 @@
  */
 class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
-		"id"=>"Attendee.id",
+		//"id"=>"Attendee.id",
 		"date_of_registration"=>"Attendee.date_of_registration",
 		'final_price'=>'Attendee.final_price',
 		'code'=>'Attendee.registration_id',
 		'is_primary'=>'Attendee.is_primary',
 		'is_checked_in'=>'Attendee.checked_in');
-	var $calculatedColumnsToFilterOn=array('Registration.status','Registration.url_link','Registration.is_going');
+	var $calculatedColumnsToFilterOn=array('Registration.id', 'Registration.status','Registration.url_link','Registration.is_going');
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
 		Attendee.id AS 'Attendee.id',
@@ -30,7 +30,14 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		"Transaction"=>array('modelNamePlural'=>"Transactions",'hasMany'=>false),
 		'Datetime'=>array('modelNamePlural'=>'Datetimes','hasMany'=>false),
 		'Price'=>array('modelNamePlural'=>'Prices','hasMany'=>false));
-
+/**
+ * an array for caching  registration ids taht related to group registrations
+ * it coudl look like array('2etf2w24rtw'=>true, '54tgsdsf'=>false), meaning
+ * '2etf2w24rtw' is a known group registration, but '54tgsdsf' is known to NOT 
+ * be a gruop registration. All other registartion ids are not yet known andshould eb cached.
+ * @var type 
+ */
+	private $knownGroupRegistrationRegIds=array();
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
@@ -122,15 +129,48 @@ protected function processSqlResults($rows,$keyOpVals){
 			$row['Registration.status']=$attendeeStatus;
 			$row['Registration.is_going']=true;
 			$row['Registration.url_link']=null;
-			$row['Registration.is_group_registration']=$row['Attendee.quantity']>1?true:false;
+			$row['Registration.is_group_registration']=$this->determineIfGroupRegistration($row);
 			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
 			$row['Registration.is_checked_in']=$row['Attendee.checked']?true:false;
-			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
-				continue;			
-			$processedRows[]=$row;
 			
+			//in 3.2, every single row in registrationtable relates to a ticket for somebody
+			//to get into the event. In 3.1 it sometimes does and sometimes doesn't. Which is somewhat 
+			//confusing. So it really should,instead, 
+			$baseRegId=$row['Registration.id'];
+			for($i=1;$row['Attendee.quantity']>=$i;$i++){
+				$row['Registration.id']="$baseRegId.$i";
+				if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
+					continue;		
+			
+				$processedRows[]=$row;
+			}	
 		}
 		return $processedRows;
+	}
+	
+	private function determineIfGroupRegistration($sqlResult){
+		//if it hasa quantity over 1
+		//or there are other registrations with teh same Attendee.registration_id
+		if(!array_key_exists($sqlResult['Attendee.registration_id'],$this->knownGroupRegistrationRegIds)){
+			if($sqlResult['Attendee.quantity']>1){
+				$this->knownGroupRegistrationRegIds[$sqlResult['Attendee.registration_id']]=true;
+			}else{
+				//check for other attendee rows with teh same registration id
+				global $wpdb;
+				$count=$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}events_attendee Attendee
+					WHERE Attendee.registration_id='{$sqlResult['Attendee.registration_id']}'");
+				if($count>1){
+					$this->knownGroupRegistrationRegIds[$sqlResult['Attendee.registration_id']]=true;
+				}else{
+					$this->knownGroupRegistrationRegIds[$sqlResult['Attendee.registration_id']]=false;
+				}
+
+			}
+		}
+		return $this->knownGroupRegistrationRegIds[$sqlResult['Attendee.registration_id']];
+			
+
+//return in_array($sqlResult['Attendee.registration_id'],$this->knowGroupRegistrationRegIds);
 	}
 	/**
 	 *for taking the info in the $sql row and formatting it according
@@ -141,7 +181,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		
 		$transaction=array(
-			'id'=>$sqlResult['Attendee.id'],
+			'id'=>$sqlResult['Registration.id'],
 			'status'=>$sqlResult['Registration.status'],
 			'date_of_registration'=>$sqlResult['Attendee.date'],
 			'final_price'=>$sqlResult['Attendee.final_price'],
@@ -159,8 +199,14 @@ protected function processSqlResults($rows,$keyOpVals){
 		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
+		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
+		//where all tickets use the same attendee info
+		//if that's the case, we row we want to update is 1 or 343, respectively.
+		//soo just strip everything out after the "."
+		$idParts=explode(".",$id,2);
+		$rowId=$idParts[0];
 		//get the registration
-		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'";
+		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$rowId'";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
 		if(empty($registration))
 			throw new EspressoAPI_ObjectDoesNotExist($id);
@@ -168,6 +214,10 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_UnauthorizedException();
 		$ignorePayment=(isset($queryParameters['ignore_payment']) && $queryParameters['ignore_payment']=='true')?true:false;
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
+		if(intval($registration['checked_in_quantity'])+$quantity>$registration['quantity']){
+			throw new EspressoAPI_SpecialException(__("Checkins Exceeded! Checkins permitted on this registration: ","event_espresso").$registration['quantity']);
+		}
+		
 		//check payment status
 		if($registration['payment_status']=='Incomplete' && !$ignorePayment){
 		//if its 'Incomplete' then stop
@@ -183,13 +233,21 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked in failed:","event_espresso").$result);
 		}
 	}
+	
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb;
 		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
+		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
+		//where all tickets use the same attendee info
+		//if that's the case, we row we want to update is 1 or 343, respectively.
+		//soo just strip everything out after the "."
+		$idParts=explode(".",$id,2);
+		$rowId=$idParts[0];
+		
 		//get the registration
-		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'";
+		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$rowId'";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
 		if(empty($registration))
 			throw new EspressoAPI_ObjectDoesNotExist($id);

@@ -57,7 +57,8 @@ class EspressoAPI_Router{
 		//fetch params and sanitize. $_REQUEST variables must be passed by the api before doing anything in teh db
 		$apiRequest=get_query_var('espresso-api-request');
 		$apiAuthenticate=get_query_var('espresso-api-authenticate');
-		$sessionKey=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-sessionkey')));
+		$sessionKeyAndMaybeFormat=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-sessionkey')));
+		$sessionKey=$this->stripFormat($sessionKeyAndMaybeFormat);
         $apiParam1=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api1')));
         $apiParam2=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api2')));
         $apiParam3=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api3')));
@@ -81,8 +82,8 @@ class EspressoAPI_Router{
 				//basic authentication: only logged-in users can do anything, and only those with basic event manager admin permissions
 				//if(!$this->currentUserCanUseAPI())
 				//	throw new EspressoAPI_UnauthorizedException();
-				$controller=EspressoAPI_ClassLoader::load(ucwords($this->stripFormat($apiParam1)),"Controller");
-				$response=$controller->handleRequest($this->stripFormat($apiParam2),$this->stripFormat($apiParam3));
+				$controller=EspressoAPI_ClassLoader::load(ucwords($apiParam1),"Controller");
+				$response=$controller->handleRequest($apiParam2,$apiParam3);
 			}
         } catch (EspressoAPI_MethodNotImplementedException $e) {
 			$response= array(EspressoAPI_STATUS => __("Endpoint not yet implemented","event_espresso"), EspressoAPI_STATUS_CODE => 500);
@@ -100,7 +101,7 @@ class EspressoAPI_Router{
 		catch (Exception $e) {
 			$response= array(EspressoAPI_STATUS => $e->getMessage(), EspressoAPI_STATUS_CODE => 500);
 		}
-		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($apiParam1,$apiParam2,$apiParam3));
+		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
 		if($format=='xml'){
 			header('Content-type: text/xml, application/xml');
 		}elseif($format=='json'){
@@ -115,8 +116,7 @@ class EspressoAPI_Router{
 			return $urlPart;
 		else{
 			return substr($urlPart,0,$posOfDot);
-		}
-			
+		}	
 	}
     
 }

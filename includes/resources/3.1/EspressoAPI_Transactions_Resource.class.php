@@ -7,7 +7,7 @@
  * When getting a single transaction, don't forget to get all the registrations for that 
  * transaction. It's easier said tahn done. only query to transaction (attendee row entries)
  * which are marked as 'primary', and then for each of them, get all 'registrations'
- * that have teh same 'code' (registration_id in the db)
+ * that have teh same 'code' (registration_id in the db) 
  */
 class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array();
@@ -27,7 +27,8 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		'Transaction.txn_type',
 		'Transaction.details',
 		'Transaction.tax_data',
-		'Transaction.session_data');
+		'Transaction.session_data',
+		'Transaction.checked_in_quantity');
 	
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
@@ -37,7 +38,8 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		Attendee.amount_pd as 'Attendee.amount_pd',
 		Attendee.payment_status as 'Attendee.payment_status',
 		Attendee.quantity as 'Attendee.quantity',
-		Attendee.txn_type as 'Attendee.txn_type'";
+		Attendee.txn_type as 'Attendee.txn_type',
+		Attendee.checked_in_quantity as 'Attendee.checked_in_quantity'";
 	var $relatedModels=array();
 	
 	/**
@@ -77,10 +79,10 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				$row['Attendee.date']=$primaryTransaction['Attendee.date'];
 				$row['Attendee.total_cost']=$primaryTransaction['Attendee.total_cost'];
 				$row['Attendee.amount_pd']=$primaryTransaction['Attendee.amount_pd'];
-				$row['Attendee.quantity']=$primaryTransaction['Attendee.quantity'];
+				$row['Attendee.quantity']=$primaryTransaction['Attendee.quantity'];//although the quantity should always be 1 when a group registration spans multiple rows
 				$row['Attendee.txn_type']=$primaryTransaction['Attendee.txn_type'];
 			}
-			$row['Transaction.registrations_on_transaction']=$this->countRegistrationPerTransaction($row);
+			$row['Transaction.registrations_on_transaction']=$this->countRegistrationsPerTransaction($row);
 			$row['Transaction.status']=$this->statusMapping[$row['Attendee.payment_status']];
 			$row['Transaction.details']=null;
 			$row['Transaction.tax_data']=null;
@@ -112,11 +114,12 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'tax_data'=>$sqlResult['Transaction.tax_data'],
 				'session_data'=>$sqlResult['Transaction.session_data'],
 				'payment_gateway'=>$sqlResult['Attendee.txn_type'],
+				'checked_in_quantity'=>$sqlResult['Attendee.checked_in_quantity']
 				);
 			return $transaction;
 	}
 	
-	private function countRegistrationPerTransaction($sqlResult){
+	private function countRegistrationsPerTransaction($sqlResult){
 		if(empty($sqlResult['Attendee.registration_id'])){
 			throw new EspressoAPI_OperationFailed(__("Error counting registrations per transaction. There is no registration_id on the results on the row we're using to count","event_espresso"));
 		}
