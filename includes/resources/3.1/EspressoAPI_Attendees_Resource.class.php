@@ -49,7 +49,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 				'state'=>$sqlResult['Attendee.state'],
 				'country'=>$sqlResult['Attendee.country'],
 				'zip'=>$sqlResult['Attendee.zip'],
-				'email'=>$sqlResult['Attendee.zip'],
+				'email'=>$sqlResult['Attendee.email'],
 				'phone'=>$sqlResult['Attendee.phone'],
 				'comments'=>null,
 				'notes'=>null
