@@ -10,15 +10,25 @@
  * that have teh same 'code' (registration_id in the db)
  */
 class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resource_Facade{
-	var $APIqueryParamsToDbColumns=array(
-		'id'=>'Attendee.id',
-		'timestamp'=>'Attendee.date',
-		'total'=>'Attendee.total_cost',
-		'amount_paid'=>'Attendee.amount_pd',
-		'registrations_on_transaction'=>'Attendee.quantity',
-		'payment_gateway'=>'Attendee.txn_type');
+	var $APIqueryParamsToDbColumns=array();
+		//'id'=>'Attendee.id',
+		//'timestamp'=>'Attendee.date',
+		//'total'=>'Attendee.total_cost',
+		//'amount_paid'=>'Attendee.amount_pd',
+		////'registrations_on_transaction'=>'Attendee.quantity',
+		//'payment_gateway'=>'Attendee.txn_type');
 		
-	var $calculatedColumnsToFilterOn=array();
+	var $calculatedColumnsToFilterOn=array(
+		'Transaction.id',
+		'Transaction.date',
+		'Transaction.total_cost',
+		'Transaction.amount_pd',
+		'Transaction.quantity',
+		'Transaction.txn_type',
+		'Transaction.details',
+		'Transaction.tax_data',
+		'Transaction.session_data');
+	
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
 		Attendee.id as 'Attendee.id',
@@ -52,6 +62,36 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'Completed'=>'complete',
 				'Pending'=>'pending',
 				'Incomplete'=>'open');
+	
+	
+	protected function processSqlResults($rows,$keyOpVals){
+		global $wpdb;
+		$processedRows=array();
+		foreach($rows as $row){
+			//if this is a primary registration, use this data
+			//if its not, call the private function getPrimaryTransaction
+			if(!$row['Attendee.is_primary']){
+				//convert the 
+				$primaryTransaction=$this->getPrimaryTransaction($row);
+				$row['Transaction.id']=$primaryTransaction['Transaction.id'];
+				$row['Attendee.date']=$primaryTransaction['Attendee.date'];
+				$row['Attendee.total_cost']=$primaryTransaction['Attendee.total_cost'];
+				$row['Attendee.amount_pd']=$primaryTransaction['Attendee.amount_pd'];
+				$row['Attendee.quantity']=$primaryTransaction['Attendee.quantity'];
+				$row['Attendee.txn_type']=$primaryTransaction['Attendee.txn_type'];
+			}
+			$row['Transaction.registrations_on_transaction']=$this->countRegistrationPerTransaction($row);
+			$row['Transaction.status']=$this->statusMapping[$row['Attendee.payment_status']];
+			$row['Transaction.details']=null;
+			$row['Transaction.tax_data']=null;
+			$row['Transaction.session_data']=null;
+			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
+				continue;			
+			$processedRows[]=$row;
+			
+		}
+		return $processedRows;
+	}
 	/**
 	 *for taking the info in the $sql row and formatting it according
 	 * to the model
@@ -60,22 +100,17 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 			
-			//if this is a primary registration, use this data
-			//if its not, call the private function getPrimaryTransaction
-			if(!$sqlResult['Attendee.is_primary']){
-				$sqlResult=$this->getPrimaryTransaction($sqlResult);
-			}
-			$status=$this->statusMapping[$sqlResult['Attendee.payment_status']];
+			
 			$transaction=array(
 				'id'=>$sqlResult['Transaction.id'],
 				'timestamp'=>$sqlResult['Attendee.date'],
 				'total'=>$sqlResult['Attendee.total_cost'],
 				'amount_paid'=>$sqlResult['Attendee.amount_pd'],
-				'registrations_on_transaction'=>$this->countRegistrationPerTransaction($sqlResult),
-				'status'=>$status,
-				'details'=>null,
-				'tax_data'=>null,
-				'session_data'=>null,
+				'registrations_on_transaction'=>$sqlResult['Transaction.registrations_on_transaction'],
+				'status'=>$sqlResult['Transaction.status'],
+				'details'=>$sqlResult['Transaction.details'],
+				'tax_data'=>$sqlResult['Transaction.tax_data'],
+				'session_data'=>$sqlResult['Transaction.session_data'],
 				'payment_gateway'=>$sqlResult['Attendee.txn_type'],
 				);
 			return $transaction;

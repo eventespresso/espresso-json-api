@@ -10,7 +10,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		'code'=>'Attendee.registration_id',
 		'is_primary'=>'Attendee.is_primary',
 		'is_checked_in'=>'Attendee.checked_in');
-	var $calculatedColumnsToFilterOn=array('Registration.status');
+	var $calculatedColumnsToFilterOn=array('Registration.status','Registration.url_link','Registration.is_going');
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
 		Attendee.id AS 'Attendee.id',
@@ -54,11 +54,10 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 	
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		switch($columnName){
-			case 'Registration.status':
+			/*case 'Registration.status':
 			case 'Registration.url_link':
-			case 'Attendee.is_primary':
 			case 'Registration.is_going':
-				return null;
+				return null;*/
 			case 'Registration.is_group_registration':
 				if($value=='true'){
 					return "Attendee.quantity > 1";
@@ -121,6 +120,11 @@ protected function processSqlResults($rows,$keyOpVals){
 			}
 			$attendeeStatus=$attendeeStatuses[$row['Attendee.id']];
 			$row['Registration.status']=$attendeeStatus;
+			$row['Registration.is_going']=true;
+			$row['Registration.url_link']=null;
+			$row['Registration.is_group_registration']=$row['Attendee.quantity']>1?true:false;
+			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
+			$row['Registration.is_checked_in']=$row['Attendee.checked']?true:false;
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 				continue;			
 			$processedRows[]=$row;
@@ -135,20 +139,18 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		$isGroupRegistration=$sqlResult['Attendee.quantity']>1?true:false;
-		$isPrimary=$sqlResult['Attendee.is_primary']?true:false;
-		$isCheckedIn=$sqlResult['Attendee.checked']?true:false;
+		
 		$transaction=array(
 			'id'=>$sqlResult['Attendee.id'],
 			'status'=>$sqlResult['Registration.status'],
 			'date_of_registration'=>$sqlResult['Attendee.date'],
 			'final_price'=>$sqlResult['Attendee.final_price'],
 			'code'=>$sqlResult['Attendee.registration_id'],
-			'url_link'=>null,
-			'is_primary'=>$isPrimary,
-			'is_group_registration'=>$isGroupRegistration,
-			'is_going'=>true,
-			'is_checked_in'=>$isCheckedIn
+			'url_link'=>$sqlResult['Registration.url_link'],
+			'is_primary'=>$sqlResult['Registration.is_primary'],
+			'is_group_registration'=>$sqlResult['Registration.is_group_registration'],
+			'is_going'=>$sqlResult['Registration.is_going'],
+			'is_checked_in'=>$sqlResult['Registration.is_checked_in']
 			);
 		return $transaction;
 	}

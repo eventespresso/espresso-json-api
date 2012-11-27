@@ -31,13 +31,11 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 	 */
 	var $APIqueryParamsToDbColumns=array();
 	
-	//protected function mapValuesToDbValues()
 	protected function convertApiParamToDBColumn($apiParam){
 		$apiParamParts=explode(".",$apiParam,2);
 		if(count($apiParamParts)!=2){
 			throw new EspressoAPI_BadRequestException(__("Illegal get parameter passed!:","event_espresso").$apiParam);
 		}else if($apiParamParts[0]==$this->modelName && array_key_exists($apiParamParts[1], $this->APIqueryParamsToDbColumns)){
-			
 			return $this->APIqueryParamsToDbColumns[$apiParamParts[1]];
 		}elseif(count($apiParamParts)==2 && array_key_exists($apiParamParts[0],$this->relatedModels)){
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$apiParamParts[0]]['modelNamePlural'],'Resource');
@@ -92,25 +90,28 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 	 * @param string $value like 23, 'foobar', '2012-03-03 12:23:34'
 	 * @return string of full where Subcluae like "foo='bar'", no 'AND's 
 	 */
-	protected function constructSQLWhereSubclause($columnName,$operator,$value){
+	protected function constructSQLWhereSubclause($apiParam,$operator,$value){
 		//take an api param like "Datetime.is_primary" or "id"
-		$apiParamParts=explode(".",$columnName,2);
+		$apiParamParts=explode(".",$apiParam,2);
 		
 		//determine which model its referring to ("Datetime" in teh first case, in the second case it's $this->modelName)
 		if(count($apiParamParts)==1){//if it's an api param with no ".", like "name" (as opposed to "Event.name")
 			$modelName=$this->modelName;
-		}else{//it's an api param like "StartEnd.start_timeh"
+			$columnName=$apiParam;
+		}else{//it's an api param like "StartEnd.start_time"
 			$modelName=$apiParamParts[0];
+			$columnName=$apiParamParts[1];
 		}
 		//construct sqlSubWhereclause, or get the related model (to whom the attribute belongs)to do it.
-		//eg
 		if($this->modelName==$modelName){
-			$dbColumn=$this->convertAPIParamToDBColumn($columnName);
+			if(in_array("{$modelName}.{$columnName}",$this->calculatedColumnsToFilterOn))
+					return null;
+			$dbColumn=$this->convertAPIParamToDBColumn($apiParam);
 			$formattedValue=$this->constructValueInWhereClause($operator,$value);
 			return "$dbColumn $operator $formattedValue";
 		}else{//this should be handled by the model to whom this attribute belongs, in case there's associated special logic
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$modelName]['modelNamePlural'],'Resource');
-			return $otherFacade->constructSQLWhereSubclause($columnName,$operator,$value);
+			return $otherFacade->constructSQLWhereSubclause($apiParam,$operator,$value);
 		}
 		
 	}
@@ -287,8 +288,13 @@ abstract class EspressoAPI_Generic_Resource_Facade{
 	 * @throws EspressoAPI_BadRequestException 
 	 */
 	protected function evaluate($operand1,$operatorRepresentation,$operand2){
+		$booleanStrings=array('true'=>true,'false'=>false);
+		if(array_key_exists($operand2,$booleanStrings)){
+			$operand2=$booleanStrings[$operand2];
+		}	
 		if(is_int($operand2))
 			$operand2=intval($operand2);
+		
 		switch($operatorRepresentation){
 			case '<':
 				return $operand1<$operand2;

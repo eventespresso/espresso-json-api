@@ -7,7 +7,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		'id'=>'StartEnd.id',
 		'limit'=>'StartEnd.reg_limit'
 	);
-	var $calculatedColumnsToFilterOn=array('Datetime.tickets_left');
+	var $calculatedColumnsToFilterOn=array('Datetime.is_primary','Datetime.tickets_left');
 	var $selectFields="
 		StartEnd.id AS 'Datetime.id',
 		StartEnd.id AS 'StartEnd.id',
@@ -88,10 +88,6 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			case 'StartEnd.reg_limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
-			case 'Datetime.is_primary'://ignore, doesn't apply to 3.1
-				return null;
-			case 'Datetime.tickets_left'://handled in processSQLResults
-				return null;
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
@@ -112,7 +108,8 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			}
 			$row['StartEnd.reg_limit']=intval($row['Event.reg_limit']);
 			$row['Datetime.tickets_left']=intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
-			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
+			$row['Datetime.is_primary']=true;
+//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 				continue;
 			$processedRows[]=$row;
@@ -163,7 +160,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			
 		$datetime=array(
 			'id'=>$sqlResult['StartEnd.id'],
-			'is_primary'=>true,
+			'is_primary'=>$sqlResult['Datetime.is_primary'],
 			'event_start'=>$eventStart,
 			'event_end'=>$eventEnd,
 			'registration_start'=>$registrationStart,

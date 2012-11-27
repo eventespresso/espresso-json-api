@@ -12,7 +12,7 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		'apply_to_each_attendee'=>'Promocode.each_attendee',
 		'user'=>'Promocode.wp_user',
 	);
-	var $calculatedColumnsToFilterOn=array();
+	var $calculatedColumnsToFilterOn=array('Promocode.quantity_available','Promocode.expiration_date');
 	var $selectFields="
 		Promocode.id AS 'Promocode.id',
 		Promocode.coupon_code AS 'Promocode.coupon_code',
@@ -32,6 +32,21 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
+	
+	protected function processSqlResults($rows,$keyOpVals){
+		global $wpdb;
+		$processedRows=array();
+		foreach($rows as $row){
+			$row['Promocode.quantity_available']=999999;
+			$row['Promocode.expiration_date']='9999-01-01 01:01:01';
+			
+			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
+				continue;
+			$processedRows[]=$row;
+		}
+		return $processedRows;
+	}
+	
 	/**
 	 * takes the results acquired from a DB selection, and extracts
 	 * each instance of this model, and compiles into a nice array like
@@ -56,8 +71,8 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		'use_percentage'=>$sqlResult['Promocode.use_percentage'],
 		'description'=>$sqlResult['Promocode.coupon_code_description'],
 		'apply_to_each_attendee'=>$sqlResult['Promocode.each_attendee'],
-		'quantity_available'=>999999,
-		'expiration_date'=>'9999-01-01 01:01:01',
+		'quantity_available'=>$sqlResult['Promocode.quantity_available'],
+		'expiration_date'=>$sqlResult['Promocode.expiration_date'],
 		'user'=>$sqlResult['Promocode.wp_user']
 		);
 		return $promocode; 

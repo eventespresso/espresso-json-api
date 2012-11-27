@@ -9,7 +9,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'amount'=>'Price.event_cost',
 		'limit'=>'Event.reg_limit'
 	);
-	var $calculatedColumnsToFilterOn=array('Price.remaining');
+	var $calculatedColumnsToFilterOn=array('Price.remaining','Price.start_date','Price.end_date','Price.remaining','Price.description');
 	var $selectFields="
 		Price.id AS 'Price.id',
 		Price.event_id AS 'Price.event_id',
@@ -46,18 +46,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				}
 		}
 		return $filteredResults;
-	}
-	protected function constructSQLWhereSubclause($columnName,$operator,$value){
-		switch($columnName){
-			case 'Price.start_date':
-			case 'Price.end_date':
-			case 'Price.remaining':
-			case 'Price.description':
-				return null;	
-		}
-		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
-	}
-	
+	}	
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
 		$attendeesPerEvent=array();
@@ -74,7 +63,10 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			}
 			$row['Price.limit']=intval($row['Event.reg_limit']);
 			$row['Price.remaining']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
-			//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
+			$row['Price.description']=null;
+			$row['Price.start_date']=null;
+			$row['Price.end_date']=null;
+//now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 				continue;
 			$processedRows[]=$row;
@@ -105,11 +97,11 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'id'=>$sqlResult['Price.id'].".0",
 		'amount'=>$sqlResult['Price.event_cost'],
 		'name'=>$sqlResult['Price.price_type'],
-		'description'=>null,
+		'description'=>$sqlResult['Price.description'],
 		'limit'=>$sqlResult['Price.limit'],
 		'remaining'=>$sqlResult['Price.remaining'],
-		'start_date'=>null,
-		'end_date'=>null,
+		'start_date'=>$sqlResult['Price.start_date'],
+		'end_date'=>$sqlResult['Price.end_date'],
 		'Pricetype'=>$priceTypeModel->fakeDbTable[1]
 		);
 		if($sqlResult['Price.surcharge']!=0){
