@@ -8,9 +8,9 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		"date_of_registration"=>"Attendee.date_of_registration",
 		'final_price'=>'Attendee.final_price',
 		'code'=>'Attendee.registration_id',
-		'is_primary'=>'Attendee.is_primary',
+		//'is_primary'=>'Attendee.is_primary',
 		'is_checked_in'=>'Attendee.checked_in');
-	var $calculatedColumnsToFilterOn=array('Registration.id', 'Registration.status','Registration.url_link','Registration.is_going');
+	var $calculatedColumnsToFilterOn=array('Registration.id', 'Registration.status','Registration.url_link','Registration.is_going','Attendee.is_primary');
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
 		Attendee.id AS 'Attendee.id',
@@ -139,6 +139,9 @@ protected function processSqlResults($rows,$keyOpVals){
 			$baseRegId=$row['Registration.id'];
 			for($i=1;$row['Attendee.quantity']>=$i;$i++){
 				$row['Registration.id']="$baseRegId.$i";
+				 if($i>1){  
+					$row['Registration.is_primary']=false;  
+				}  
 				if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 					continue;		
 			
