@@ -12,7 +12,14 @@
  */
 require_once(dirname(__FILE__).'/EspressoAPI_Generic_Resource_Facade_Read_Functions.class.php');
 abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends EspressoAPI_Generic_Resource_Facade_Read_Functions{
-	//put your code here
+	function createMany($input){
+		//validate input
+		
+		//create 
+	
+	}
+	
+	public function updateOne($input){
+		
+	}
 }
-
-?>

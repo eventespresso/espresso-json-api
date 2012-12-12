@@ -30,12 +30,12 @@ abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Re
 		'id',
 		'name',
 		'description',
-		'status',
+		'status',//enum
 		'limit',
 		'group_registrations_allowed',
 		'group_registrations_max',
 		'active',
-		'member_only',
+		'member_only',//boolean
 		'virtual_url',
 		'call_in_number',
 		'phone',

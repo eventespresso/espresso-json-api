@@ -19,7 +19,10 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * @var array 
 	 */
 	var $APIqueryParamsToDbColumns=array();
-	
+	/**
+	 * 
+	 * @var type 
+	 */
 	protected $validator;
 	function __construct(){
 		$this->validator=new EspressoAPI_Validator($this);
@@ -95,5 +98,3 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	
 	
 }
-
-?>

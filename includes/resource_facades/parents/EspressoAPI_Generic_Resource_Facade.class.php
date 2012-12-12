@@ -22,6 +22,6 @@
  * ------------------------------------------------------------------------
  */
 require_once(dirname(__FILE__).'/EspressoAPI_Generic_Resource_Facade_Write_Functions.class.php');
-abstract class EspressoAPI_Generic_Resource_Facade extends EspressoAPI_Generic_Resource_Facade_Read_Functions{
-	
+abstract class EspressoAPI_Generic_Resource_Facade extends EspressoAPI_Generic_Resource_Facade_Write_Functions{
+	//mostly just a facade for the other inherited classes
 }
