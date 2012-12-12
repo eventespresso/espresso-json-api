@@ -41,8 +41,10 @@ require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_SessionKey_Manager.
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Functions.class.php');
 if(is_admin()){
 	require(dirname(__FILE__).'/includes/admin/EspressoAPI_Generic_Admin.class.php');
+	require (dirname(__FILE__).'/includes/EspressoAPI_URL_Rewrite.class.php');
 }else{
 	require (dirname(__FILE__).'/includes/EspressoAPI_URL_Rewrite.class.php');
 	require (dirname(__FILE__).'/includes/EspressoAPI_Router.class.php');
 	require (dirname(__FILE__).'/includes/EspressoAPI_Response_Formatter.class.php');
+	require (dirname(__FILE__).'/includes/helpers/EspressoAPI_Validator.class.php');
 }

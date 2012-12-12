@@ -39,25 +39,6 @@ abstract class EspressoAPI_Pricetypes_Resource_Facade extends EspressoAPI_Generi
 		'is_global',
 		'order'
 	);
-	/**
-	 * Gets events from database according ot query parameters by calling the concrete child classes' _getEvents function
-	 * @param array $queryParameters
-	 * @return array  
-	 */
-     function getMany($queryParameters){
-		 return $this->forceResponseIntoFormat($this->_getDatetimes($queryParameters),
-		     array("attendees"=>array($this->requiredFields)));
-     }
-	 /**
-	  * implemented in concrete child class for getting events from db
-	  */
-     abstract protected  function _getMany($queryParameters);
-     
-	 function getOne($id){
-		   return $this->forceResponseIntoFormat($this->_getDatetime($id),
-		     array("attendee"=>$this->requiredFields));
-	 }
-	 abstract protected function _getOne($id);
 	 /**
 	  * creation of event facade, calls concrete child class' _creatEvent function
 	  * @param array $createParameters

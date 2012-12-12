@@ -67,13 +67,14 @@ class EventEspressoAPI_URL_Rewrite {
 		if (empty($rules)) {
 			//rules are empty because permalinks must be off
 			add_action('admin_notices', array($this, 'noticeURLRewritesAreOff'));
+			flush_rewrite_rules();
 			return;
 		}
 
 		$ruleMapFroms = array_keys($rules);
 		$needFlush = false;
 		foreach ($this->getRewriteRules() as $mapFrom => $mapTo) {
-			if (!array_key_exists($mapFrom, $ruleMapFroms)) {
+			if (empty($ruleMapFroms) || !in_array($mapFrom, $ruleMapFroms)) {
 				$needFlush = true;
 			}
 		}
