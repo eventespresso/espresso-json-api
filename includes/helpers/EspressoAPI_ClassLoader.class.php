@@ -10,7 +10,7 @@ class EspressoAPI_ClassLoader{
 		switch($type){
 			case 'Resource':
 				$version = substr(EVENT_ESPRESSO_VERSION, 0, 3);
-				$genericFacadeFilePath=EspressoAPI_DIR_PATH . "includes/resource_facades/EspressoAPI_Generic_Resource_Facade.class.php";
+				$genericFacadeFilePath=EspressoAPI_DIR_PATH . "includes/resource_facades/parents/EspressoAPI_Generic_Resource_Facade.class.php";
 				$apiFacadeFilePath=EspressoAPI_DIR_PATH . "includes/resource_facades/EspressoAPI_{$class}_Resource_Facade.class.php";
 				$apiFilePath=EspressoAPI_DIR_PATH . "includes/resources/{$version}/EspressoAPI_{$class}_Resource.class.php";
 				if(file_exists($genericFacadeFilePath) && file_exists($apiFacadeFilePath) && file_exists($apiFilePath)){

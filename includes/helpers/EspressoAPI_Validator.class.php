@@ -6,7 +6,13 @@
  */
 
 /**
- * Description of EspressoAPI_Validator
+ * Class for validating responses and input arrays. The validator operates on 
+ * data in array form (ie, not in xml or json itself. it's a layer abstracted away from either of those).
+ * Validation is clearly highly dependent on WHAT is being validated (ie, 
+ * are we validating a response which should contain a list of events, a response for
+ * a single registration, or the input to update a single attendee?)
+ * So at first it made sense for these functions to be part of the Generic
+ * Resource Facade, but it got factored out because that class was gettting unruly.
  *
  * @author mnelson4
  */
