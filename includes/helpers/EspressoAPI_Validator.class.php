@@ -27,6 +27,30 @@ class EspressoAPI_Validator {
 		$this->resource=$resource;
 	}
 	
+	function validateQueryParameters($keyOpVals){
+		//get related models
+		$relatedModels=$this->resource->getFullRelatedModels();
+		
+		foreach($keyOpVals as $keyOpVal){
+			list($modelName,$fieldName)=explode(".",$keyOpVal['key']);
+			$fieldInfo=null;
+			if($this->resource->modelName==$modelName){
+				$fieldInfo=$this->resource->getRequiredFieldInfo($fieldName);
+			}else{
+				foreach($relatedModels as $relatedModel){
+					if($relatedModel['modelName']==$modelName){
+						$fieldInfo=$relatedModel['class']->getRequiredFieldInfo($fieldName);
+						break;
+					}
+				}
+			}
+			if(empty($fieldInfo) || empty($fieldInfo['type']) || !$this->valueIs($keyOpVal['value'],$fieldInfo['type'],$fieldInfo['allowedEnumValues'])){
+				throw new EspressoAPI_BadRequestException(sprintf(
+								__("Param '%s' with value '%s' is not of allowed type '%s'.","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type']));
+			}
+		}
+		return true;
+	}
 	function validate($models,$single=true){
 		if($single){
 			return 	$models=$this->forceResponseIntoFormat($models,
@@ -35,7 +59,6 @@ class EspressoAPI_Validator {
 			return 	$models=$this->forceResponseIntoFormat($models,
 		     array($this->resource->modelNamePlural=>array($this->getRequiredFullResponse())));	
 		}
-	
 	}
 	
 	/**
@@ -112,55 +135,63 @@ class EspressoAPI_Validator {
 	 * @return boolean 
 	 */
 	function valueIs($value,$type,$allowedEnumValues=array()){
-		if($value==null)
-			return true;
-		switch($type){
-			case 'int':
-				if(ctype_digit($value) || is_int($value)){
-					return true;
-				}
-				else{
-					return false;
-				}
-			case 'float':
-				if(is_numeric($value)){
-					return true;
-				}else{
-					return false;
-				}
-			case 'string':
-				if(is_string($value)){
-					return true;
-				}else{
-					return false;
-				}
-			case 'bool':
-				if(is_bool($value)){
-					return true;
-				}else{
-					return false;
-				}
-			case 'datetime':
-				if(preg_match('/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/',$value)){
-					return true;
-				}else{
-					return false;
-				}
-			case 'enum':
-				if(in_array($value, $allowedEnumValues)){
-					return true;
-				}else{
-					return false;
-				}
-			case 'array':
-				if(is_array($value)){
-					return true;
-				}else{
-					return false;
-				}
-			default:
-				throw new EspressoAPI_SpecialException(sprintf(__("Internal Event Espresso API Error while validating data. Type %s not permitted","event_espresso"),$type));
+		if(is_array($value)){
+			$csvValues=array($value);
+		}else{
+			$csvValues=explode(",",$value);
 		}
+		foreach($csvValues as $value){
+			if($value==null)
+				return true;
+			switch($type){
+				case 'int':
+					if(ctype_digit($value) || is_int($value)){
+						continue;
+					}
+					else{
+						return false;
+					}
+				case 'float':
+					if(is_numeric($value)){
+						continue;
+					}else{
+						return false;
+					}
+				case 'string':
+					if(is_string($value)){
+						continue;
+					}else{
+						return false;
+					}
+				case 'bool':
+					if(is_bool($value) || intval($value)===0 || intval($value)===1){
+						continue;
+					}else{
+						return false;
+					}
+				case 'datetime':
+					if(preg_match('/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/',$value)){
+						continue;
+					}else{
+						return false;
+					}
+				case 'enum':
+					if(in_array($value, $allowedEnumValues)){
+						continue;
+					}else{
+						return false;
+					}
+				case 'array':
+					if(is_array($value)){
+						continue;
+					}else{
+						return false;
+					}
+				default:
+					throw new EspressoAPI_SpecialException(sprintf(__("Internal Event Espresso API Error while validating data. Type %s not permitted","event_espresso"),$type));
+			}
+		}
+		return true;
 	}
 	
 	/**

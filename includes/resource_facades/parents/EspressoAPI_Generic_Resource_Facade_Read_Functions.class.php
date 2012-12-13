@@ -316,6 +316,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		 if(!EspressoAPI_Permissions_Wrapper::current_user_can('get', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		 }
+		 //parse query parameter
 		 if (!empty($queryParameters)){
 			 if(array_key_exists('cache_result',$queryParameters)){
 				 $cacheResult=true;
@@ -324,13 +325,16 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 				 $cacheResult=false;
 			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
-			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);
 		}
 		else{
 			$cacheResult=false;
 			$keyOpVals=array();
-			$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
 		}
+		//validate query parameter input first by normalizing input into 'Model.parameter'
+		$this->validator->validateQueryParameters($keyOpVals);
+		
+		$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
+		//construct database query
 		if(empty($whereSubclauses))
 			$sqlWhere='';
 		else
@@ -345,8 +349,9 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhere);
 		if(isset($_GET['debug']))echo "generic api facade 301: sql:$sqlQuery";
 		$results = $wpdb->get_results($sqlQuery, ARRAY_A);
-		//var_dump($results);
+		//process results (calculate 'calculated columns' and filter on them)
 		$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
+		//begin constructing response array
 		$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
 		$completeResults=array();
 		foreach($topLevelModels as $key=>$model){

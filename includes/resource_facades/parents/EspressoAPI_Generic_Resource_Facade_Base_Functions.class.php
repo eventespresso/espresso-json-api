@@ -28,6 +28,31 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		$this->validator=new EspressoAPI_Validator($this);
 	}
 	/**
+	 * finds the model's field info.
+	 * eg, on the Event Resource call getRequiredFieldInfo('name') and you
+	 * should get array('var'=>'name', 'type'=>'string')
+	 * @param string $fieldName
+	 * @return array with keys 'var', 'type', and possibly 'allowedEnumValues' 
+	 */
+	function getRequiredFieldInfo($fieldName){
+		$requiredFields=$this->getRequiredFields();
+		$fieldIndicated=null;
+		foreach($requiredFields as $requiredField){
+			if($requiredField['var']==$fieldName){
+				$fieldIndicated=$requiredField;
+				break;
+			}
+		}
+		if($fieldIndicated==null){
+			return array('var'=>null,'type'=>null,'allowedEnumValues'=>null);
+		}else{
+			if(!array_key_exists('allowedEnumValues',$fieldIndicated)){
+				$fieldIndicated['allowedEnumValues']=null;
+			}
+			return $fieldIndicated;
+		}
+	}
+	/**
 	 * returns the list of fields on teh current model that are required in a response
 	 * and should eb acceptable for querying on
 	 * @return type 
@@ -63,6 +88,8 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * @throws EspressoAPI_BadRequestException 
 	 */
 	protected function constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
+		//first: validate that the input is acceptable
+		//if($this->validator->valueIs($valueInput, , $allowedEnumValues)
 		if(isset($mappingFromApiToDbColumn)){
 			if(array_key_exists($valueInput,$mappingFromApiToDbColumn)){
 				$valueInput=$mappingFromApiToDbColumn[$valueInput];
@@ -85,7 +112,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 *		'Datetime'=>...)
 	 * @return array as described above 
 	 */
-	protected function getFullRelatedModels(){
+	function getFullRelatedModels(){
+		//if we've already called this function and assigned the classes in the relatedModels array, just use it
+		if(array_key_exists('class',array_shift(array_values($this->relatedModels)))){
+			return $this->relatedModels;
+		}
 		$relatedModels=array();
 		foreach($this->relatedModels as $modelName=>$relatedModel){
 			$relatedModels[$modelName]['modelName']=$modelName;
@@ -93,8 +124,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 			$relatedModels[$modelName]['hasMany']=$relatedModel['hasMany'];
 			$relatedModels[$modelName]['class']=EspressoAPI_ClassLoader::load($relatedModel['modelNamePlural'],'Resource');
 		}
+		$this->relatedModels=$relatedModels;
 		return $relatedModels;
 	}
-	
-	
 }

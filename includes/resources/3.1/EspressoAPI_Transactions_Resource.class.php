@@ -20,11 +20,11 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		
 	var $calculatedColumnsToFilterOn=array(
 		'Transaction.id',
-		'Transaction.date',
-		'Transaction.total_cost',
-		'Transaction.amount_pd',
-		'Transaction.quantity',
-		'Transaction.txn_type',
+		'Transaction.timestamp',
+		'Transaction.total',
+		'Transaction.amount_paid',
+		'Transaction.registrations_on_transaction',
+		'Transaction.payment_gateway',
 		'Transaction.details',
 		'Transaction.tax_data',
 		'Transaction.session_data',
@@ -76,11 +76,15 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				//convert the 
 				$primaryTransaction=$this->getPrimaryTransaction($row);
 				$row['Transaction.id']=$primaryTransaction['Transaction.id'];
-				$row['Attendee.date']=$primaryTransaction['Attendee.date'];
-				$row['Attendee.total_cost']=$primaryTransaction['Attendee.total_cost'];
-				$row['Attendee.amount_pd']=$primaryTransaction['Attendee.amount_pd'];
-				$row['Attendee.quantity']=$primaryTransaction['Attendee.quantity'];//although the quantity should always be 1 when a group registration spans multiple rows
-				$row['Attendee.txn_type']=$primaryTransaction['Attendee.txn_type'];
+				$row['Transaction.timestamp']=$primaryTransaction['Attendee.date'];
+				$row['Transaction.total']=$primaryTransaction['Attendee.total_cost'];
+				$row['Transaction.amount_paid']=$primaryTransaction['Attendee.amount_pd'];
+				$row['Transaction.payment_gateway']=$primaryTransaction['Attendee.txn_type'];
+			}else{
+				$row['Transaction.timestamp']=$row['Attendee.date'];
+				$row['Transaction.total']=$row['Attendee.total_cost'];
+				$row['Transaction.amount_paid']=$row['Attendee.amount_pd'];
+				$row['Transaction.payment_gateway']=$row['Attendee.txn_type'];
 			}
 			$row['Transaction.registrations_on_transaction']=$this->countRegistrationsPerTransaction($row);
 			$row['Transaction.status']=$this->statusMapping[$row['Attendee.payment_status']];
@@ -105,15 +109,15 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 			
 			$transaction=array(
 				'id'=>$sqlResult['Transaction.id'],
-				'timestamp'=>$sqlResult['Attendee.date'],
-				'total'=>$sqlResult['Attendee.total_cost'],
-				'amount_paid'=>$sqlResult['Attendee.amount_pd'],
+				'timestamp'=>$sqlResult['Transaction.timestamp'],
+				'total'=>$sqlResult['Transaction.total'],
+				'amount_paid'=>$sqlResult['Transaction.amount_paid'],
 				'registrations_on_transaction'=>$sqlResult['Transaction.registrations_on_transaction'],
 				'status'=>$sqlResult['Transaction.status'],
 				'details'=>$sqlResult['Transaction.details'],
 				'tax_data'=>$sqlResult['Transaction.tax_data'],
 				'session_data'=>$sqlResult['Transaction.session_data'],
-				'payment_gateway'=>$sqlResult['Attendee.txn_type'],
+				'payment_gateway'=>$sqlResult['Transaction.payment_gateway'],
 				'checked_in_quantity'=>$sqlResult['Attendee.checked_in_quantity']
 				);
 			return $transaction;
