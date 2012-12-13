@@ -30,11 +30,11 @@ abstract class EspressoAPI_Categories_Resource_Facade extends EspressoAPI_Generi
 	 * @var type 
 	 */
 	var $requiredFields=array(
-		'id',
-		'name',
-		'identifier',
-		'description',
-		'user'
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'name','type'=>'string'),
+		array('var'=>'identifier','type'=>'string'),
+		array('var'=>'description','type'=>'string'),
+		array('var'=>'user','type'=>'int')
 	);
 
 }

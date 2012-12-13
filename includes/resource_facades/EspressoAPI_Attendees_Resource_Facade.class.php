@@ -26,17 +26,17 @@ abstract class EspressoAPI_Attendees_Resource_Facade extends EspressoAPI_Generic
 	var $modelName="Attendee";
 	var $modelNamePlural="Attendees";
 	var $requiredFields=array(
-		'id',
-		'firstname',
-		'lastname',
-		'address',
-		'address2',
-		'city',
-		'state',
-		'country',
-		'zip',
-		'email',
-		'phone'
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'firstname','type'=>'string'),
+		array('var'=>'lastname','type'=>'string'),
+		array('var'=>'address','type'=>'string'),
+		array('var'=>'address2','type'=>'string'),
+		array('var'=>'city','type'=>'string'),
+		array('var'=>'state','type'=>'string'),
+		array('var'=>'country','type'=>'string'),
+		array('var'=>'zip','type'=>'string'),
+		array('var'=>'email','type'=>'string'),
+		array('var'=>'phone','type'=>'string')
 		);
 	/**
 	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set

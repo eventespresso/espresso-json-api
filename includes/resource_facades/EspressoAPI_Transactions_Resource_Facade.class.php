@@ -26,17 +26,17 @@ abstract class EspressoAPI_Transactions_Resource_Facade extends EspressoAPI_Gene
 	var $modelName="Transaction";
 	var $modelNamePlural="Transactions";
 	var $requiredFields=array(
-		'id',
-		'timestamp',
-		'total',
-		'amount_paid',
-		'status',
-		'details',
-		'tax_data',
-		'session_data',
-		'registrations_on_transaction',
-		'payment_gateway',
-		'checked_in_quantity');
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'timestamp','type'=>'datetime'),
+		array('var'=>'total','type'=>'float'),
+		array('var'=>'amount_paid','type'=>'float'),
+		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array('complete','open','pending')),
+		array('var'=>'details','type'=>'string'),
+		array('var'=>'tax_data','type'=>'string'),
+		array('var'=>'session_data','type'=>'string'),
+		array('var'=>'registrations_on_transaction','type'=>'int'),
+		array('var'=>'payment_gateway','type'=>'string'),
+		array('var'=>'checked_in_quantity','type'=>'int'));
 }
 
 //$html .= '<script type="text/javascript">$jaer = jQuery.noConflict();var attendee_num = 0;var additional_limit = '.$additional_limit.';var first_add_button = null;var selector = \'div#additional_attendee_\' + attendee_num;function markup(attendee_num) {return \''.stripslashes($htm).'\';}function remove_add() {attendee_num -= 1;selector = \'div#additional_attendee_\' + attendee_num;$jaer(selector).remove();if (attendee_num != 0) {var temp_selector = \'div#additional_attendee_\' + (attendee_num - 1);$jaer(temp_selector + \' a.add\').on(\'click\',add_add);$jaer(temp_selector + \' a.remove\').on(\'click\',remove_add);} else {first_add_button.on(\'click\',add_add);}}function add_add() {if (attendee_num == additional_limit) return;$jaer(this).parent().parent().after(markup(attendee_num));$jaer(selector + \' a.add\').on(\'click\',add_add);$jaer(selector + \' a.remove\').on(\'click\',remove_add);$jaer(this).off(\'click\', add_add);if (attendee_num != 0) {var temp_selector = \'div#additional_attendee_\' + (attendee_num - 1);$jaer(temp_selector + \' a.remove\').off(\'click\', remove_add);}attendee_num += 1;selector = \'div#additional_attendee_\' + attendee_num;}jQuery(do cument).ready(function($jaer) {$jaer(\'a.add\').on(\'click\',add_add);first_add_button = $jaer(\'a.add\');});</script>';

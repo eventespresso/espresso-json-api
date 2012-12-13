@@ -30,14 +30,14 @@ abstract class EspressoAPI_Datetimes_Resource_Facade extends EspressoAPI_Generic
 	 * @var type 
 	 */
 	var $requiredFields=array(
-		'id',
-		'is_primary',
-		'event_start',
-		'event_end',
-		'registration_start',
-		'registration_end',
-		'limit',
-		'tickets_left'
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'is_primary','type'=>'bool'),
+		array('var'=>'event_start','type'=>'datetime'),
+		array('var'=>'event_end','type'=>'datetime'),
+		array('var'=>'registration_start','type'=>'datetime'),
+		array('var'=>'registration_end','type'=>'datetime'),
+		array('var'=>'limit','type'=>'int'),
+		array('var'=>'tickets_left','type'=>'int')
 	);
 	
 }

@@ -30,14 +30,14 @@ abstract class EspressoAPI_Pricetypes_Resource_Facade extends EspressoAPI_Generi
 	 * @var type 
 	 */
 	var $requiredFields=array(
-		'id',
-		'name',
-		'is_member',
-		'is_discount',
-		'is_tax',
-		'is_percent',
-		'is_global',
-		'order'
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'name','type'=>'string'),
+		array('var'=>'is_member','type'=>'bool'),
+		array('var'=>'is_discount','type'=>'bool'),
+		array('var'=>'is_tax','type'=>'bool'),
+		array('var'=>'is_percent','type'=>'bool'),
+		array('var'=>'is_global','type'=>'bool'),
+		array('var'=>'order','type'=>'int')
 	);
 	 /**
 	  * creation of event facade, calls concrete child class' _creatEvent function

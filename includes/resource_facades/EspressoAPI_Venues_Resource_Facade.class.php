@@ -30,16 +30,16 @@ abstract class EspressoAPI_Venues_Resource_Facade extends EspressoAPI_Generic_Re
 	 * @var type 
 	 */
 	var $requiredFields=array(
-		'id',
-		'name',
-		'identifier',
-		'address',
-		'address2',
-		'city',
-		'state',
-		'zip',
-		'country',
-		'user'
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'name','type'=>'string'),
+		array('var'=>'identifier','type'=>'string'),
+		array('var'=>'address','type'=>'string'),
+		array('var'=>'address2','type'=>'string'),
+		array('var'=>'city','type'=>'string'),
+		array('var'=>'state','type'=>'string'),
+		array('var'=>'zip','type'=>'string'),
+		array('var'=>'country','type'=>'string'),
+		array('var'=>'user','type'=>'int')
 	);
 	
 	

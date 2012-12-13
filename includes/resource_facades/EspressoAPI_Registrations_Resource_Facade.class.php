@@ -24,16 +24,17 @@
 abstract class EspressoAPI_Registrations_Resource_Facade extends EspressoAPI_Generic_Resource_Facade{
 	var $modelName="Registration";
 	var $modelNamePlural="Registrations";
-	var $requiredFields=array("id",
-		"status",
-		"date_of_registration",
-		'final_price',
-		'code',
-		'url_link',
-		'is_primary',
-		'is_group_registration',
-		'is_going',
-		'is_checked_in');
+	var $requiredFields=array
+		(array('var'=>'id','type'=>'float'),
+		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array('approved','not_approved')),
+		array('var'=>'date_of_registration','type'=>'datetime'),
+		array('var'=>'final_price','type'=>'float'),
+		array('var'=>'code','type'=>'string'),
+		array('var'=>'url_link','type'=>'string'),
+		array('var'=>'is_primary','type'=>'bool'),
+		array('var'=>'is_group_registration','type'=>'bool'),
+		array('var'=>'is_going','type'=>'bool'),
+		array('var'=>'is_checked_in','type'=>'bool'));
 	 /**
 	  * creation of event facade, calls concrete child class' _creatEvent function
 	  * @param array $createParameters

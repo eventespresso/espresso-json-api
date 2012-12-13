@@ -30,12 +30,12 @@ abstract class EspressoAPI_Promocodes_Resource_Facade extends EspressoAPI_Generi
 	 * @var type 
 	 */
 	var $requiredFields=array(
-		'id',
-		'coupon_code',
-		'amount',
-		'use_percentage',
-		'apply_to_each_attendee',
-		'user',
+		array('var'=>'id','type'=>'int'),
+		array('var'=>'coupon_code','type'=>'string'),
+		array('var'=>'amount','type'=>'float'),
+		array('var'=>'use_percentage','type'=>'bool'),
+		array('var'=>'apply_to_each_attendee','type'=>'bool'),
+		array('var'=>'user','type'=>'int'),
 	);
 	
 	
