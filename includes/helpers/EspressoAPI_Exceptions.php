@@ -59,3 +59,10 @@ class EspressoAPI_ClassNotFound extends Exception{
 	
 }
 
+/**
+
+ * for handling json or xml input parsing errors 
+ */
+class EspressoAPI_InputParsingError extends Exception{
+	
+}

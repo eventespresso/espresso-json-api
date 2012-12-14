@@ -81,10 +81,44 @@ class EspressoAPI_Response_Formatter{
 			return $newNode;
 		}
 	}
+	static function parseJson($input){
+		$input= $input;
+			$output=json_decode($input,true);
+			if(json_last_error()!=JSON_ERROR_NONE){
+				$input=stripslashes($input);
+				$output=json_decode($input,true);
+			}
+			if(json_last_error()!=JSON_ERROR_NONE){
+				
+				switch (json_last_error()) {
+					case JSON_ERROR_NONE:
+					break;
+					case JSON_ERROR_DEPTH:
+						$parseErrorMessage= ' JSON_ERROR_DEPTH - Maximum stack depth exceeded';
+					break;
+					case JSON_ERROR_STATE_MISMATCH:
+						$parseErrorMessage= ' JSON_ERROR_STATE_MISMATCH - Underflow or the modes mismatch';
+					break;
+					case JSON_ERROR_CTRL_CHAR:
+						$parseErrorMessage= ' JSON_ERROR_CTRL_CHAR - Unexpected control character found';
+					break;
+					case JSON_ERROR_SYNTAX:
+						$parseErrorMessage= ' JSON_ERROR_SYNTAX - Syntax error, malformed JSON';
+					break;
+					case JSON_ERROR_UTF8:
+						$parseErrorMessage= ' JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded';
+					break;
+					default:
+						$parseErrorMessage= ' - Unknown error';
+				}
+				throw new EspressoAPI_InputParsingError($parseErrorMessage,400);
+			}
+			return $output;
+	}
 	
 	static function parse($input,$formatName='json'){
 		if($formatName=='json'){
-			$output=json_decode($input,true);
+			$output=EspressoAPI_Response_Formatter::parseJson($input);
 		}else{
 			
 		}
