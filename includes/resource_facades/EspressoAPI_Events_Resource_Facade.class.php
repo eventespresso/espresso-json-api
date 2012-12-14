@@ -31,7 +31,7 @@ abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Re
 		array('var'=>'code','type'=>'string'),
 		array('var'=>'name','type'=>'string'),
 		array('var'=>'description','type'=>'string'),
-		array('var'=>'status','type'=>'string','allowedEnumValues'=>array(
+		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array(
 				'secondary/waitlist',
 				'expired',
 				'active',

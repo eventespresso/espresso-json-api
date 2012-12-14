@@ -43,11 +43,20 @@ class EspressoAPI_Validator {
 						break;
 					}
 				}
+			}if(empty($fieldInfo) || empty($fieldInfo['type'])){
+				throw new EspressoAPI_BadRequestException(sprintf(__("Query parameter '%s' not a valid parameter of resource '%s'"),$fieldName,$modelName));
 			}
-			if(empty($fieldInfo) || empty($fieldInfo['type']) || !$this->valueIs($keyOpVal['value'],$fieldInfo['type'],$fieldInfo['allowedEnumValues'])){
+			elseif(!$this->valueIs($keyOpVal['value'],$fieldInfo['type'],$fieldInfo['allowedEnumValues'])){
+				if($fieldInfo['type']=='enum'){
+					$enumInfoString=sprintf(__("Allowed values are :%s"),implode(",",$fieldInfo['allowedEnumValues']));
+				}else{
+					$enumInfoString='';
+				}
 				throw new EspressoAPI_BadRequestException(sprintf(
-								__("Param '%s' with value '%s' is not of allowed type '%s'.","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type']));
+								__("Param '%s' with value '%s' is not of allowed type '%s'. %s","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type'],$enumInfoString));
+				
 			}
+			
 		}
 		return true;
 	}
