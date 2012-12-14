@@ -52,7 +52,7 @@ abstract class EspressoAPI_Registrations_Resource_Facade extends EspressoAPI_Gen
 	  * @return array like $this->getRegistration() 
 	  */
 	 function checkin($registrationId,$queryParameters=array()){
-		 return $this->validator->validate($this->_checkin($registrationId,$queryParameters),true);
+		 return $this->validator->validate($this->_checkin($registrationId,$queryParameters),array('single'=>true));
 	}
 	/**
 	 *implemented in child class for updating a registration as checkedIn 
@@ -66,7 +66,7 @@ abstract class EspressoAPI_Registrations_Resource_Facade extends EspressoAPI_Gen
 	 * @return array like $this->getRegistration
 	 */
 	function checkout($registrationId,$queryParameters=array()){
-		return $this->validator->validate($this->_checkout($registrationId,$queryParameters),true);	
+		return $this->validator->validate($this->_checkout($registrationId,$queryParameters),array('single'=>true));	
 	}
 	/**
 	 *implemented in child class for checking-out a registration 

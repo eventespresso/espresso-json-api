@@ -25,11 +25,11 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		Attendee.event_time as 'Attendee.event_time',
 		Attendee.end_time as 'Attendee.end_time'";
 	var $relatedModels=array(
-		"Event"=>array('modelNamePlural'=>"Events",'hasMany'=>false),
-		"Attendee"=>array('modelNamePlural'=>"Attendees",'hasMany'=>false),
-		"Transaction"=>array('modelNamePlural'=>"Transactions",'hasMany'=>false),
-		'Datetime'=>array('modelNamePlural'=>'Datetimes','hasMany'=>false),
-		'Price'=>array('modelNamePlural'=>'Prices','hasMany'=>false));
+		"Event"=>array('modelName'=>'Event', 'modelNamePlural'=>"Events",'hasMany'=>false),
+		"Attendee"=>array('modelName'=>'Attendee','modelNamePlural'=>"Attendees",'hasMany'=>false),
+		"Transaction"=>array('modelName'=>'Transaction','modelNamePlural'=>"Transactions",'hasMany'=>false),
+		'Datetime'=>array('modelName'=>'Datetime','modelNamePlural'=>'Datetimes','hasMany'=>false),
+		'Price'=>array('modelName'=>'Price','modelNamePlural'=>'Prices','hasMany'=>false));
 /**
  * an array for caching  registration ids taht related to group registrations
  * it coudl look like array('2etf2w24rtw'=>true, '54tgsdsf'=>false), meaning

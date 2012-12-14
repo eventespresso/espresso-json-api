@@ -28,6 +28,19 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		$this->validator=new EspressoAPI_Validator($this);
 	}
 	/**
+	 * returns whether or not $modelName is the name (singular or plural)
+	 * of the current model
+	 * @param string $modelName 
+	 */
+	function isARelatedModel($modelName){
+		foreach($this->relatedModels as $relatedModel){
+			if($relatedModel['modelName']==$modelName || $relatedModel['modelNamePlural']==$modelName){
+				return true;
+			}
+		}
+		return false;
+	}
+	/**
 	 * finds the model's field info.
 	 * eg, on the Event Resource call getRequiredFieldInfo('name') and you
 	 * should get array('var'=>'name', 'type'=>'string')

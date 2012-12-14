@@ -33,11 +33,11 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		Event.virtual_phone AS 'Event.virtual_phone',
 		Event.phone AS 'Event.phone'";
 	var $relatedModels=array(
-		"Datetime"=>array('modelNamePlural'=>"Datetimes",'hasMany'=>true),
-		"Venue"=>array('modelNamePlural'=>"Venues",'hasMany'=>true),
-		"Category"=>array('modelNamePlural'=>"Categories",'hasMany'=>true),
-		'Promocode'=>array('modelNamePlural'=>'Promocodes','hasMany'=>true),
-		'Price'=>array('modelNamePlural'=>'Prices','hasMany'=>true));
+		"Datetime"=>array('modelName'=>'Datetime','modelNamePlural'=>"Datetimes",'hasMany'=>true),
+		"Venue"=>array('modelName'=>'Venue','modelNamePlural'=>"Venues",'hasMany'=>true),
+		"Category"=>array('modelName'=>'Category','modelNamePlural'=>"Categories",'hasMany'=>true),
+		'Promocode'=>array('modelName'=>'Promocode','modelNamePlural'=>'Promocodes','hasMany'=>true),
+		'Price'=>array('modelName'=>'Price','modelNamePlural'=>'Prices','hasMany'=>true));
 	var $statusConversions=array(
 				'S'=>'secondary/waitlist',
 				'X'=>'expired',

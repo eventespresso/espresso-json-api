@@ -369,7 +369,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$completeResults[$key]=$model;
 		}
 		$models= array($this->modelNamePlural => $completeResults);
-		$models=$this->validator->validate($models,false);
+		$models=$this->validator->validate($models,array('single'=>false));
 		if($cacheResult){
 			$transientKey=EspressoAPI_Functions::generateRandomString(40);
 			set_transient($transientKey,$models,60*60);

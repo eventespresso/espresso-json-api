@@ -51,13 +51,23 @@ class EspressoAPI_Validator {
 		}
 		return true;
 	}
-	function validate($models,$single=true){
+	function validate($models,$options=array()){
+		if(array_key_exists('single',$options) && $options['single']==true){
+			$single=true;
+		}else{
+			$single=false;
+		}
+		if(array_key_exists('requireRelated',$options) && $options['requireRelated']==false){
+			$requireRelated=false;
+		}else{
+			$requireRelated=true;
+		}
 		if($single){
 			return 	$models=$this->forceResponseIntoFormat($models,
-		     array($this->resource->modelName=>$this->getRequiredFullResponse()));	
+		     array($this->resource->modelName=>$this->getRequiredFullResponse()),$requireRelated);	
 		}else{
 			return 	$models=$this->forceResponseIntoFormat($models,
-		     array($this->resource->modelNamePlural=>array($this->getRequiredFullResponse())));	
+		     array($this->resource->modelNamePlural=>array($this->getRequiredFullResponse())),$requireRelated);	
 		}
 	}
 	
@@ -70,7 +80,7 @@ class EspressoAPI_Validator {
 	 * @return array just passes the response on if there were no errors thrown
 	 * @throws Exception if the response is not in the specified format
 	 */
-	private function forceResponseIntoFormat($response,$format){
+	private function forceResponseIntoFormat($response,$format,$requireRelated=true){
 		$filteredResponse=array();
 		foreach($format as $key=>$value){
 			if(is_numeric($key)){				
@@ -114,7 +124,10 @@ class EspressoAPI_Validator {
 				}
 			}else{//it's a string key, require it in the response
 				if(!isset($response[$key])){
-					
+					//if it's a related model, and we're not requiring them, ignore it and carry on
+					if($this->resource->isARelatedModel($key) && !$requireRelated){
+						continue;
+					}
 					if(WP_DEBUG)
 						throw new Exception(__("Response in wrong Event Espresso Format! Expected value: ","event_espresso").print_r($value,true).__(" but it wasnt set in ","event_espresso").print_r($response,true));
 					else 
@@ -170,7 +183,7 @@ class EspressoAPI_Validator {
 						return false;
 					}
 				case 'datetime':
-					if(preg_match('/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/',$value)){
+					if(preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',$value)){
 						continue;
 					}else{
 						return false;
