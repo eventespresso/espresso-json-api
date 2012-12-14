@@ -65,6 +65,7 @@ class EspressoAPI_Router{
         
 		if(empty($apiRequest))//this wasn't actually a request to the espresso API, let it go through the normal Wordpress response process
             return;
+		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
 		try{
 			if($apiAuthenticate=='true'){				
 				$controller=EspressoAPI_ClassLoader::load('Authentication',"Controller");
@@ -75,15 +76,12 @@ class EspressoAPI_Router{
 				global $current_user;
 				if($this->publicAccessQuery($sessionKey)){
 					$current_user->ID=0;
-				}else{				
+				}else{
 					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
 					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
 				}
-				//basic authentication: only logged-in users can do anything, and only those with basic event manager admin permissions
-				//if(!$this->currentUserCanUseAPI())
-				//	throw new EspressoAPI_UnauthorizedException();
 				$controller=EspressoAPI_ClassLoader::load(ucwords($apiParam1),"Controller");
-				$response=$controller->handleRequest($apiParam2,$apiParam3);
+				$response=$controller->handleRequest($apiParam2,$apiParam3,$format);
 			}
         } catch (EspressoAPI_MethodNotImplementedException $e) {
 			$response= array(EspressoAPI_STATUS => __("Endpoint not yet implemented","event_espresso"), EspressoAPI_STATUS_CODE => 500);
@@ -101,7 +99,7 @@ class EspressoAPI_Router{
 		catch (Exception $e) {
 			$response= array(EspressoAPI_STATUS => $e->getMessage(), EspressoAPI_STATUS_CODE => 500);
 		}
-		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
+		
 		if($format=='xml'){
 			header('Content-type: text/xml, application/xml');
 		}elseif($format=='json'){

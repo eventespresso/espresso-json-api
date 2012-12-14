@@ -29,9 +29,10 @@ class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controlle
 	 *for handling reuqests like POST /events for creating a new event 
 	 * @return array with 'id' of newly created object
 	 */
-	 protected function generalRequestPost(){
+	 protected function generalRequestPost($format){
 		 if(array_key_exists('body',$_POST)){
-			$this->apiFacade->createMany($_POST['body']);
+			 $formattedInput=  EspressoAPI_Response_Formatter::parse($_POST['body'], $format);
+			return $this->apiFacade->createMany($formattedInput);
 		 }else{
 			throw new EspressoAPI_BadRequestException(__("POST requests must contain all post input in a post variable called 'body'",'event_espresso')); 
 		 }

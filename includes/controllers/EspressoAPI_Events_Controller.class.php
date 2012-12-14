@@ -30,7 +30,7 @@ class EspressoAPI_Events_Controller extends EspressoAPI_Generic_Controller{
 	 *for handling reuqests like POST /events for creating a new event 
 	 * @return array with 'id' of newly created object
 	 */
-	 protected function generalRequestPost(){throw new EspressoAPI_MethodNotImplementedException();}
+	 protected function generalRequestPost($format){throw new EspressoAPI_MethodNotImplementedException();}
 	/**
 	 *for handling requests like PUT /events/13 for updating an event with id 13 
 	 * @param $id id of the object

@@ -37,25 +37,32 @@ abstract class EspressoAPI_Generic_Controller {
 		$apiModel = $matches[1];
 		$this->apiFacade = EspressoAPI_ClassLoader::load($apiModel, 'Resource');//new $apiFacadeName;
 	}
-
-	function handleRequest($param1, $param2) {
+	/**
+	 * for handling http requests for the api. We've already confirmed it's a request for the api.
+	 * the requestsis like {wpsite.com}/espresso-api/v1/{controllerName}/$param1/$param2/{sessionId}.$frmat
+	 * @param string $param1
+	 * @param string $param2
+	 * @param string $format
+	 * @return type 
+	 */
+	function handleRequest($param1, $param2,$format) {
 		if (empty($param1) && empty($param2)) {
-			return $this->generalRequest();
+			return $this->generalRequest($format);
 		} elseif (!empty($param1) && empty($param2)) {
-			return $this->specificRequest($param1);
+			return $this->specificRequest($param1,$format);
 		} else {
-			return $this->specificAttributeRequest($param1, $param2);
+			return $this->specificAttributeRequest($param1, $param2,$format);
 		}
 	}
 
 	/**
 	 * for handling requests like '/events/' 
 	 */
-	protected function generalRequest() {
+	protected function generalRequest($format) {
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestGet());
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
-			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestPost());
+			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestPost($format));
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {//technically this oen should only be used for updates, but we'll be generous
 			return array(EspressoAPI_STATUS => __("PUT (update) on all items does not apply. You probably meant to POST.","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
@@ -77,7 +84,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * for handling reuqests like POST /events for creating a new event 
 	 * @return array with 'id' of newly created object
 	 */
-	abstract protected function generalRequestPost();
+	abstract protected function generalRequestPost($format);
 
 	/**
 	 * for handling requests liks '/events/14'

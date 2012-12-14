@@ -28,6 +28,7 @@ abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Re
 	
 	var $requiredFields = array(
 		array('var'=>'id','type'=>'int'),
+		array('var'=>'code','type'=>'string'),
 		array('var'=>'name','type'=>'string'),
 		array('var'=>'description','type'=>'string'),
 		array('var'=>'status','type'=>'string','allowedEnumValues'=>array(

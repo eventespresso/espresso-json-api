@@ -36,7 +36,7 @@ class EspressoAPI_Attendees_Controller extends EspressoAPI_Generic_Controller{
 	 *for handling reuqests like POST /events for creating a new event 
 	 * @return array with 'id' of newly created object
 	 */
-	 protected function generalRequestPost(){throw new EspressoAPI_MethodNotImplementedException();}
+	 protected function generalRequestPost($format){throw new EspressoAPI_MethodNotImplementedException();}
 	 
 	 protected function specificRequestGet($id){throw new EspressoAPI_MethodNotImplementedException();}
 	/**

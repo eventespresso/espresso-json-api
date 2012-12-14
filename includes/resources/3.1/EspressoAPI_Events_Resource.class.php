@@ -7,6 +7,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	var $APIqueryParamsToDbColumns = array(
 		'id'=>'Event.id',
 		'name'=>'Event.event_name',
+		'code'=>'Event.event_code',
 		'description'=>'Event.event_desc',
 		'status'=>'Event.event_status',
 		'limit'=>'Event.reg_limit',
@@ -20,6 +21,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	var $calculatedColumnsToFilterOn=array();
 	var $selectFields="
 		Event.id AS 'Event.id',
+		Event.event_code AS 'Event.event_code',
 		Event.event_name AS 'Event.event_name',
 		Event.event_desc AS 'Event.event_desc',
 		Event.event_meta AS 'Event.event_meta',
@@ -144,6 +146,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 			$groupRegistrationsAllowed=$sqlResult['Event.allow_multiple']=='Y'?true:false;
 			$event=array(
 				'id'=>$sqlResult['Event.id'],
+				'code'=>$sqlResult['Event.event_code'],
 				'name'=>$sqlResult['Event.event_name'],
 				'description'=>$sqlResult['Event.event_desc'],
 				'metadata'=>$metaDatas,

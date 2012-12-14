@@ -61,7 +61,7 @@ class EspressoAPI_Response_Formatter{
 		return json_encode($infoToFormat);
     }
     
-	function arrayToXml($thisNodeName,$input){
+	static function arrayToXml($thisNodeName,$input){
 		if(empty($thisNodeName))
 			return;
 		if(is_numeric($thisNodeName))
@@ -80,5 +80,14 @@ class EspressoAPI_Response_Formatter{
 			$newNode.="</$thisNodeName>";
 			return $newNode;
 		}
+	}
+	
+	static function parse($input,$formatName='json'){
+		if($formatName=='json'){
+			$output=json_decode($input,true);
+		}else{
+			
+		}
+		return $output;
 	}
 }
