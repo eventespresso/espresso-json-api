@@ -18,7 +18,10 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		'virtual_url'=>'Event.virtual_url',
 		'call_in_number'=>'Event.virtual_phone',
 		'phone'=>'Event.phone');
-	var $calculatedColumnsToFilterOn=array();
+	var $calculatedColumnsToFilterOn=array('status');
+	
+
+	
 	var $selectFields="
 		Event.id AS 'Event.id',
 		Event.event_code AS 'Event.event_code',
@@ -61,6 +64,10 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		}
 		return $whereSqlArray;
 	}
+	
+
+	
+	
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
@@ -94,17 +101,25 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		foreach ($results as $event) {
 			//if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event['Event.id']))//allow all users to at least 'see' an event, but probably not moredetails
 				$resultsICanView[] = $event;
+				
 		}
 		return $resultsICanView;
 	}
 	
+	/**
+	 * important to remember: paramname is the API param, but this constructs SQL
+	 * @param string $paramName eg 'Event.status'
+	 * @param string $operator representing SQL operator, eg <, LIKE, etc.
+	 * @param string $value api value, eg true instead of 'Y'
+	 * @return string of sql 
+	 */
 	protected function constructSQLWhereSubclause($paramName,$operator,$value){
 		
 		switch($paramName){
-			case 'Event.event_status':
+			case 'Event.status':
 				$apiParamToDbStatus=array_flip($this->statusConversions);
-				
-				$value=$this->constructValueInWhereClause($operator,$value,$apiParamToDbStatus,'Transaction.status');
+				$column=$this->convertApiParamToDBColumn($paramName);
+				$value=$this->constructValueInWhereClause($operator,$value,$apiParamToDbStatus,'Event.status');
 				/*if($operator=="IN"){
 					$valuesSeperated=explode(",",$value);
 					$valuesConverted=array();
@@ -116,17 +131,14 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 					$value=$apiParamToDbStatus[$value];
 				}*/
 				//now we've converted the status from something like 'Active' to 'A', handle the value as usual
-				return "Event.event_status $operator $value";
-			case 'Event.is_active':
+				return "$column $operator $value";
+			case 'Event.active':
 			case 'Event.member_only':
-			case 'Event.allow_multiple':
-				if($value=='true'){
-					$value='Y';
-				}else{
-					$value='N';
-				}
-		}
-				
+			case 'Event.group_registrations_allowed':
+				$column=$this->convertApiParamToDBColumn($paramName);
+				$value=$this->constructValueInWhereClause($operator,$value,array('true'=>'Y','false'=>'N'));
+				return "$column $operator $value";
+		}		
 		return parent::constructSQLWhereSubclause($paramName, $operator, $value);		
 	}
 	

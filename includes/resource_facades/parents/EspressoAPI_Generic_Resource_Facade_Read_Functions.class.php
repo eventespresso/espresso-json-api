@@ -53,9 +53,9 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	}
 	/**
 	 * makes each "foo='bar'" in a MYSQL WHERE clause like '...WHERE foo=bar AND uncle LIKE '%bob%' AND date < '2012-04-02 23:22:02'
-	 * @param string $columnName like 'Event.name'
-	 * @param string $operator like '<', '=', 'LIKE',
-	 * @param string $value like 23, 'foobar', '2012-03-03 12:23:34'
+	 * @param string $apiParam like 'Event.name' (API param, not SQL column yet. Mapping from one to the other is part of what happens here)
+	 * @param string $operator like '<', '=', 'LIKE', (SQL already, no longer API operators like __lt or __like)
+	 * @param string $value like 23, 'foobar', '2012-03-03 12:23:34' (API values, not SQL ones yet. Mapping happens here)
 	 * @return string of full where Subcluae like "foo='bar'", no 'AND's 
 	 */
 	protected function constructSQLWhereSubclause($apiParam,$operator,$value){
