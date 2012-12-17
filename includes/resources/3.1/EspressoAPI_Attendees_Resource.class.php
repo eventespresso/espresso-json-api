@@ -75,5 +75,30 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 			throw new EspressoAPI_UnauthorizedException();
 	
 	}
+	
+	protected function extractMyColumnsFromApiInput($apiInput){
+		$models=$this->extractModelsFromApiInput($apiInput);
+		
+		$dbEntries=array(
+			EVENTS_ATTENDEE_TABLE=>array());
+		foreach($models as $model){
+			//$dbEntries[EVENTS_ATTENDEE_TABLE][]
+		
+				$attendeeModel['id']=array(
+					'id'=>$attendeeModel['id'],
+					'fname'=>$attendeeModel['firstname'],
+					'lname'=>$attendeeModel['lastname'],
+					'address'=>$attendeeModel['address'],
+					'address2'=>$attendeeModel['address2'],
+					'city'=>$attendeeModel['city'],
+					'state'=>$attendeeModel['state'],
+					'country_id'=>$attendeeModel['country'],
+					'zip'=>$attendeeModel['zip'],
+					'email'=>$attendeeModel['email'],
+					'phone'=>$attendeeModel['phone']
+			);		
+		}
+		return $dbEntries;
+	}
 }
 //new Events_Controller();

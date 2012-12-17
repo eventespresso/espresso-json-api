@@ -40,6 +40,20 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		}
 		return false;
 	}
+	
+	/**
+	 * gets the class of the related model specified by $modelName.
+	 * eg: Attendees are related models to Registrations. So on a 
+	 * EspressoAPI_Registration_Resource you can call getRelatedModel('Attendee')
+	 * and you'll get the EspressoAPI_Attendee_Resource.
+	 * Automatically makes sure the related models' classes have been instantiated.
+	 * @param string $modelName
+	 * @return child of EspressoAPI_Generic_Resource_Facade 
+	 */
+	/*function getRelatedModel($modelName){
+		$relatedModels=$this->getFullRelatedModels();
+		return $relatedModels[$modelName]['class'];
+	}*/
 	/**
 	 * finds the model's field info.
 	 * eg, on the Event Resource call getRequiredFieldInfo('name') and you

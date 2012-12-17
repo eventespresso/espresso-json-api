@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Miscellaneous helper functions for EspressoAPI
+ * Miscellaneous helper functions for EspressoAPI. Basically anything that should be in 
+ * php core but wasn't.
  *
  * @author mnelson4
  */
@@ -33,6 +34,28 @@ class EspressoAPI_Functions {
 		}
 		// return our finished random string
 		return $random_string;
+	}
+	
+	/**
+	 * taken from http://php.net/manual/en/function.array-merge-recursive.php#usernotes.
+	 * recursively merges two arrays like array_merge_recursive, except it will 
+	 * overwrite duplicate keys' values, instead of turning value into an array
+	 * and appending it
+	 * @param array $Arr1
+	 * @param array $Arr2
+	 * @return array 
+	 */
+	static function array_merge_recursive_overwrite($Arr1, $Arr2){
+		foreach($Arr2 as $key => $Value)
+		{
+			if(array_key_exists($key, $Arr1) && is_array($Value))
+			$Arr1[$key] = MergeArrays($Arr1[$key], $Arr2[$key]);
+
+			else
+			$Arr1[$key] = $Value;
+
+		}
+		return $Arr1;
 	}
 }
 ?>

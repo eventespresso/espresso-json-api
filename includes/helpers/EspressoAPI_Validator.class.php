@@ -96,6 +96,9 @@ class EspressoAPI_Validator {
 				if(is_array($value)){
 					if(array_key_exists('var', $value)){//this should be a variable
 						$variableInfo=$value;
+						if(!is_array($response)){
+							throw new EspressoAPI_InputParsingError(sprintf(__("Parsing error. Expected %s to be an array","event_espresso"),$response));
+						}
 						//validate the key of the response
 						if(!array_key_exists($variableInfo['var'],$response)){
 							if(WP_DEBUG){
@@ -124,7 +127,7 @@ class EspressoAPI_Validator {
 						//we're probably iterating through a list of things like events,
 						//so if there's an subelement in teh response, force it into teh correct format too, otherwise continue
 						foreach($response as $responseSubElement){
-							$filteredResponse[]=$this->forceResponseIntoFormat($responseSubElement,$value);
+							$filteredResponse[]=$this->forceResponseIntoFormat($responseSubElement,$value,$requireRelated);
 						}	
 					}
 				}else{//if the value is just a string and the key is numeric, this is an error. it shouldn't happen
@@ -143,7 +146,14 @@ class EspressoAPI_Validator {
 						throw new Exception(__("Response in wrong format. For more information please turn on WP_DEBUG in wp-config","event_espresso"));
 						
 				}else{ 
-					$filteredResponse[$key]=$this->forceResponseIntoFormat ($response[$key],$value);
+					//we're looking at a related, nested model. Eg: an Event's Datetime.
+					//with key 'Datetime' and value of array('id'=>12,'start_time'=>'2012-23-12 12:23:34', etc.
+					//OR, if we're not requiring related models, the value could simply be it's id, eg 12
+					if($this->resource->isARelatedModel($key) && !$requireRelated && !is_array($response[$key])){//it should only 
+						continue;
+					}else{
+						$filteredResponse[$key]=$this->forceResponseIntoFormat ($response[$key],$value,$requireRelated);
+					}
 				}
 			}
 		}

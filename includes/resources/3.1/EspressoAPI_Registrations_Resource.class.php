@@ -20,7 +20,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		Attendee.registration_id as 'Attendee.registration_id',
 		Attendee.is_primary as 'Attendee.is_primary',
 		Attendee.quantity as 'Attendee.quantity',
-		Attendee.checked_in as 'Attendee.checked',
+		Attendee.checked_in as 'Attendee.checked_in',
 		Attendee.price_option as 'Attendee.price_option',
 		Attendee.event_time as 'Attendee.event_time',
 		Attendee.end_time as 'Attendee.end_time'";
@@ -131,7 +131,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			$row['Registration.url_link']=null;
 			$row['Registration.is_group_registration']=$this->determineIfGroupRegistration($row);
 			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
-			$row['Registration.is_checked_in']=$row['Attendee.checked']?true:false;
+			$row['Registration.is_checked_in']=$row['Attendee.checked_in']?true:false;
 			
 			//in 3.2, every single row in registrationtable relates to a ticket for somebody
 			//to get into the event. In 3.1 it sometimes does and sometimes doesn't. Which is somewhat 
@@ -206,10 +206,13 @@ protected function processSqlResults($rows,$keyOpVals){
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
 		//soo just strip everything out after the "."
-		$idParts=explode(".",$id,2);
+		$idParts=explode(".",$id);
+		if(count($idParts)!=2){
+			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+		}
 		$rowId=$idParts[0];
 		//get the registration
-		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$rowId'";
+		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
 		if(empty($registration))
 			throw new EspressoAPI_ObjectDoesNotExist($id);
@@ -246,18 +249,25 @@ protected function processSqlResults($rows,$keyOpVals){
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
 		//soo just strip everything out after the "."
-		$idParts=explode(".",$id,2);
+		$idParts=explode(".",$id);
+		if(count($idParts)!=2){
+			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+		}
 		$rowId=$idParts[0];
 		
 		//get the registration
-		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$rowId'";
+		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
 		if(empty($registration))
 			throw new EspressoAPI_ObjectDoesNotExist($id);
 		if(!EspressoAPI_Permissions_Wrapper::espresso_is_my_event($registration['event_id']))
 			throw new EspressoAPI_UnauthorizedException();
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
-		//check payment status
+		//check not too many checkouts
+		if(intval($registration['checked_in_quantity'])-$quantity<0){
+			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! No one is currently checked-in for registration %s","event_espresso"),$registration['quantity']));
+		}
+		
 		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE registration_id='{$registration['registration_id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
@@ -269,13 +279,73 @@ protected function processSqlResults($rows,$keyOpVals){
 		}
 		
 	}
-    function _create($createParameters){
-        return array("status"=>"Not Yet Implemented","status_code"=>"500");
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
+	/**
+	 * overrides parent's createorUpdateOne. Should create something in our db according to this
+	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
+	 * 
+	 */
+    function createOrUpdateOne($model){
+		$this->validator->validate($model,array('single'=>true,'requireRelated'=>false));
+		
+		//construct list of key-value pairs, for insertion or update
+		
+		$dbEntriesAffected=$this->extractModelsFromApiInput($model);
+		$relatedModels=$this->getFullRelatedModels();
+		foreach($relatedModels as $relatedModelInfo){
+			if(array_key_exists($relatedModelInfo['modelName'],$model[$this->modelName])){
+				if(is_array($model[$this->modelName])){
+					$dbEntriesAffected=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntriesAffected,$relatedModelInfo['class']->extractModelsFromApiInput($model[$this->modelName]));
+				}else{
+					//they only provided the id of the related model, 
+					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
+					//instead of array('Registration'=>array('id'=>1...'Event'=>array('id'=>1,'name'=>'party1'...)
+					//this is logic very specific to the current application
+					if($this->modelName=='Event'){
+						$dbEntriesAffected[EVENTS_ATTENDEE_TABLE][$model['id']]['event_id']=$model[$this->modelName];
+					}
+					//if it's 'Price', ignore it. There's nothing really to set. (When returning this it's just deduced
+					//by the final_price on the registration anyway
+					// @todo if it's Attendee, then we should update all the current row's attendee info to match
+					//the attendee info found at that ID
+					throw new EspressoAPI_MethodNotImplementedException(__("We have yet ot handle such updating of Attendees"));
+					// @todo if it's Transaction, then we should update the current row's registration_db
+					throw new EspressoAPI_MethodNotImplementedException(__("We have yet to handle such updating of transactions","event_espresso"));
+					// @todo if it's Datetime, then we hsould update the times in the current row
+					throw new EspressoAPI_MethodNotImplementedException(__("We have yet to handle such updating of datetimes","event_espresso"));
+				}
+			}elseif(array_key_exists($relatedModelInfo['modelNamePlural'],$model[$this->modelName])){
+				throw new EspressoAPI_MethodNotImplementedException(sprintf(__("We do not yet handle bulk updating/creating on %s","event_espresso"),$this->modelNamePlural));
+			}
+		}
+		
+		
+		
+		$transactionModel=$thisModel['Transaction'];
+		$transactionModel=array(
+			EVENTS_ATTENDEE_TABLE=>array(
+					$transactionModel['id']
+			)
+		); throw new Exception("not done in regisration resource 318");
+
+	}
+	
+	protected function extractMyColumnsFromApiInput($apiInput){
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
+		
+		foreach($models as $thisModel){
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array(
+						'id'=>intval($thisModel['id']),//id
+						'pre_approve'=>$thisModel['status'],//status
+						'date'=>$thisModel['date_of_registration'],
+						'final_price'=>$thisModel['final_price'],
+						'registration_id'=>$thisModel['code'],
+						'is_primary'=>$thisModel['is_primary'],
+						'is_checked_in'=>$thisModel['is_checked_in']);
+		}
+		return $dbEntries;
+	}
+	
 	
 }
 //new Events_Controller();

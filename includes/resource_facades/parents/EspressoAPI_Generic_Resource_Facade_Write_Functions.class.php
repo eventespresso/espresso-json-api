@@ -15,12 +15,31 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 	function createMany($input){
 		//validate input
 		$models=$this->validator->validate($input,array('single'=>false,'requireRelated'=>false));
+		foreach($models[$this->modelNamePlural] as $model){
+			$this->createOrUpdateOne(array($this->modelName=>$model));
+		}
 		throw new EspressoAPI_SpecialException("it worked!");
 		//create 
 	
 	}
 	
-	public function updateOne($input){
+	function createOrUpdateOne($model){
 		
+	}
+	
+	/**
+	 * given API input like array('Events'=>array(0=>array('id'=>1,'name'=>'party1'...) 
+	 * or array('Event'=>array('id'=>1,'name'=>'party1'...)
+	 * produces array(0=>array('id'=>1,'name'='party1'...)
+	 * @param array $apiInput (se above)
+	 * @return see above 
+	 */
+	protected function extractModelsFromApiInput($apiInput){
+		if(array_key_exists($this->modelName,$apiInput)){
+			$models=array($apiInput[$this->modelName]);
+		}elseif(array_key_exists($this->modelNamePlural,$apiInput)){
+			$models=$apiInput[$this->modelNamePlural];
+		}
+		return $models;
 	}
 }

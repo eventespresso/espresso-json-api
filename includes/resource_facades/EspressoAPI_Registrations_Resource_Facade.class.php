@@ -35,15 +35,6 @@ abstract class EspressoAPI_Registrations_Resource_Facade extends EspressoAPI_Gen
 		array('var'=>'is_group_registration','type'=>'bool'),
 		array('var'=>'is_going','type'=>'bool'),
 		array('var'=>'is_checked_in','type'=>'bool'));
-	 /**
-	  * creation of event facade, calls concrete child class' _creatEvent function
-	  * @param array $createParameters
-	  * @return array 
-	  */
-     function create($createParameters){
-         return $this->_createAttendee($createParameters);
-     }
-     abstract protected function _create($createParameters);
 	 
 	 /**
 	  * checks the registration as being checked in, and updates the registration's check-in-quanity
