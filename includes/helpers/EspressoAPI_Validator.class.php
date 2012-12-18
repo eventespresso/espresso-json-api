@@ -61,7 +61,7 @@ class EspressoAPI_Validator {
 		return true;
 	}
 	function validate($models,$options=array()){
-		if(array_key_exists('single',$options) && $options['single']==true){
+		/*if(array_key_exists('single',$options) && $options['single']==true){
 			$single=true;
 		}else{
 			$single=false;
@@ -70,13 +70,17 @@ class EspressoAPI_Validator {
 			$requireRelated=false;
 		}else{
 			$requireRelated=true;
-		}
-		if($single){
+		}*/
+		$options=shortcode_atts(array('single'=>false,'requireRelated'=>true,'allowTempIds'=>false,'requireAllFields'=>true),$options);
+
+		if($options['single']){
+			unset($options['single']);
 			return 	$models=$this->forceResponseIntoFormat($models,
-		     array($this->resource->modelName=>$this->getRequiredFullResponse()),$requireRelated);	
+		     array($this->resource->modelName=>$this->getRequiredFullResponse()),$options);	
 		}else{
+			unset($options['single']);
 			return 	$models=$this->forceResponseIntoFormat($models,
-		     array($this->resource->modelNamePlural=>array($this->getRequiredFullResponse())),$requireRelated);	
+		     array($this->resource->modelNamePlural=>array($this->getRequiredFullResponse())),$options);	
 		}
 	}
 	
@@ -89,7 +93,9 @@ class EspressoAPI_Validator {
 	 * @return array just passes the response on if there were no errors thrown
 	 * @throws Exception if the response is not in the specified format
 	 */
-	private function forceResponseIntoFormat($response,$format,$requireRelated=true){
+	private function forceResponseIntoFormat($response,$format,$options=array()){
+		$options=shortcode_atts(array('requireRelated'=>true,'allowTempIds'=>false,'requireAllFields'=>true),$options);
+		
 		$filteredResponse=array();
 		foreach($format as $key=>$value){
 			if(is_numeric($key)){				
@@ -114,20 +120,23 @@ class EspressoAPI_Validator {
 							if($this->valueIs($response[$variableInfo['var']], $variableInfo['type'],  array_key_exists('allowedEnumValues', $variableInfo)?$variableInfo['allowedEnumValues']:null)){
 								$filteredResponse[$value['var']]=$this->castToType($response[$variableInfo['var']], $variableInfo['type']);
 							}else{
-								throw new EspressoAPI_BadRequestException(sprintf(
-										__("Param %s with value %s is not of allowed type %s.","event_espresso"),$variableInfo['var'],$response[$variableInfo['var']],$variableInfo['type']));
+								//the value is of the wrong type for this variable. what are we going to do?
+								if($options['allowTempIds'] && strpos($response[$variableInfo['var']],"temp-")==0){//if the value is like 'temp-%', and we're accepting temporary ids, then let it be
+										$filteredResponse[$value['var']]=$response[$variableInfo['var']];
+								}else{//it's not a temporary id, and it's an invalid value for this type of variable, so error
+									throw new EspressoAPI_BadRequestException(sprintf(
+											__("Param %s with value %s is not of allowed type %s.","event_espresso"),$variableInfo['var'],$response[$variableInfo['var']],$variableInfo['type']));
+								}
 							}
 							
-						}else{
+						}else{//variable info doesn't have an array key of 'type', so one of the resource facades must have been improperly configured
 							throw new EspressoAPI_SpecialException(__("Event Espresso Internal bug. Misconfiguered Resource variables. Please contact Event Espresso.","event_espresso"));
 						}
 					}else{
-						
-					
 						//we're probably iterating through a list of things like events,
 						//so if there's an subelement in teh response, force it into teh correct format too, otherwise continue
 						foreach($response as $responseSubElement){
-							$filteredResponse[]=$this->forceResponseIntoFormat($responseSubElement,$value,$requireRelated);
+							$filteredResponse[]=$this->forceResponseIntoFormat($responseSubElement,$value,$options);
 						}	
 					}
 				}else{//if the value is just a string and the key is numeric, this is an error. it shouldn't happen
@@ -137,7 +146,7 @@ class EspressoAPI_Validator {
 			}else{//it's a string key, require it in the response
 				if(!isset($response[$key])){
 					//if it's a related model, and we're not requiring them, ignore it and carry on
-					if($this->resource->isARelatedModel($key) && !$requireRelated){
+					if($this->resource->isARelatedModel($key) && !$options['requireRelated']){
 						continue;
 					}
 					if(WP_DEBUG)
@@ -149,10 +158,10 @@ class EspressoAPI_Validator {
 					//we're looking at a related, nested model. Eg: an Event's Datetime.
 					//with key 'Datetime' and value of array('id'=>12,'start_time'=>'2012-23-12 12:23:34', etc.
 					//OR, if we're not requiring related models, the value could simply be it's id, eg 12
-					if($this->resource->isARelatedModel($key) && !$requireRelated && !is_array($response[$key])){//it should only 
+					if($this->resource->isARelatedModel($key) && !$options['requireRelated'] && !is_array($response[$key])){//it should only 
 						continue;
 					}else{
-						$filteredResponse[$key]=$this->forceResponseIntoFormat ($response[$key],$value,$requireRelated);
+						$filteredResponse[$key]=$this->forceResponseIntoFormat ($response[$key],$value,$options);
 					}
 				}
 			}

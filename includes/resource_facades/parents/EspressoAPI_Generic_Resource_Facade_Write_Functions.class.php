@@ -14,7 +14,7 @@ require_once(dirname(__FILE__).'/EspressoAPI_Generic_Resource_Facade_Read_Functi
 abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends EspressoAPI_Generic_Resource_Facade_Read_Functions{
 	function createMany($input){
 		//validate input
-		$models=$this->validator->validate($input,array('single'=>false,'requireRelated'=>false));
+		$models=$this->validator->validate($input,array('single'=>false,'requireRelated'=>false,'allowTempIds'=>true));
 		foreach($models[$this->modelNamePlural] as $model){
 			$this->createOrUpdateOne(array($this->modelName=>$model));
 		}

@@ -94,7 +94,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		$pricesToReturn=array();
 		$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 		$pricesToReturn['base']=array(
-		'id'=>$sqlResult['Price.id'].".0",
+		'id'=>floatval($sqlResult['Price.id'].".0"),
 		'amount'=>$sqlResult['Price.event_cost'],
 		'name'=>$sqlResult['Price.price_type'],
 		'description'=>$sqlResult['Price.description'],
@@ -111,7 +111,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				$priceType=$priceTypeModel->fakeDbTable[3];
 			
 			$pricesToReturn['surcharge']=array(
-			'id'=>$sqlResult['Price.id'].".1",
+			'id'=>floatval($sqlResult['Price.id'].".1"),
 			'amount'=>$sqlResult['Price.surcharge'],
 			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
 			'description'=>null,
@@ -123,7 +123,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			);
 		}
 		$pricesToReturn['member']=array(
-		'id'=>$sqlResult['Price.id'].".2",
+		'id'=>floatval($sqlResult['Price.id'].".2"),
 		'amount'=>$sqlResult['Price.member_price'],
 		'name'=>$sqlResult['Price.member_price_type'],
 		'description'=>null,

@@ -284,24 +284,24 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
 	 * 
 	 */
-    function createOrUpdateOne($model){
-		$this->validator->validate($model,array('single'=>true,'requireRelated'=>false));
+    function createOrUpdateOne($apiInput){
+		$apiInput=$this->validator->validate($apiInput,array('single'=>true,'requireRelated'=>false,'allowTempIds'=>true));
 		
 		//construct list of key-value pairs, for insertion or update
 		
-		$dbEntriesAffected=$this->extractModelsFromApiInput($model);
+		$dbUpdateData=$this->extractMyColumnsFromApiInput($apiInput);
 		$relatedModels=$this->getFullRelatedModels();
 		foreach($relatedModels as $relatedModelInfo){
-			if(array_key_exists($relatedModelInfo['modelName'],$model[$this->modelName])){
-				if(is_array($model[$this->modelName])){
-					$dbEntriesAffected=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntriesAffected,$relatedModelInfo['class']->extractModelsFromApiInput($model[$this->modelName]));
+			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
+				if(is_array($apiInput[$this->modelName])){
+					$dbUpdateData=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbUpdateData,$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]));
 				}else{
 					//they only provided the id of the related model, 
 					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
 					//instead of array('Registration'=>array('id'=>1...'Event'=>array('id'=>1,'name'=>'party1'...)
 					//this is logic very specific to the current application
 					if($this->modelName=='Event'){
-						$dbEntriesAffected[EVENTS_ATTENDEE_TABLE][$model['id']]['event_id']=$model[$this->modelName];
+						$dbUpdateData[EVENTS_ATTENDEE_TABLE][$apiInput['id']]['event_id']=$apiInput[$this->modelName];
 					}
 					//if it's 'Price', ignore it. There's nothing really to set. (When returning this it's just deduced
 					//by the final_price on the registration anyway
@@ -313,35 +313,164 @@ protected function processSqlResults($rows,$keyOpVals){
 					// @todo if it's Datetime, then we hsould update the times in the current row
 					throw new EspressoAPI_MethodNotImplementedException(__("We have yet to handle such updating of datetimes","event_espresso"));
 				}
-			}elseif(array_key_exists($relatedModelInfo['modelNamePlural'],$model[$this->modelName])){
+			}elseif(array_key_exists($relatedModelInfo['modelNamePlural'],$apiInput[$this->modelName])){
 				throw new EspressoAPI_MethodNotImplementedException(sprintf(__("We do not yet handle bulk updating/creating on %s","event_espresso"),$this->modelNamePlural));
 			}
 		}
+		return $this->updateDBTables($dbUpdateData);
 		
-		
-		
-		$transactionModel=$thisModel['Transaction'];
+		/*$transactionModel=$thisModel['Transaction'];
 		$transactionModel=array(
 			EVENTS_ATTENDEE_TABLE=>array(
 					$transactionModel['id']
 			)
-		); throw new Exception("not done in regisration resource 318");
+		); throw new Exception("not done in regisration resource 318");*/
 
 	}
 	
+	/**
+	 * given data in the form array(TABLE_NAME=>array(1=>array('columnName'=>'columnValue'...
+	 * this will update or create the appropriate tables
+	 * @param type $dbUpdateData 
+	 * @return true if all updates are successful, false is there was an error
+	 */
+	protected function updateDBTables($dbUpdateData){
+		//now we go about creating or updating according to what' sin dbUpdateData
+		foreach($dbUpdateData as $tableName=>$rowsToUpdate){
+			foreach($rowsToUpdate as $rowId=>$columns){
+				$result=$this->updateRow($tableName,$columns);
+				if($result===false){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * updates the row indicated of $tableName, where $keyValPairs is an array of
+	 * column-value-mappings for the update.
+	 * @global type $wpdb
+	 * @param string $tableName
+	 * @param array $keyValPairs like array('id'=>12,'fname'=>'bob'... 
+	 * @param array $options array of options:
+	 * - 'whereClauses' is an array of key-value pairs
+	 * to be used for 'where' conditions (replaces default of array('id'=>$keyValPairs['id'])
+	 * - 'id' is the column name to be used instead of 'id',  default is 'id'
+	 * - 'whereFormats' is an array of strings, each being one of '%s','%d',%f' like documented in http://codex.wordpress.org/Class_Reference/wpdb#UPDATE_rows
+	 * 
+	 * @return success of udpate 
+	 */
+	protected function updateRow($tableName, array $keyValPairs,array $options=array()){
+		global $wpdb;
+		if(array_key_exists('whereClauses',$options)){
+			$wheres=$options['whereClauses'];
+			$idCol=null;
+		}else{
+			$wheres=array();
+			if(array_key_exists('id',$options)){
+				$idCol=$options['id'];
+			}else{
+				$idCol='id';
+			}
+		}
+		
+		
+		$updateFormat=array();
+		foreach($keyValPairs as $columnName=>$columnValue){
+			if($columnName!=$idCol){
+				if(is_float($columnValue)){
+					$updateFormat[]='%f';
+				}else if(is_int($columnValue)){
+					$updateFormat[]='%d';
+				}else{
+					$updateFormat[]='%s';
+				}
+				//$sqlAssignments[]=$wpdb->prepare("$columnName=".(isint($columnValue) || isfloat($columnValue)?"%d":"%s"),$columnValue);
+			}elseif(isset($idCol)){
+				$wheres[$idCol]=$columnValue;
+				if(strpos($keyValPairs[$idCol],"temp-")==0){//so if the id starts with 'temp-'
+					$create=true;
+				}else{
+					$create=false;
+				}
+				unset($keyValPairs[$idCol]);
+			}
+		}
+		if($create){
+			
+		}{
+			$result= $wpdb->update($tableName,$keyValPairs,$wheres,$updateFormat,
+				array_key_exists('whereFormats',$options)?$options['whereFormats']:'%d');
+			if($result!==false){
+				return $wheres[$idCol];
+			}else{
+				return false;
+			}
+		
+		}
+		//$updateSQL="UPDATE $tableName SET ".implode(",",$sqlAssignments).$wpdb->prepare(" WHERE $idCol=%d $extraSQL",$rowId);
+		
+		//return $wpdb->query($updateSQL);
+	}
+	
+	/**
+	 * gets all the database column values from api input
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
 	protected function extractMyColumnsFromApiInput($apiInput){
 		$models=$this->extractModelsFromApiInput($apiInput);
 		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array(
-						'id'=>intval($thisModel['id']),//id
-						'pre_approve'=>$thisModel['status'],//status
-						'date'=>$thisModel['date_of_registration'],
-						'final_price'=>$thisModel['final_price'],
-						'registration_id'=>$thisModel['code'],
-						'is_primary'=>$thisModel['is_primary'],
-						'is_checked_in'=>$thisModel['is_checked_in']);
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+						$dbCol='id';
+						$dbValue=$apiValue;
+						break;
+					case 'status':
+						$dbCol='pre_approve';
+						if($apiValue=='approved'){
+							$dbValue=1;
+						}else{
+							$dbValue=0;
+						}
+						break;
+					case 'date_of_registration':
+						$dbCol='date';
+						$dbValue=$apiValue;
+						break;
+					case 'final_price':
+						$dbCol='final_price';
+						$dbValue=$apiValue;
+						break;
+					case 'code':
+						$dbCol='registration_id';
+						$dbValue=$apiValue;
+						break;
+					case 'is_primary':
+						$dbCol='is_primary';
+						if($apiValue=='true'){
+							$dbValue=1;
+						}else{
+							$dbValue=0;
+						}
+						break;
+					case'is_checked_in':
+						$dbCol='checked_in';
+						if($apiValue=='true'){
+							$dbValue=1;
+						}else{
+							$dbValue=0;
+						}
+				}
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+			}
+			
 		}
 		return $dbEntries;
 	}

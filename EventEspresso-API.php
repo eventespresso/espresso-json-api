@@ -48,3 +48,9 @@ if(is_admin()){
 	require (dirname(__FILE__).'/includes/helpers/EspressoAPI_Response_Formatter.class.php');
 	require (dirname(__FILE__).'/includes/helpers/EspressoAPI_Validator.class.php');
 }
+/**
+ * these helpers are only needed on updates or creates 
+ */
+if(in_array($_SERVER['REQUEST_METHOD'],array('POST','PUT'))){
+	require (dirname(__FILE__).'/includes/helpers/EspressoAPI_Temp_Id_Holder.class.php');
+}
