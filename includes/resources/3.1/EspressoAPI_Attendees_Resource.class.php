@@ -76,7 +76,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	
 	}
 	
-	protected function extractMyColumnsFromApiInput($apiInput){
+	/*protected function extractMyColumnsFromApiInput($apiInput){
 		$models=$this->extractModelsFromApiInput($apiInput);
 		
 		$dbEntries=array(
@@ -97,6 +97,54 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 					'email'=>$attendeeModel['email'],
 					'phone'=>$attendeeModel['phone']
 			);		
+		}
+		return $dbEntries;
+	}*/
+	
+	/**
+	 * gets all the database column values from api input
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	protected function extractMyColumnsFromApiInput($apiInput){
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
+		
+		foreach($models as $thisModel){
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+						$dbCol='id';
+						$dbValue=$apiValue;
+						break;
+					case 'firstname':
+						$dbCol='fname';
+						$dbValue=$apiValue;
+						break;
+					case 'lastname':
+						$dbCol='lname';
+						$dbValue=$apiValue;
+						break;
+					case 'address':
+					case 'address2':
+					case 'city':
+					case 'state':
+					case 'zip':
+					case 'email':
+					case 'phone':
+						$dbCol=$apiField;
+						$dbValue=$apiValue;
+						break;
+					case 'country':
+						$dbCol='country_id';
+						$dbValue=$apivalue;
+						break;
+				}
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+			}
+			
 		}
 		return $dbEntries;
 	}

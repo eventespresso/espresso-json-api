@@ -62,7 +62,13 @@ class EspressoAPI_Router{
         $apiParam1=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api1')));
         $apiParam2=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api2')));
         $apiParam3=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api3')));
-        
+        //checks for the METHOD parameter in $_REQUEST, which sets the request method if
+		//the client is unable to use PUT and DELETE methods
+		if(array_key_exists('request_method',$_REQUEST) && in_array($_REQUEST['request_method'],array('GET','POST','PUT','DELETE'))){
+			$_SERVER['REQUEST_METHOD']=$_REQUEST['request_method'];
+			unset($_REQUEST['request_method']);
+		}
+		
 		if(empty($apiRequest))//this wasn't actually a request to the espresso API, let it go through the normal Wordpress response process
             return;
 		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));

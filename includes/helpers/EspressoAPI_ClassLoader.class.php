@@ -6,7 +6,7 @@ class EspressoAPI_ClassLoader{
 	 * @param string $class eg 'Events' or 'Attendees'
 	 * @param string $type  eg 'Controller' or 'Facade'
 	 */
-	function load($class,$type){
+	static function load($class,$type){
 		switch($type){
 			case 'Resource':
 				$version = substr(EVENT_ESPRESSO_VERSION, 0, 3);

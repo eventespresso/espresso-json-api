@@ -25,18 +25,7 @@
  */
 //require_once("EspressoAPI_Generic_Controller.class.php");
 class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controller{
-	/**
-	 *for handling reuqests like POST /events for creating a new event 
-	 * @return array with 'id' of newly created object
-	 */
-	 protected function generalRequestPost($format){
-		 if(array_key_exists('body',$_POST)){
-			 $formattedInput=  EspressoAPI_Response_Formatter::parse($_POST['body'], $format);
-			return $this->apiFacade->createMany($formattedInput);
-		 }else{
-			throw new EspressoAPI_BadRequestException(__("POST requests must contain all post input in a post variable called 'body'",'event_espresso')); 
-		 }
-	 }
+	
 	/**
 	 *for handling requests like PUT /events/13 for updating an event with id 13 
 	 * @param $id id of the object
@@ -59,9 +48,9 @@ class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controlle
 	 protected function specificAttributeRequestGet($id,$attribute){
 		 switch($attribute){
 			 case 'checkin':
-				return $this->apiFacade->checkin($id,$_GET);
+				return $this->apiFacade->checkin($id,$_REQUEST);
 			 case 'checkout':
-				return $this->apiFacade->checkout($id,$_GET);
+				return $this->apiFacade->checkout($id,$_REQUEST);
 			 default:
 				  throw new EspressoAPI_MethodNotImplementedException();
 		 }
@@ -75,9 +64,9 @@ class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controlle
 	 protected function specificAttributeRequestPost($id,$attribute){
 		 switch($attribute){
 			 case 'checkin':
-				return $this->apiFacade->checkin($id,$_POST);
+				return $this->apiFacade->checkin($id,$_REQUEST);
 			 case 'checkout':
-				return $this->apiFacade->checkout($id,$_POST);
+				return $this->apiFacade->checkout($id,$_REQUEST);
 			 default:
 				  throw new EspressoAPI_MethodNotImplementedException();
 		 }

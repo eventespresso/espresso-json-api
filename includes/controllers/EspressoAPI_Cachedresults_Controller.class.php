@@ -37,8 +37,8 @@ class EspressoAPI_Cachedresults_Controller{
 	protected function handleLimit($results){
 		$limitedResult=array();
 		foreach($results as $key=>$models){
-			if(array_key_exists('limit',$_GET)){
-				$limit=$_GET['limit'];
+			if(array_key_exists('limit',$_REQUEST)){
+				$limit=$_REQUEST['limit'];
 				$limitParts=explode(",",$limit);
 				if(count($limitParts)==2){
 					$models=  array_slice($models, $limitParts[0], $limitParts[1]);

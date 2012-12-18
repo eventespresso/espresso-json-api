@@ -279,14 +279,15 @@ protected function processSqlResults($rows,$keyOpVals){
 		}
 		
 	}
+	
+	
 	/**
 	 * overrides parent's createorUpdateOne. Should create something in our db according to this
 	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
 	 * 
 	 */
-    function createOrUpdateOne($apiInput){
-		$apiInput=$this->validator->validate($apiInput,array('single'=>true,'requireRelated'=>false,'allowTempIds'=>true));
-		
+    function performCreateOrUpdate($apiInput){
+			
 		//construct list of key-value pairs, for insertion or update
 		
 		$dbUpdateData=$this->extractMyColumnsFromApiInput($apiInput);
@@ -328,91 +329,7 @@ protected function processSqlResults($rows,$keyOpVals){
 
 	}
 	
-	/**
-	 * given data in the form array(TABLE_NAME=>array(1=>array('columnName'=>'columnValue'...
-	 * this will update or create the appropriate tables
-	 * @param type $dbUpdateData 
-	 * @return true if all updates are successful, false is there was an error
-	 */
-	protected function updateDBTables($dbUpdateData){
-		//now we go about creating or updating according to what' sin dbUpdateData
-		foreach($dbUpdateData as $tableName=>$rowsToUpdate){
-			foreach($rowsToUpdate as $rowId=>$columns){
-				$result=$this->updateRow($tableName,$columns);
-				if($result===false){
-					return false;
-				}
-			}
-		}
-		return true;
-	}
 	
-	/**
-	 * updates the row indicated of $tableName, where $keyValPairs is an array of
-	 * column-value-mappings for the update.
-	 * @global type $wpdb
-	 * @param string $tableName
-	 * @param array $keyValPairs like array('id'=>12,'fname'=>'bob'... 
-	 * @param array $options array of options:
-	 * - 'whereClauses' is an array of key-value pairs
-	 * to be used for 'where' conditions (replaces default of array('id'=>$keyValPairs['id'])
-	 * - 'id' is the column name to be used instead of 'id',  default is 'id'
-	 * - 'whereFormats' is an array of strings, each being one of '%s','%d',%f' like documented in http://codex.wordpress.org/Class_Reference/wpdb#UPDATE_rows
-	 * 
-	 * @return success of udpate 
-	 */
-	protected function updateRow($tableName, array $keyValPairs,array $options=array()){
-		global $wpdb;
-		if(array_key_exists('whereClauses',$options)){
-			$wheres=$options['whereClauses'];
-			$idCol=null;
-		}else{
-			$wheres=array();
-			if(array_key_exists('id',$options)){
-				$idCol=$options['id'];
-			}else{
-				$idCol='id';
-			}
-		}
-		
-		
-		$updateFormat=array();
-		foreach($keyValPairs as $columnName=>$columnValue){
-			if($columnName!=$idCol){
-				if(is_float($columnValue)){
-					$updateFormat[]='%f';
-				}else if(is_int($columnValue)){
-					$updateFormat[]='%d';
-				}else{
-					$updateFormat[]='%s';
-				}
-				//$sqlAssignments[]=$wpdb->prepare("$columnName=".(isint($columnValue) || isfloat($columnValue)?"%d":"%s"),$columnValue);
-			}elseif(isset($idCol)){
-				$wheres[$idCol]=$columnValue;
-				if(strpos($keyValPairs[$idCol],"temp-")==0){//so if the id starts with 'temp-'
-					$create=true;
-				}else{
-					$create=false;
-				}
-				unset($keyValPairs[$idCol]);
-			}
-		}
-		if($create){
-			
-		}{
-			$result= $wpdb->update($tableName,$keyValPairs,$wheres,$updateFormat,
-				array_key_exists('whereFormats',$options)?$options['whereFormats']:'%d');
-			if($result!==false){
-				return $wheres[$idCol];
-			}else{
-				return false;
-			}
-		
-		}
-		//$updateSQL="UPDATE $tableName SET ".implode(",",$sqlAssignments).$wpdb->prepare(" WHERE $idCol=%d $extraSQL",$rowId);
-		
-		//return $wpdb->query($updateSQL);
-	}
 	
 	/**
 	 * gets all the database column values from api input

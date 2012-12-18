@@ -64,7 +64,7 @@ abstract class EspressoAPI_Generic_Controller {
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestPost($format));
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {//technically this oen should only be used for updates, but we'll be generous
-			return array(EspressoAPI_STATUS => __("PUT (update) on all items does not apply. You probably meant to POST.","event_espresso"), EspressoAPI_STATUS_CODE => 405);
+			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestPut($format));
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
 			return array(EspressoAPI_STATUS => __("Denied. You requested to delete all events, and we don't think you meant to do that","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		}
@@ -81,16 +81,28 @@ abstract class EspressoAPI_Generic_Controller {
 	
 
 	/**
-	 * for handling reuqests like POST /events for creating a new event 
+	 *for handling reuqests like POST /events for creating a new event 
 	 * @return array with 'id' of newly created object
 	 */
-	abstract protected function generalRequestPost($format);
+	 protected function generalRequestPost($format){
+		$parsedInput=$this->parseInputBodyOrError($format);
+		return $this->apiFacade->createOrUpdateMany($parsedInput);
+	 }
+	 
+	 /**
+	 *for handling reuqests like POST /events for creating a new event 
+	 * @return array with 'id' of newly created object
+	 */
+	 protected function generalRequestPut($format){
+		$parsedInput=$this->parseInputBodyOrError($format);
+		return $this->apiFacade->createOrUpdateMany($parsedInput);
+	 }
 
 	/**
 	 * for handling requests liks '/events/14'
 	 * @param int $id id of event
 	 */
-	protected function specificRequest($id) {
+	protected function specificRequest($id,$format) {
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			$object = $this->specificRequestGet($id);
 			if (empty($object))
@@ -100,7 +112,7 @@ abstract class EspressoAPI_Generic_Controller {
 		}elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			return array(EspressoAPI_STATUS => __("POST (create) on a specific item is not supported. You probably meant to PUT:","event_espresso"), EspressoAPI_STATUS_CODE => 405);
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-			$object = $this->specificRequestPut($id);
+			$object = $this->specificRequestPut($id,$format);
 			if (empty($object))
 				return array(EspressoAPI_STATUS => __("Could not find object with id for update:","event_espresso") . $id, EspressoAPI_STATUS_CODE => 404);
 			else
@@ -123,13 +135,33 @@ abstract class EspressoAPI_Generic_Controller {
 	protected function specificRequestGet($id){
 		 return $this->apiFacade->getOne($id);
 	}
+	/**
+	 * $takes the input (EG $_REQUEST), finds it's element
+	 * called 'body' (or throws an error), and parses it into a php array according to 
+	 * the $format it was sent in.
+	 * @param string $format 'json','xml'
+	 * @return array
+	 * @throws EspressoAPI_BadRequestException 
+	 */
+	protected function parseInputBodyOrError($format='json'){
+		 if(array_key_exists('body',$_REQUEST)){
+			 $formattedInput=  EspressoAPI_Response_Formatter::parse($_REQUEST['body'], $format);
+			 return $formattedInput;
+		 }else{
+			 throw new EspressoAPI_BadRequestException(__("POST and PUT requests must contain all input in a field called 'body'. Eg: 'body:\"{\'Registrations\':[{\'id:\'12,...}]}\"",'event_espresso')); 
+		 }
+	}
 
 	/**
 	 * for handling requests like PUT /events/13 for updating an event with id 13 
 	 * @param $id id of the object
 	 * @return boolean success of updating object
 	 */
-	abstract protected function specificRequestPut($id);
+	protected function specificRequestPut($id,$format){
+		$parsedInput=$this->parseInputBodyOrError($format);
+		return $this->apiFacade->updateOne($id,$parsedInput);
+
+	}
 
 	/**
 	 * for handling requests like DELETE /events/23 for deleting an event with id 23 
@@ -143,7 +175,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @param type $id id of event
 	 * @param type $attribute attribute like 'attendees' or 'venue'
 	 */
-	protected function specificAttributeRequest($id, $attribute) {
+	protected function specificAttributeRequest($id, $attribute,$format) {
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			$object = $this->specificAttributeRequestGet($id, $attribute);
 			if (empty($object))
@@ -163,7 +195,7 @@ abstract class EspressoAPI_Generic_Controller {
 			else
 				return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $object);
 		}elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
-			$object = $this->specificAttributeRequestDelet__($id, $attribute);
+			$object = $this->specificAttributeRequestDelete($id, $attribute);
 			if (empty($object))
 				return array(EspressoAPI_STATUS => __("Attribute on object was not found for deletion: ","event_espresso") . $attribute, EspressoAPI_STATUS_CODE => 404);
 			else
