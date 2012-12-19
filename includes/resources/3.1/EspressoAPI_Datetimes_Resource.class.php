@@ -85,7 +85,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				$date=$this->constructValueInWhereClause($operator,$matches[1]);
 				$hourAndMinute=$this->constructValueInWhereClause($operator,$matches[2].":".$matches[3]);
 				return $this->constructSqlDateTimeWhereSubclause($operator,'Event.registration_end',$date,'Event.registration_endT',$hourAndMinute);
-			case 'StartEnd.reg_limit':
+			case 'Datetime.reg_limit':
 				$filteredValue=$this->constructValueInWhereClause($operator,$value);
 				return "Event.reg_limit $operator $filteredValue";
 		}
@@ -169,6 +169,98 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			'tickets_left'=>$sqlResult['Datetime.tickets_left']
 			);
 		return $datetime; 
+	}
+	/**
+	 * gets the date and time contained in the $dateSTring
+	 * @param string $dateString in mysql datetime format, eg "YYYY-MM-DD HH:MM:SS'
+	 * @return array with keys 'date' (YYYY-MM-DD) and 'time' (HH:MM, seconds are ignored), 
+	 */
+	private function parseDate($dateString){
+		preg_match("~^(\\d*-\\d*-\\d*) (\\d*):(\\d*):(\\d*)$~",$dateString,$matches);
+		return array('date'=>$matches[1],'time'=>$matches[2].":".$matches[3]);
+	}
+	/**
+	 * gets all the database column values from api input
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	function extractMyColumnsFromApiInput($apiInput,$options=array()){
+		global $wpdb;
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
+		
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_DETAIL_TABLE=>array(),EVENTS_START_END_TABLE=>array());
+		
+		foreach($models as $thisModel){
+			$sql='SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'];
+			$correspondingEventRow=$wpdb->get_row('SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'],ARRAY_A );
+			if(empty($correspondingEventRow)){
+				throw new EspressoAPI_SpecialException(__("The Datetime you provided is missing from our system. If you are storing your Datetimes, please update them. Otherwise, contact Event Espresso support with a database dump and the current request information.","event_espresso"));
+			}
+			$correspondingEventId=$correspondingEventRow['event_id'];
+			$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]=array();
+			$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]=array('id'=>$correspondingEventId);
+			if(isset($options['correspondingAttendeeId'])){
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]=array();
+			}
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+						$dbCol=$apiField;
+						$dbTable=EVENTS_START_END_TABLE;
+						$dbValue=$apiValue;
+						$skipInsertionInArray=false;
+						break;
+					//case 'is_primary': notion doesn't exist in 3.1 DB
+					case 'event_start':
+						$dateTimeInfo=$this->parseDate($apiValue);
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['start_date']=$dateTimeInfo['date'];
+						$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]['start_time']=$dateTimeInfo['time'];
+						if(isset($options['correspondingAttendeeId'])){
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['start_date']=$dateTimeInfo['date'];
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['event_time']=$dateTimeInfo['time'];
+						}
+						$skipInsertionInArray=true;
+						break;
+					case 'event_end':
+						$dateTimeInfo=$this->parseDate($apiValue);
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['end_date']=$dateTimeInfo['date'];
+						$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]['end_time']=$dateTimeInfo['time'];
+						if(isset($options['correspondingAttendeeId'])){
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['end_date']=$dateTimeInfo['date'];
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['end_time']=$dateTimeInfo['time'];
+						}
+						$skipInsertionInArray=true;
+						break;
+					case 'registration_start':
+						$dateTimeInfo=$this->parseDate($apiValue);
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_start']=$dateTimeInfo['date'];
+						$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]['registration_startT']=$dateTimeInfo['time'];
+						$skipInsertionInArray=true;
+						break;
+					case 'registration_start':
+						$dateTimeInfo=$this->parseDate($apiValue);
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_end']=$dateTimeInfo['date'];
+						$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]['registration_endT']=$dateTimeInfo['time'];
+						$skipInsertionInArray=true;
+						break;
+					case 'limit':
+						$dbCol='reg_limit';
+						$dbTable=EVENTS_START_END_TABLE;
+						$dbValue=$apiValue;
+						$skipInsertionInArray=false;
+						break;
+					case 'tickets_left':
+					default:
+						$skipInsertionInArray=true;
+				}
+				if(!$skipInsertionInArray){
+					$dbEntries[$dbTable][$thisModel['id']][$dbCol]=$dbValue;
+				}
+			}
+		}
+		return $dbEntries;
 	}
 }
 //new Events_Controller();

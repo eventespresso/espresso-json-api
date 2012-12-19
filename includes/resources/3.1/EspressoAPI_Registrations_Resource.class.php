@@ -295,7 +295,12 @@ protected function processSqlResults($rows,$keyOpVals){
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
-					$dbUpdateData=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbUpdateData,$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]));
+					if($relatedModelInfo['modelName']=='Datetime'){
+						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],array('correspondingAttendeeId'=>intval($apiInput[$this->modelName]['id'])));
+					}else{
+						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]);
+					}
+					$dbUpdateData=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbUpdateData,$dbUpdateDataForThisModel);
 				}else{
 					//they only provided the id of the related model, 
 					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
@@ -319,14 +324,6 @@ protected function processSqlResults($rows,$keyOpVals){
 			}
 		}
 		return $this->updateDBTables($dbUpdateData);
-		
-		/*$transactionModel=$thisModel['Transaction'];
-		$transactionModel=array(
-			EVENTS_ATTENDEE_TABLE=>array(
-					$transactionModel['id']
-			)
-		); throw new Exception("not done in regisration resource 318");*/
-
 	}
 	
 	

@@ -187,7 +187,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		$dbEntries=array(EVENTS_DETAIL_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]=array();
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':
@@ -211,7 +211,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 						break;
 					case 'metadata':
 						$dbCol='event_meta';
-						$dbValue=serialize($apiValue);//serialize?
+						$dbValue=serialize($apiValue);
 						break;
 					case 'status':
 						$dbCol='event_status';
@@ -252,7 +252,6 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				}
 				$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']][$dbCol]=$dbValue;
 			}
-			
 		}
 		return $dbEntries;
 	}
