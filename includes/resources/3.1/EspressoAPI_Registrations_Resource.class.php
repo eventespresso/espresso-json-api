@@ -295,7 +295,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
-					if($relatedModelInfo['modelName']=='Datetime'){
+					if(in_array($relatedModelInfo['modelName'],array('Datetime','Price'))){
 						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],array('correspondingAttendeeId'=>intval($apiInput[$this->modelName]['id'])));
 					}else{
 						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]);

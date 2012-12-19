@@ -57,5 +57,13 @@ class EspressoAPI_Functions {
 		}
 		return $Arr1;
 	}
+	
+	/**
+	 * for comparing two floats to see if they have the same value
+	 *  
+	 */
+	static function floats_are_equal($float1,$float2){
+		return (abs($float1-$float2)<0.00001);
+	}
 }
 ?>

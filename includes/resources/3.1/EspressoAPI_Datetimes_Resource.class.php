@@ -180,7 +180,9 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		return array('date'=>$matches[1],'time'=>$matches[2].":".$matches[3]);
 	}
 	/**
-	 * gets all the database column values from api input
+	 * gets all the database column values from api input. also, if in the $options array, 
+	 * the setting for 'correspondingAttendeeId' is set, then we will also try to update
+	 * the events_attendee row with the datetime information contained in $apiInput
 	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
@@ -191,10 +193,12 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		
 		$models=$this->extractModelsFromApiInput($apiInput);
 		$dbEntries=array(EVENTS_DETAIL_TABLE=>array(),EVENTS_START_END_TABLE=>array());
-		
+		if(!empty($options['corresondingAttendeeId'])){
+			$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
+		}
 		foreach($models as $thisModel){
 			$sql='SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'];
-			$correspondingEventRow=$wpdb->get_row('SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'],ARRAY_A );
+			$correspondingEventRow=$wpdb->get_row($sql,ARRAY_A );
 			if(empty($correspondingEventRow)){
 				throw new EspressoAPI_SpecialException(__("The Datetime you provided is missing from our system. If you are storing your Datetimes, please update them. Otherwise, contact Event Espresso support with a database dump and the current request information.","event_espresso"));
 			}

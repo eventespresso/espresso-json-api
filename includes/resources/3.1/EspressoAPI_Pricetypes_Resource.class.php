@@ -2,6 +2,10 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
+define('ESPRESSOAPI_PRICETYPE_BASE',1);
+define('ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE',2);
+define('ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE',3);
+define('ESPRESSOAPI_PRICETYPE_MEMBER_BASE',4);
 class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>null,
@@ -22,7 +26,7 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 	 * and “Member Price”.  
 	 */
 	var $fakeDbTable=array(
-		1=>array(
+		ESPRESSOAPI_PRICETYPE_BASE=>array(
 			"id"=>1,
 			'name'=>'Base Price',
 			'is_member'=>false,
@@ -31,7 +35,7 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 			'is_percent'=>false,
 			'is_global'=>true,
 			'order'=>0),
-		2=>array(
+		ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE=>array(
 			"id"=>2,
 			"name"=>"Surcharge Amount",
 			"is_member"=>false,
@@ -40,7 +44,7 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 			"is_percent"=>false,
 			"is_global"=>true,
 			"order"=>10),
-		3=>array(
+		ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE=>array(
 			"id"=>3,
 			"name"=>"Surcharge Percent",
 			"is_member"=>false,
@@ -49,7 +53,7 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 			"is_percent"=>true,
 			"is_global"=>true,
 			"order"=>10),
-		4=>array(
+		ESPRESSOAPI_PRICETYPE_MEMBER_BASE=>array(
 			"id"=>4,
 			"name"=>"Member Price",
 			"is_member"=>true,

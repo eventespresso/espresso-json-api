@@ -48,15 +48,4 @@ abstract class EspressoAPI_Prices_Resource_Facade extends EspressoAPI_Generic_Re
 			array('var'=>'is_global','type'=>'bool'),
 			array('var'=>'order','type'=>'int'))
 	);
-	
-	 /**
-	  * creation of event facade, calls concrete child class' _creatEvent function
-	  * @param array $createParameters
-	  * @return array 
-	  */
-     function create($createParameters){
-         return $this->_createDatetime($createParameters);
-     }
-     abstract protected function _create($createParameters);
-	 
 }

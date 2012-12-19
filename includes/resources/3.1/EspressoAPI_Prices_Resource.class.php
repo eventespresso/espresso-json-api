@@ -2,6 +2,14 @@
 /**
  *this file should actually exist in the Event Espresso Core Plugin 
  */
+/**
+ *constants for referring to a 'subprice' on a row. IE, each row in the events_attendees table
+ * actually corresponds to 3 prices: nonmember price, a surcharge, and a member price 
+ */
+define('ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR',.0);
+define('ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR',.1);
+define('ESPRESSOAPI_PRICE_MEMBER_INDICATOR',.2);
+
 class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Price.id',
@@ -22,9 +30,15 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		Price.member_price_type AS 'Price.member_price_type'
 		";
 	var $relatedModels=array();
-    function _create($createParameters){
-       return new EspressoAPI_MethodNotImplementedException();
-    }
+	/**
+	 * the 3.1 implementation of prices resource is tightly connected to the pricetype
+	 * resource, so just just import it when constructed
+	 * @var type 
+	 */
+	private $pricetypeModel;
+	function __construct(){
+		$this->pricetypeModel=EspressoAPI_ClassLoader::load("Pricetypes",'Resource');;
+	}
 	
 	/**
 	 * this APImodel overrides this function in order to return mutliple 'models' 
@@ -92,9 +106,8 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		$pricesToReturn=array();
-		$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 		$pricesToReturn['base']=array(
-		'id'=>floatval($sqlResult['Price.id'].".0"),
+		'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR),
 		'amount'=>$sqlResult['Price.event_cost'],
 		'name'=>$sqlResult['Price.price_type'],
 		'description'=>$sqlResult['Price.description'],
@@ -102,16 +115,16 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'remaining'=>$sqlResult['Price.remaining'],
 		'start_date'=>$sqlResult['Price.start_date'],
 		'end_date'=>$sqlResult['Price.end_date'],
-		'Pricetype'=>$priceTypeModel->fakeDbTable[1]
+		'Pricetype'=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_BASE]
 		);
 		if($sqlResult['Price.surcharge']!=0){
 			if($sqlResult['Price.surcharge_type']=='pct')
-				$priceType=$priceTypeModel->fakeDbTable[2];
+				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE];
 			else
-				$priceType=$priceTypeModel->fakeDbTable[3];
+				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE];
 			
 			$pricesToReturn['surcharge']=array(
-			'id'=>floatval($sqlResult['Price.id'].".1"),
+			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR),
 			'amount'=>$sqlResult['Price.surcharge'],
 			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
 			'description'=>null,
@@ -123,7 +136,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			);
 		}
 		$pricesToReturn['member']=array(
-		'id'=>floatval($sqlResult['Price.id'].".2"),
+		'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_MEMBER_INDICATOR),
 		'amount'=>$sqlResult['Price.member_price'],
 		'name'=>$sqlResult['Price.member_price_type'],
 		'description'=>null,
@@ -131,7 +144,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'remaining'=>$sqlResult['Price.remaining'],
 		'start_date'=>null,
 		'end_date'=>null,
-		"Pricetype"=>$priceTypeModel->fakeDbTable[4]
+		"Pricetype"=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_MEMBER_BASE]
 		);
 		return $pricesToReturn;
 	}
@@ -186,6 +199,102 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			'Pricetype'=>$priceTypeModel->fakeDbTable[1]);
 
 		}
+	}
+	
+	
+	
+	/**
+	 * gets all the database column values from api input. also, if in the $options array, 
+	 * the setting for 'correspondingAttendeeId' is set, then we will also try to update
+	 * the events_attendee row with the datetime information contained in $apiInput
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	function extractMyColumnsFromApiInput($apiInput,$options=array()){
+		global $wpdb;
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
+		
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_PRICES_TABLE=>array());
+		if(!empty($options['correspondingAttendeeId'])){
+			$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]=array('id'=>$options['correspondingAttendeeId']);
+		}
+		foreach($models as $thisModel){
+			
+			$rowId=floor($thisModel['id']);
+			$paymentType=$thisModel['id']-$rowId;
+			
+			$dbEntries[EVENTS_PRICES_TABLE][$rowId]=array();
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+						$dbCol='id';
+						$dbValue=$rowId;
+						$skipInsertionInArray=false;
+						break;
+					case 'amount':
+						if(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR)){
+							$dbCol='event_cost';
+						}elseif(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR)){
+							$dbCol='surcharge';
+						}elseif(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_MEMBER_INDICATOR)){
+							$dbCol='member_price';
+						}
+						if(!empty($options['correspondingAttendeeId'])){
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['orig_price']=$apiValue;
+						}
+						$dbValue=$apiValue;
+						$skipInsertionInArray=false;
+						break;
+					case 'name':
+						if(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR)){
+							$dbCol='price_type';
+							$skipInsertionInArray=false;
+						}elseif(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR)){
+							$skipInsertionInArray=true;
+						}elseif(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_MEMBER_INDICATOR)){
+							$dbCol='member_price_type';
+							$skipInsertionInArray=false;
+						}
+						if(!empty($options['correspondingAttendeeId'])){
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['price_option']=$apiValue;
+						}
+						$dbValue=$apiValue;
+						break;
+					case 'description':
+					case 'limit':
+					case 'remaining':
+					case 'start_date':
+					case 'end_date':
+						$skipInsertionInArray=true;
+						break;
+					case 'Pricetype':
+						$dbCol='surcharge_type';
+						switch($apiValue['id']){
+							case ESPRESSOAPI_PRICETYPE_BASE:
+							case ESPRESSOAPI_PRICETYPE_MEMBER_BASE:
+								$skipInsertionInArray=true;
+								break;
+							case ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE:
+								$dbValue='flat_rate';
+								$skipInsertionInArray=false;
+								break;
+							case ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE:
+								$dbValue='pct';
+								$skipInsertionInArray=false;
+								break;
+							default:
+								$skipInsertionInArray=true;
+						}
+				}
+				if(!$skipInsertionInArray){
+					$dbEntries[EVENTS_PRICES_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+				}
+			}
+		}
+		return $dbEntries;
 	}
 }
 //new Events_Controller();
