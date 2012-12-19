@@ -179,5 +179,57 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
+	
+	/**
+	 * gets all the database column values from api input
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	function extractMyColumnsFromApiInput($apiInput){
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
+		
+		foreach($models as $thisModel){
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+						$dbCol=$apiField;
+						$dbValue=$apiValue;
+						break;
+					case 'timestamp':
+						$dbCol='date';
+						$dbValue=$apiValue;
+						break;
+					case 'total':
+						$dbCol='total_cost';
+						$dbValue=$apiValue;
+						break;
+					case 'amount_paid':
+						$dbCol='amount_pd';
+						$dbValue=$apiValue;
+						break;
+					case 'payment_gateway':
+						$dbCol='txn_type';
+						$dbValue=$apiValue;
+						break;
+					case 'status':
+						$dbCol='payment_status';
+						$statusMappingFlipped=array_flip($this->statusMapping);
+						$dbValue=$statusMappingFlipped[$apiValue];
+						break;
+					case 'details':
+					case 'tax_data':
+					case 'session_data':
+					case 'checked_in_quantity':
+						continue;			
+				}
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+			}
+			
+		}
+		return $dbEntries;
+	}
 }
 //new Events_Controller();
