@@ -27,12 +27,6 @@
 class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controller{
 	
 	/**
-	 *for handling requests like PUT /events/13 for updating an event with id 13 
-	 * @param $id id of the object
-	 * @return boolean success of updating object
-	 */
-	 protected function specificRequestPut($id){throw new EspressoAPI_MethodNotImplementedException();}
-	/**
 	 * for handling requests like DELETE /events/23 for deleting an event with id 23 
 	 * @param $id id of the object
 	 * @return boolean success fo deleting the event

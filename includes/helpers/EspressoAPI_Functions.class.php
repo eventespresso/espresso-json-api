@@ -49,7 +49,7 @@ class EspressoAPI_Functions {
 		foreach($Arr2 as $key => $Value)
 		{
 			if(array_key_exists($key, $Arr1) && is_array($Value))
-			$Arr1[$key] = MergeArrays($Arr1[$key], $Arr2[$key]);
+			$Arr1[$key] = EspressoAPI_Functions::array_merge_recursive_overwrite($Arr1[$key], $Arr2[$key]);
 
 			else
 			$Arr1[$key] = $Value;

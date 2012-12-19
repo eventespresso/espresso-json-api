@@ -107,7 +107,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	protected function extractMyColumnsFromApiInput($apiInput){
+	function extractMyColumnsFromApiInput($apiInput){
 		$models=$this->extractModelsFromApiInput($apiInput);
 		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
@@ -139,7 +139,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 						break;
 					case 'country':
 						$dbCol='country_id';
-						$dbValue=$apivalue;
+						$dbValue=$apiValue;
 						break;
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;

@@ -116,7 +116,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 				//$sqlAssignments[]=$wpdb->prepare("$columnName=".(isint($columnValue) || isfloat($columnValue)?"%d":"%s"),$columnValue);
 			}elseif(isset($idCol)){
 				$wheres[$idCol]=$columnValue;
-				if(strpos($keyValPairs[$idCol],"temp-")==0){//so if the id starts with 'temp-'
+				if(strpos($keyValPairs[$idCol],"temp-")===0){//so if the id starts with 'temp-'
 					$create=true;
 				}else{
 					$create=false;

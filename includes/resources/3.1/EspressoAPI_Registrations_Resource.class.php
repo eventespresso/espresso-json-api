@@ -294,7 +294,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		$relatedModels=$this->getFullRelatedModels();
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
-				if(is_array($apiInput[$this->modelName])){
+				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
 					$dbUpdateData=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbUpdateData,$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]));
 				}else{
 					//they only provided the id of the related model, 
@@ -337,7 +337,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	protected function extractMyColumnsFromApiInput($apiInput){
+	function extractMyColumnsFromApiInput($apiInput){
 		$models=$this->extractModelsFromApiInput($apiInput);
 		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
@@ -347,7 +347,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				switch($apiField){
 					case 'id':
 						$dbCol='id';
-						$dbValue=$apiValue;
+						$dbValue=intval($apiValue);
 						break;
 					case 'status':
 						$dbCol='pre_approve';
