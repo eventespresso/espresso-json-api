@@ -167,7 +167,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				'group_registrations_allowed'=>$groupRegistrationsAllowed,
 				'group_registrations_max'=>$sqlResult['Event.additional_limit'],
 				'active'=>$eventActive,
-				'thumbnail_url'=>@$metaDatas['event_thumbnail_url'],
+				//'thumbnail_url'=>@$metaDatas['event_thumbnail_url'],
 				'member_only'=>$memberOnly,
 				'virtual_url'=>$sqlResult['Event.virtual_url'],
 				'call_in_number'=>$sqlResult['Event.virtual_phone'],
@@ -176,5 +176,85 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 			return $event;
 	}
 
+	/**
+	 * gets all the database column values from api input
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	function extractMyColumnsFromApiInput($apiInput){
+		$models=$this->extractModelsFromApiInput($apiInput);
+		$dbEntries=array(EVENTS_DETAIL_TABLE=>array());
+		
+		foreach($models as $thisModel){
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			foreach($thisModel as $apiField=>$apiValue){
+				switch($apiField){
+					case 'id':
+					
+					case 'virtual_url':
+					case 'phone':
+						$dbCol=$apiField;
+						$dbValue=$apiValue;
+						break;
+					case 'name':
+						$dbCol='event_name';
+						$dbValue=$apiValue;
+						break;
+					case 'code':
+						$dbCol='event_code';
+						$dbValue=$apiValue;
+						break;
+					case 'description':
+						$dbCol='event_desc';
+						$dbValue=$apiValue;
+						break;
+					case 'metadata':
+						$dbCol='event_meta';
+						$dbValue=serialize($apiValue);//serialize?
+						break;
+					case 'status':
+						$dbCol='event_status';
+						$flippedStatusConversions=array_flip($this->statusConversions);
+						$dbValue=$flippedStatusConversions[$apiValue];
+						break;
+					case 'limit':
+						$dbCol='reg_limit';
+						$dbValue=$apiValue;
+						break;
+					case 'group_registrations_allowed':
+						$dbCol='allow_multiple';
+						$dbValue=($apiValue?'Y':'N');
+						break;
+					case 'group_registrations_max':
+						$dbCol='additional_limit';
+						$dbValue=$apiValue;
+						break;
+					case 'active':
+						$dbCol='is_active';
+						$dbValue=($apiValue?'Y':'N');
+						break;
+					/*case 'thumbnail_url'://ignore this input. This needs to be changed
+						if(!array_key_exists('metadata',$dbEntries[$dbTable][$thisModel['id']])){
+							$dbEntries[$dbTable][$thisModel['id']]['metadata']=array();
+						}
+						$dbEntries[$dbTable][$thisModel['id']]['metadata']['thumbnail_url']=$dbValue;
+						continue;*/
+					case 'member_only':
+						$dbCol='member_only';
+						$dbValue=($apiValue?'Y':'N');
+						break;
+					case 'call_in_number':
+						$dbCol='virtual_phone';
+						$dbValue=$apiValue;
+						break;
+				
+				}
+				$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+			}
+			
+		}
+		return $dbEntries;
+	}
 
 }
