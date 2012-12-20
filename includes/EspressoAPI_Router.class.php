@@ -69,9 +69,11 @@ class EspressoAPI_Router{
 			unset($_REQUEST['request_method']);
 		}
 		
+		
 		if(empty($apiRequest))//this wasn't actually a request to the espresso API, let it go through the normal Wordpress response process
             return;
 		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
+		
 		try{
 			if($apiAuthenticate=='true'){				
 				$controller=EspressoAPI_ClassLoader::load('Authentication',"Controller");
@@ -106,11 +108,7 @@ class EspressoAPI_Router{
 			$response= array(EspressoAPI_STATUS => $e->getMessage(), EspressoAPI_STATUS_CODE => 500);
 		}
 		
-		if($format=='xml'){
-			header('Content-type: text/xml, application/xml');
-		}elseif($format=='json'){
-			header('Content-type: application/json');
-		}
+		EspressoAPI_Response_Formatter::setContentType($format);
 		echo EspressoAPI_Response_Formatter::format($response,$format);
         die;
     }

@@ -40,7 +40,13 @@ class EspressoAPI_Response_Formatter{
 		}
 		return 'json';
 	}
-	
+	static function setContentType($format){
+		if($format=='xml'){
+			header('Content-type: text/xml, application/xml');
+		}elseif(in_array($format,array('json','pretty_json'))){
+			header('Content-type: application/json');
+		}
+	}
     /**
      * formats the input to the specified format
      * @param $infoToFormat is an array, ro object, or whatever
@@ -48,10 +54,13 @@ class EspressoAPI_Response_Formatter{
      * @return string of $infoToFormat converted to specified format
      */
     static function format($infoToFormat, $formatName='json'){
+
 		switch($formatName){
 			case 'xml':
 				$xmlOutput="<?xml version='1.0'?>".EspressoAPI_Response_Formatter::arrayToXml("response",$infoToFormat);
 				return $xmlOutput;
+			case 'pretty_json':
+				return EspressoAPI_Response_Formatter::prettyJson(EspressoAPI_Response_Formatter::arrayToJson($infoToFormat));
 			case 'json':
 			default:
 				return EspressoAPI_Response_Formatter::arrayToJson($infoToFormat);
@@ -117,11 +126,94 @@ class EspressoAPI_Response_Formatter{
 	}
 	
 	static function parse($input,$formatName='json'){
-		if($formatName=='json'){
+		if(in_array($formatName,array('json','pretty_json'))){
 			$output=EspressoAPI_Response_Formatter::parseJson($input);
 		}else{
 			
 		}
 		return $output;
 	}
+	/**
+	 * grabbed from  http://www.php.net/manual/en/function.json-encode.php#80339, 
+	 * it will put the json in a nicer format
+	 * @param string $json
+	 * @return string 
+	 */
+	static function prettyJson($json) 
+{ 
+    $tab = "  "; 
+    $new_json = ""; 
+    $indent_level = 0; 
+    $in_string = false; 
+
+    $json_obj = json_decode($json); 
+
+    if($json_obj === false) 
+        return false; 
+
+    $json = json_encode($json_obj); 
+    $len = strlen($json); 
+
+    for($c = 0; $c < $len; $c++) 
+    { 
+        $char = $json[$c]; 
+        switch($char) 
+        { 
+            case '{': 
+            case '[': 
+                if(!$in_string) 
+                { 
+                    $new_json .= $char . "\n" . str_repeat($tab, $indent_level+1); 
+                    $indent_level++; 
+                } 
+                else 
+                { 
+                    $new_json .= $char; 
+                } 
+                break; 
+            case '}': 
+            case ']': 
+                if(!$in_string) 
+                { 
+                    $indent_level--; 
+                    $new_json .= "\n" . str_repeat($tab, $indent_level) . $char; 
+                } 
+                else 
+                { 
+                    $new_json .= $char; 
+                } 
+                break; 
+            case ',': 
+                if(!$in_string) 
+                { 
+                    $new_json .= ",\n" . str_repeat($tab, $indent_level); 
+                } 
+                else 
+                { 
+                    $new_json .= $char; 
+                } 
+                break; 
+            case ':': 
+                if(!$in_string) 
+                { 
+                    $new_json .= ": "; 
+                } 
+                else 
+                { 
+                    $new_json .= $char; 
+                } 
+                break; 
+            case '"': 
+                if($c > 0 && $json[$c-1] != '\\') 
+                { 
+                    $in_string = !$in_string; 
+                } 
+            default: 
+                $new_json .= $char; 
+                break;                    
+        } 
+    } 
+
+    return $new_json; 
+} 
 }
