@@ -278,7 +278,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			if((!empty($idKey) && !empty($idValue) && $sqlResult[$idKey]!= $idValue))
 				continue;
 			$formatedResult=$this->_extractMyUniqueModelsFromSqlResults($sqlResult);
-			if(array_key_exists('id',$formatedResult) && $formatedResult['id']!==NULL)
+			if(isset($formatedResult) && array_key_exists('id',$formatedResult) && $formatedResult['id']!==NULL)
 				$filteredResults[$formatedResult['id']]=$formatedResult;
 		}
 		return $filteredResults;

@@ -150,6 +150,9 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
+			if(empty($sqlResult['Event.id'])){
+				return null;
+			}
 			$metaDatas=unserialize($sqlResult['Event.event_meta']);
 			$statusUnconverted=$sqlResult['Event.event_status'];
 			
@@ -161,7 +164,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				'code'=>$sqlResult['Event.event_code'],
 				'name'=>$sqlResult['Event.event_name'],
 				'description'=>$sqlResult['Event.event_desc'],
-				'metadata'=>$metaDatas,
+				'metadata'=>$metaDatas,	
 				'status'=>$this->statusConversions[$statusUnconverted],
 				'limit'=>$sqlResult['Event.reg_limit'],
 				'group_registrations_allowed'=>$groupRegistrationsAllowed,

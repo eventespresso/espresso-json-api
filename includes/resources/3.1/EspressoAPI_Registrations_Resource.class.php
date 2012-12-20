@@ -51,7 +51,24 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 			LEFT JOIN
 				{$wpdb->prefix}events_attendee_meta AttendeeMeta ON Attendee.id=AttendeeMeta.attendee_id
 			LEFT JOIN
-				{$wpdb->prefix}events_prices Price ON Attendee.event_id=Price.event_id
+				{$wpdb->prefix}events_prices Price ON Attendee.event_id=Price.event_id and 
+													(
+														(Price.surcharge_type='flat_rate'
+														AND(
+															Price.member_price+Price.surcharge=Attendee.orig_price
+															OR
+															Price.event_cost+Price.surcharge=Attendee.orig_price
+															)
+														)
+													OR
+														(Price.surcharge_type='pct'
+														AND(
+															Price.member_price*Price.surcharge/100=Attendee.orig_price
+															OR
+															Price.event_cost*Price.surcharge/100=Attendee.orig_price
+															)
+														)
+													)
 			LEFT JOIN
 				{$wpdb->prefix}events_start_end StartEnd ON StartEnd.start_time=Attendee.event_time AND StartEnd.end_time=Attendee.end_time AND StartEnd.event_id=Attendee.event_id
 			$whereSql";
@@ -82,25 +99,8 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 	 */
 	protected function constructSQLWhereSubclauses($keyOpVals){
 		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
-		$whereSqlArray[]="
-		(
-			(Price.surcharge_type='flat_rate'
-			AND(
-				Price.member_price+Price.surcharge=Attendee.orig_price
-				OR
-				Price.event_cost+Price.surcharge=Attendee.orig_price
-				)
-			)
-		
-		OR
-			(Price.surcharge_type='pct'
-			AND(
-				Price.member_price*Price.surcharge/100=Attendee.orig_price
-				OR
-				Price.event_cost*Price.surcharge/100=Attendee.orig_price
-				)
-			)
-		)";
+		//$whereSqlArray[]="
+		//";
 		return $whereSqlArray;
 	}
 	/*protected function processSqlResults($results,$keyOpVals){
