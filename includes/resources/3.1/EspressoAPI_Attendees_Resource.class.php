@@ -107,12 +107,11 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	function extractMyColumnsFromApiInput($apiInput){
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		$models=$this->extractModelsFromApiInput($apiInput);
-		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
+			//$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':

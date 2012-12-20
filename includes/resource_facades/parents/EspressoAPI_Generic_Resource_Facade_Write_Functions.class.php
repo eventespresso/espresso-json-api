@@ -1,10 +1,5 @@
 <?php
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of EspressoAPI_Generic_Resource_Facade_Create_Functions
  *
@@ -46,6 +41,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 		}
 		return $models;
 	}
+	
 	
 	/**
 	 * given data in the form array(TABLE_NAME=>array(1=>array('columnName'=>'columnValue'...
@@ -150,4 +146,15 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 		
 		//return $wpdb->query($updateSQL);
 	}
+	/**
+	 * gets all the database column values from apiInput
+	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * //OR like array('event'=>array('id'=>...
+	 * $dbEntries is an array of what we already have planned to update/add to the database, and which is added upon
+	 * in this function. Eg array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'...)),'wp_events_detail'=>...)
+	 * @options contains options like:
+	 * 'correspondingAttendeeId', which indicates the events_attendee.id relating to the current model
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 */
+	abstract protected function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array());
 }

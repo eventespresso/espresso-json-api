@@ -77,4 +77,7 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		);
 		return $promocode; 
 	}
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		return $dbEntries;
+	}
 }

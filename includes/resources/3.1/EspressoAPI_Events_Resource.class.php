@@ -185,12 +185,12 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	function extractMyColumnsFromApiInput($apiInput){
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		$models=$this->extractModelsFromApiInput($apiInput);
-		$dbEntries=array(EVENTS_DETAIL_TABLE=>array());
+		//$dbEntries=array(EVENTS_DETAIL_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]=array();
+			//$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]=array();
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':

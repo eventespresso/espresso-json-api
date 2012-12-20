@@ -46,5 +46,8 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 		);
 		return $category; 
 	}
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		return $dbEntries;
+	}
 }
 //new Events_Controller();

@@ -63,5 +63,8 @@ class EspressoAPI_Venues_Resource extends EspressoAPI_Venues_Resource_Facade{
 		);
 		return $venue; 
 	}
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		return $dbEntries;
+	}
 }
 //new Events_Controller();

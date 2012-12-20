@@ -188,16 +188,15 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		else{
 			$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 			return array(
-			'id'=>"0",
+			'id'=>0,
 			'amount'=>$origPrice,
-			'name'=>isset($rowWithOrigPrice['$Attendee.price_option'])?$rowWithOrigPrice['$Attendee.price_option']:'Unknown',
+			'name'=>isset($rowWithOrigPrice['Attendee.price_option'])?$rowWithOrigPrice['Attendee.price_option']:'Unknown',
 			'description'=>null,
 			'limit'=>9999999,
 			'remaining'=>999999,//$sqlResult['Event.remaining'],
 			'start_date'=>null,
 			'end_date'=>null,
 			'Pricetype'=>$priceTypeModel->fakeDbTable[1]);
-
 		}
 	}
 	
@@ -211,15 +210,15 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	function extractMyColumnsFromApiInput($apiInput,$options=array()){
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		global $wpdb;
 		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
 		
 		$models=$this->extractModelsFromApiInput($apiInput);
-		$dbEntries=array(EVENTS_PRICES_TABLE=>array());
+		//$dbEntries=array(EVENTS_PRICES_TABLE=>array());
 		if(!empty($options['correspondingAttendeeId'])){
-			$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
-			$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]=array('id'=>$options['correspondingAttendeeId']);
+			//$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['id']=$options['correspondingAttendeeId'];
 		}
 		foreach($models as $thisModel){
 			

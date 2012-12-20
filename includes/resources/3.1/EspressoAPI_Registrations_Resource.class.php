@@ -290,24 +290,24 @@ protected function processSqlResults($rows,$keyOpVals){
 			
 		//construct list of key-value pairs, for insertion or update
 		
-		$dbUpdateData=$this->extractMyColumnsFromApiInput($apiInput);
+		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,array());
 		$relatedModels=$this->getFullRelatedModels();
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
 					if(in_array($relatedModelInfo['modelName'],array('Datetime','Price'))){
-						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],array('correspondingAttendeeId'=>intval($apiInput[$this->modelName]['id'])));
+						$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>intval($apiInput[$this->modelName]['id'])));
 					}else{
-						$dbUpdateDataForThisModel=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName]);
+						$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries);
 					}
-					$dbUpdateData=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbUpdateData,$dbUpdateDataForThisModel);
+					//$dbEntries=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntries,$dbEntriesForThisModel);
 				}else{
 					//they only provided the id of the related model, 
 					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
 					//instead of array('Registration'=>array('id'=>1...'Event'=>array('id'=>1,'name'=>'party1'...)
 					//this is logic very specific to the current application
 					if($this->modelName=='Event'){
-						$dbUpdateData[EVENTS_ATTENDEE_TABLE][$apiInput['id']]['event_id']=$apiInput[$this->modelName];
+						$dbEntries[EVENTS_ATTENDEE_TABLE][$apiInput['id']]['event_id']=$apiInput[$this->modelName];
 					}
 					//if it's 'Price', ignore it. There's nothing really to set. (When returning this it's just deduced
 					//by the final_price on the registration anyway
@@ -323,7 +323,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				throw new EspressoAPI_MethodNotImplementedException(sprintf(__("We do not yet handle bulk updating/creating on %s","event_espresso"),$this->modelNamePlural));
 			}
 		}
-		return $this->updateDBTables($dbUpdateData);
+		return $this->updateDBTables($dbEntries);
 	}
 	
 	
@@ -334,12 +334,10 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	function extractMyColumnsFromApiInput($apiInput){
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		$models=$this->extractModelsFromApiInput($apiInput);
-		$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':

@@ -112,5 +112,8 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
 		);
 		return $price; 
 	}
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		return $dbEntries;
+	}
 }
 //new Events_Controller();

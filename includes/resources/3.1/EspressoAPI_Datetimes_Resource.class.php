@@ -187,15 +187,15 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	 * //OR like array('event'=>array('id'=>...
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
-	function extractMyColumnsFromApiInput($apiInput,$options=array()){
+	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		global $wpdb;
 		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
 		
 		$models=$this->extractModelsFromApiInput($apiInput);
-		$dbEntries=array(EVENTS_DETAIL_TABLE=>array(),EVENTS_START_END_TABLE=>array());
+		/*$dbEntries=array(EVENTS_DETAIL_TABLE=>array(),EVENTS_START_END_TABLE=>array());
 		if(!empty($options['corresondingAttendeeId'])){
 			$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
-		}
+		}*/
 		foreach($models as $thisModel){
 			$sql='SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'];
 			$correspondingEventRow=$wpdb->get_row($sql,ARRAY_A );
@@ -203,11 +203,11 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				throw new EspressoAPI_SpecialException(__("The Datetime you provided is missing from our system. If you are storing your Datetimes, please update them. Otherwise, contact Event Espresso support with a database dump and the current request information.","event_espresso"));
 			}
 			$correspondingEventId=$correspondingEventRow['event_id'];
-			$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]=array();
-			$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]=array('id'=>$correspondingEventId);
-			if(isset($options['correspondingAttendeeId'])){
+			//$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]=array();
+			$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['id']=$correspondingEventId;
+			/*if(isset($options['correspondingAttendeeId'])){
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]=array();
-			}
+			}*/
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':

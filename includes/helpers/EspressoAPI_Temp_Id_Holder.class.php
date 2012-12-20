@@ -52,6 +52,21 @@ class EspressoAPI_Temp_Id_Holder {
 		}
 		return self::$instance;
 	}
+	
+	/**
+	 * detects if a particular value is a temporary id, so we can handle it appropriately
+	 * @param string or id $value
+	 * @return boolean 
+	 */
+	public static function isTempId($value){
+		if(is_int($value) || is_float($value)){
+			return false;
+		}elseif(strpos($value,"temp-")===0){//so if the id starts with 'temp-'
+			return true;
+		}else{
+			return false;
+		}
+	}
 }
 
 ?>
