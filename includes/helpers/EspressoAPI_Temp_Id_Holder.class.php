@@ -38,10 +38,23 @@ class EspressoAPI_Temp_Id_Holder {
 	 */
 	public static function get($name){
 		$instance=self::getInstance();
-		if(!in_array($name,$instance->tempIds)){
+		if(!array_key_exists($name,$instance->tempIds)){
 			return null;
 		}
 		return $instance->tempIds[$name];
+	}
+	/**
+	 * determines if we've already set $name as a temp id,
+	 * but not necessarily given it a value yet
+	 * @param type $name
+	 * @return boolean 
+	 */
+	public static function previouslySet($name){
+		$instance=self::getInstance();
+		if(!array_key_exists($name,$instance->tempIds)){
+			return false;
+		}
+		return true;
 	}
 	/*
 	 * gets singleton which has all the temporary ids

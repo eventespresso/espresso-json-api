@@ -232,6 +232,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 						$dbCol='id';
 						$dbValue=$rowId;
 						$skipInsertionInArray=false;
+						$thisModelId=$dbValue;
 						break;
 					case 'amount':
 						if(EspressoAPI_Functions::floats_are_equal($paymentType,ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR)){
@@ -289,7 +290,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 						}
 				}
 				if(!$skipInsertionInArray){
-					$dbEntries[EVENTS_PRICES_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+					$dbEntries[EVENTS_PRICES_TABLE][$thisModelId][$dbCol]=$dbValue;
 				}
 			}
 		}

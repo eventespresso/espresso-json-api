@@ -8,16 +8,22 @@
 require_once(dirname(__FILE__).'/EspressoAPI_Generic_Resource_Facade_Read_Functions.class.php');
 abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends EspressoAPI_Generic_Resource_Facade_Read_Functions{
 	function createOrUpdateMany($apiInput){
-		//validate input
 		$apiInput=$this->validator->validate($apiInput,array('single'=>false,'requireRelated'=>false,'allowTempIds'=>true));
 		$idsAffected=array();
 		foreach($apiInput[$this->modelNamePlural] as $inputPerModelInstance){
-			$idsAffected[]=$inputPerModelInstance['id'];
 			$this->performCreateOrUpdate(array($this->modelName=>$inputPerModelInstance));
+			if(EspressoAPI_Temp_Id_Holder::isTempId($inputPerModelInstance['id'])){
+				if(EspressoAPI_Temp_Id_Holder::previouslySet($inputPerModelInstance['id'])){
+						$idsAffected[]=EspressoAPI_Temp_Id_Holder::get($inputPerModelInstance['id']);
+				}else{
+					throw new EspressoAPI_SpecialException(sprintf(__('Internal Error. "%s" is a temporary id, but hasn\'t yet been set. Contact Event Espresso support with the HTTP request info and DB dump.','event_espresso'),$inputPerModelInstance['id']));
+				}
+			}else{
+				$idsAffected[]=$inputPerModelInstance['id'];
+			}
 		}
-		//throw new EspressoAPI_SpecialException("it worked!");
-		return $this->getMany(array('id__IN'=>implode(",",$idsAffected)));
-	
+		
+				return $this->getMany(array('Transaction.id__in'=>implode(",",$idsAffected)));	
 	}
 	
 	function updateOne($id,$apiInput){
@@ -46,15 +52,50 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 	/**
 	 * given data in the form array(TABLE_NAME=>array(1=>array('columnName'=>'columnValue'...
 	 * this will update or create the appropriate tables
+	 * note: it's important to do the creations first, because they may have temporary IDs. This way the temporary
+	 * ids get set in the EspressoAPI_Temp_Id_Holder and can be used in subsequent updates (and maybe creates?)
 	 * @param type $dbUpdateData 
 	 * @return true if all updates are successful, false is there was an error
 	 */
-	protected function updateDBTables($dbUpdateData){
-		//now we go about creating or updating according to what' sin dbUpdateData
-		foreach($dbUpdateData as $tableName=>$rowsToUpdate){
+	protected function updateAndCreateDbEntries($dbEntries){
+		//first do creates
+		$success=$this->loopThroughDbEntriesAndPerform('create', $dbEntries);
+		if($success){
+			//next do updates
+			$success=$this->loopThroughDbEntriesAndPerform('update', $dbEntries);
+		}
+		return $success;
+	}
+	/**
+	 * loops through all the $dbEntries, some of which may be for db insertions, others
+	 * may be for updates. Will only handle the dbEntries marked by $action
+	 * @param string $action should be only 'update' or 'create'
+	 * @param dbEntries array(TABLE_NAME=>array(1=>array('columnName'=>'columnValue'...
+	 * @return success of all the db updates and creates
+	 */
+	protected function loopThroughDbEntriesAndPerform($action,$dbEntries){
+		if(!in_array($action,array('create','update'))){
+			throw new EspressoAPI_SpecialException(sprintf(__("Internal error. Trying to loop thruogh DB entries to update or create, but supplied action was %s","event_espresso"),$action));
+		}
+		foreach($dbEntries as $tableName=>$rowsToUpdate){
 			foreach($rowsToUpdate as $rowId=>$columns){
-				$result=$this->updateOrCreateRow($tableName,$columns);
-				if($result===false){
+				if(EspressoAPI_Temp_Id_Holder::isTempId($rowId)){
+					if($action=='create'){
+						$success=$this->updateOrCreateRow($tableName,$columns);
+					}else{
+						$success=true;
+						//ignore. we're wanting to only update, but this has a temp Id
+					}
+				}else{
+					//it's not a temp id
+					if($action=='update'){
+						$success=$this->updateOrCreateRow($tableName,$columns);
+					}else{
+						$success=true;
+						//ignore. it's not a temp id, and we're creating.
+					}
+				}
+				if($success===false){
 					return false;
 				}
 			}
@@ -100,31 +141,41 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 		
 		$format=array();
 		$create=true;//start off assuming we're inserting a new row
+		$keyValPairsSansTemps=array();//keyValPairs but we've replaced all the temp ids with their real values
 		foreach($keyValPairs as $columnName=>$columnValue){
 			if($columnName!=$idCol){
-				if(is_float($columnValue)){
-					$format[]='%f';
-				}else if(is_int($columnValue)){
-					$format[]='%d';
+				if(EspressoAPI_Temp_Id_Holder::isTempId($columnValue)){
+					if(EspressoAPI_Temp_Id_Holder::previouslySet($columnValue)){
+						$keyValPairsSansTemps[$columnName]=  EspressoAPI_Temp_Id_Holder::get($columnValue);
+						$format[]='%d';
+					}else{
+						throw new EspressoAPI_SpecialException(sprintf(__('Internal Error. "%s" is a temporary id, but hasn\'t yet been set. Contact Event Espresso support with the HTTP request info and DB dump.','event_espresso'),$columnValue));
+					}
 				}else{
-					$format[]='%s';
+					$keyValPairsSansTemps[$columnName]=$columnValue;
+					if(is_float($columnValue)){
+						$format[]='%f';
+					}else if(is_int($columnValue)){
+						$format[]='%d';
+					}else{
+						$format[]='%s';
+					}
 				}
-				//$sqlAssignments[]=$wpdb->prepare("$columnName=".(isint($columnValue) || isfloat($columnValue)?"%d":"%s"),$columnValue);
-			}elseif(isset($idCol)){
-				$wheres[$idCol]=$columnValue;
-				if(strpos($keyValPairs[$idCol],"temp-")===0){//so if the id starts with 'temp-'
+			}elseif(isset($idCol)){				
+				if(EspressoAPI_Temp_Id_Holder::isTempId($keyValPairs[$idCol])){//so if the id starts with 'temp-'
 					$create=true;
 				}else{
+					$wheres[$idCol]=$columnValue;
 					$create=false;
 				}
-				unset($keyValPairs[$idCol]);
 			}
 		}
 		if($create){
-			$result=$wpdb->insert($tableName,$keyValPairs,$format);
-			return $wpdb->insert_id;
+			$result=$wpdb->insert($tableName,$keyValPairsSansTemps,$format);
+			EspressoAPI_Temp_Id_Holder::set($keyValPairs[$idCol], $wpdb->insert_id);
+			return true;
 		}else{
-			$result= $wpdb->update($tableName,$keyValPairs,$wheres,$format,
+			$result= $wpdb->update($tableName,$keyValPairsSansTemps,$wheres,$format,
 				array_key_exists('whereFormats',$options)?$options['whereFormats']:'%d');
 			if($result>1){
 				if(WP_DEBUG){
@@ -136,14 +187,12 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 				}
 			}
 			if($result!==false){
-				return $wheres[$idCol];
+				return true;//$wheres[$idCol];
 			}else{
 				return false;
 			}
-		
 		}
 		//$updateSQL="UPDATE $tableName SET ".implode(",",$sqlAssignments).$wpdb->prepare(" WHERE $idCol=%d $extraSQL",$rowId);
-		
 		//return $wpdb->query($updateSQL);
 	}
 	/**

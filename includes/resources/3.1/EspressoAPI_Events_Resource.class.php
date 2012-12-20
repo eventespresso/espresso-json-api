@@ -188,6 +188,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		$models=$this->extractModelsFromApiInput($apiInput);
 		//$dbEntries=array(EVENTS_DETAIL_TABLE=>array());
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
 		
 		foreach($models as $thisModel){
 			//$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]=array();
@@ -195,6 +196,13 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				switch($apiField){
 					case 'id':
 					
+						$dbCol=$apiField;
+						$dbValue=$apiValue;
+						if(isset($options['correspondingAttendeeId'])){
+							$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]['event_id']=$apiValue;
+						}
+						$thisModelId=$dbValue;
+						break;
 					case 'virtual_url':
 					case 'phone':
 						$dbCol=$apiField;
@@ -253,7 +261,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 						break;
 				
 				}
-				$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+				$dbEntries[EVENTS_DETAIL_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
 		}
 		return $dbEntries;

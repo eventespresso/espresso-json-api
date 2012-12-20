@@ -214,7 +214,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 */
 	protected function evaluate($operand1,$operatorRepresentation,$operand2){
 		$booleanStrings=array('true'=>true,'false'=>false);
-		if(array_key_exists($operand2,$booleanStrings)){
+		if((is_int($operand2) || is_string($operand2)) && array_key_exists($operand2,$booleanStrings)){
 			$operand2=$booleanStrings[$operand2];
 		}	
 		if(is_int($operand2))
@@ -327,7 +327,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$keyOpVals=array();
 		}
 		//validate query parameter input first by normalizing input into 'Model.parameter'
-		$this->validator->validateQueryParameters($keyOpVals);
+		$keyOpVals=$this->validator->validateQueryParameters($keyOpVals);
 		
 		$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
 		//construct database query

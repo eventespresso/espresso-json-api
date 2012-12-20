@@ -215,6 +215,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 						$dbTable=EVENTS_START_END_TABLE;
 						$dbValue=$apiValue;
 						$skipInsertionInArray=false;
+						$thisModelId=$dbValue;
 						break;
 					//case 'is_primary': notion doesn't exist in 3.1 DB
 					case 'event_start':
@@ -240,13 +241,13 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 					case 'registration_start':
 						$dateTimeInfo=$this->parseDate($apiValue);
 						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_start']=$dateTimeInfo['date'];
-						$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]['registration_startT']=$dateTimeInfo['time'];
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_startT']=$dateTimeInfo['time'];
 						$skipInsertionInArray=true;
 						break;
 					case 'registration_start':
 						$dateTimeInfo=$this->parseDate($apiValue);
 						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_end']=$dateTimeInfo['date'];
-						$dbEntries[EVENTS_DETAIL_TABLE][$thisModel['id']]['registration_endT']=$dateTimeInfo['time'];
+						$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['registration_endT']=$dateTimeInfo['time'];
 						$skipInsertionInArray=true;
 						break;
 					case 'limit':
@@ -260,7 +261,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 						$skipInsertionInArray=true;
 				}
 				if(!$skipInsertionInArray){
-					$dbEntries[$dbTable][$thisModel['id']][$dbCol]=$dbValue;
+					$dbEntries[$dbTable][$thisModelId][$dbCol]=$dbValue;
 				}
 			}
 		}

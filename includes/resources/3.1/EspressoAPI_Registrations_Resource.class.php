@@ -280,7 +280,21 @@ protected function processSqlResults($rows,$keyOpVals){
 		
 	}
 	
-	
+	/**
+	 * handles converting an API Registration id to a database attendee id.
+	 * handles teh case where $registrationId is actually a temp id, in which case
+	 * it doesn't change it. However, otherwise the conversion is done by simply 
+	 * removing the decimal
+	 * @param float or string $registrationId, like 'temp-my-reg' or 12.3, etc.
+	 * @return float or string
+	 */
+	protected function convertAPIRegistrationIdToDbAttendeeId($registrationId){
+		if(EspressoAPI_Temp_Id_Holder::isTempId($registrationId)){
+			return $registrationId;
+		}else{
+			return intval($registrationId);
+		}
+	}
 	/**
 	 * overrides parent's createorUpdateOne. Should create something in our db according to this
 	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
@@ -292,14 +306,11 @@ protected function processSqlResults($rows,$keyOpVals){
 		
 		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,array());
 		$relatedModels=$this->getFullRelatedModels();
+		$attendeeRowId=$this->convertAPIRegistrationIdToDbAttendeeId($apiInput[$this->modelName]['id']);
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
-					if(in_array($relatedModelInfo['modelName'],array('Datetime','Price'))){
-						$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>intval($apiInput[$this->modelName]['id'])));
-					}else{
-						$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries);
-					}
+					$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>$attendeeRowId));
 					//$dbEntries=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntries,$dbEntriesForThisModel);
 				}else{
 					//they only provided the id of the related model, 
@@ -323,10 +334,8 @@ protected function processSqlResults($rows,$keyOpVals){
 				throw new EspressoAPI_MethodNotImplementedException(sprintf(__("We do not yet handle bulk updating/creating on %s","event_espresso"),$this->modelNamePlural));
 			}
 		}
-		return $this->updateDBTables($dbEntries);
+		return $this->updateAndCreateDbEntries($dbEntries);
 	}
-	
-	
 	
 	/**
 	 * gets all the database column values from api input
@@ -342,7 +351,8 @@ protected function processSqlResults($rows,$keyOpVals){
 				switch($apiField){
 					case 'id':
 						$dbCol='id';
-						$dbValue=intval($apiValue);
+						$dbValue=$apiValue;
+						$thisModelId=$dbValue;
 						break;
 					case 'status':
 						$dbCol='pre_approve';
@@ -380,7 +390,7 @@ protected function processSqlResults($rows,$keyOpVals){
 							$dbValue=0;
 						}
 				}
-				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
 			
 		}

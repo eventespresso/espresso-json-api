@@ -108,6 +108,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
 		$models=$this->extractModelsFromApiInput($apiInput);
 		
 		foreach($models as $thisModel){
@@ -115,8 +116,16 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 			foreach($thisModel as $apiField=>$apiValue){
 				switch($apiField){
 					case 'id':
-						$dbCol='id';
-						$dbValue=$apiValue;
+						$dbCol=$apiField;
+						////if both this trasnaction's id is a temp ID, and its been suuplied a 'correspondingAttendeeId' 
+						//that's a temp ID, set the two of them to be equal
+						if(EspressoAPI_Temp_Id_Holder::isTempId($options['correspondingAttendeeId'])
+								&& EspressoAPI_Temp_Id_Holder::isTempId($apiValue)){
+							$dbValue=$options['correspondingAttendeeId'];
+						}else{
+							$dbValue=$apiValue;
+						}
+						$thisModelId=$dbValue;
 						break;
 					case 'firstname':
 						$dbCol='fname';
@@ -141,7 +150,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 						$dbValue=$apiValue;
 						break;
 				}
-				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']][$dbCol]=$dbValue;
+				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
 			
 		}

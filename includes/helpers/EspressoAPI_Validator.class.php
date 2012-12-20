@@ -27,10 +27,17 @@ class EspressoAPI_Validator {
 		$this->resource=$resource;
 	}
 	
+	/**
+	 * validates all the queyr parameters provided in $keyOpVals
+	 * @param array $keyOpVals like array(0=>array('key'=>'Transaction.id','operator'=>'=','value'=>'23')
+	 * @return array of the same $keyOpVals, but where the values are cast to their correct type, eg from strings to ints, floats, etc.
+	 * @throws EspressoAPI_BadRequestException if any of the requets parameters are of teh wrong type
+	 */
 	function validateQueryParameters($keyOpVals){
 		//get related models
 		$relatedModels=$this->resource->getFullRelatedModels();
 		
+		$normalizedKeyOpVals=array();
 		foreach($keyOpVals as $keyOpVal){
 			list($modelName,$fieldName)=explode(".",$keyOpVal['key']);
 			$fieldInfo=null;
@@ -55,10 +62,14 @@ class EspressoAPI_Validator {
 				throw new EspressoAPI_BadRequestException(sprintf(
 								__("Param '%s' with value '%s' is not of allowed type '%s'. %s","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type'],$enumInfoString));
 				
+			}else{//it passed, so now just normalize the value and prepare it to be returned
+				$normalizedKeyOpVals[]=array('key'=>$keyOpVal['key'],
+						'operator'=>$keyOpVal['operator'],
+						'value'=>$this->castToType($keyOpVal['value'], $fieldInfo['type']));
 			}
 			
 		}
-		return true;
+		return $normalizedKeyOpVals;
 	}
 	function validate($models,$options=array()){
 		/*if(array_key_exists('single',$options) && $options['single']==true){
