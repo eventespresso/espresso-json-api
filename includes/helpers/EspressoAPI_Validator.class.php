@@ -108,8 +108,9 @@ class EspressoAPI_Validator {
 		$options=shortcode_atts(array('requireRelated'=>true,'allowTempIds'=>false,'requireAllFields'=>true),$options);
 		
 		$filteredResponse=array();
+		//$format is an array showing the format that $response should be in. Go through each key in $response...
 		foreach($format as $key=>$value){
-			if(is_numeric($key)){				
+			if(is_numeric($key)){//if $key (of $response) is numeric, it's a list of attribute (eg array(array('var'=>'id','type'=>'int'),array(...)) or some other ordered list
 				if(is_array($value)){
 					if(array_key_exists('var', $value)){//this should be a variable
 						$variableInfo=$value;
@@ -117,7 +118,7 @@ class EspressoAPI_Validator {
 							throw new EspressoAPI_InputParsingError(sprintf(__("Parsing error. Expected %s to be an array","event_espresso"),$response));
 						}
 						//validate the key of the response
-						if(!array_key_exists($variableInfo['var'],$response)){
+						if($options['requireAllFields'] && !array_key_exists($variableInfo['var'],$response)){
 							if(WP_DEBUG){
 								throw new Exception(sprintf(__("Response in wrong Event Espresso Format! Expected value: %s but it wasnt set in %s","event_espresso"),$variableInfo['var'],print_r($response,true)));
 							}
@@ -128,18 +129,21 @@ class EspressoAPI_Validator {
 						}
 						//validate the value of the response
 						if(array_key_exists('type',$variableInfo)){
-							if($this->valueIs($response[$variableInfo['var']], $variableInfo['type'],  array_key_exists('allowedEnumValues', $variableInfo)?$variableInfo['allowedEnumValues']:null)){
-								$filteredResponse[$value['var']]=$this->castToType($response[$variableInfo['var']], $variableInfo['type']);
-							}else{
-								//the value is of the wrong type for this variable. what are we going to do?
-								if($options['allowTempIds'] && strpos($response[$variableInfo['var']],"temp-")==0){//if the value is like 'temp-%', and we're accepting temporary ids, then let it be
-										$filteredResponse[$value['var']]=$response[$variableInfo['var']];
-								}else{//it's not a temporary id, and it's an invalid value for this type of variable, so error
-									throw new EspressoAPI_BadRequestException(sprintf(
-											__("Param %s with value %s is not of allowed type %s.","event_espresso"),$variableInfo['var'],$response[$variableInfo['var']],$variableInfo['type']));
+							if($options['requireAllFields'] ||  array_key_exists($variableInfo['var'],$response)){
+								if($this->valueIs($response[$variableInfo['var']], $variableInfo['type'],  array_key_exists('allowedEnumValues', $variableInfo)?$variableInfo['allowedEnumValues']:null)){
+									$filteredResponse[$variableInfo['var']]=$this->castToType($response[$variableInfo['var']], $variableInfo['type']);
+								}else{
+									//the value is of the wrong type for this variable. what are we going to do?
+									if($options['allowTempIds'] && strpos($response[$variableInfo['var']],"temp-")==0){//if the value is like 'temp-%', and we're accepting temporary ids, then let it be
+											$filteredResponse[$variableInfo['var']]=$response[$variableInfo['var']];
+									}else{//it's not a temporary id, and it's an invalid value for this type of variable, so error
+										throw new EspressoAPI_BadRequestException(sprintf(
+												__("Param %s with value %s is not of allowed type %s.","event_espresso"),$variableInfo['var'],$response[$variableInfo['var']],$variableInfo['type']));
+									}
 								}
+							}elseif(!$options['requireAllFields'] && array_key_exists($variableInfo['var'],$response)){
+								//if it's not in the response, just leave it out of the filtered Response
 							}
-							
 						}else{//variable info doesn't have an array key of 'type', so one of the resource facades must have been improperly configured
 							throw new EspressoAPI_SpecialException(__("Event Espresso Internal bug. Misconfiguered Resource variables. Please contact Event Espresso.","event_espresso"));
 						}

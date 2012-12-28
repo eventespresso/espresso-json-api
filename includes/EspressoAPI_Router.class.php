@@ -112,6 +112,12 @@ class EspressoAPI_Router{
 		echo EspressoAPI_Response_Formatter::format($response,$format);
         die;
     }
+	/**
+	 * removes the format part of the URL. eg: espresso-api/v1/regisration/32trfwse4.xml 
+	 * would be remove the ".xml" part
+	 * @param string $urlPart
+	 * @return string 
+	 */
     function stripFormat($urlPart){
 		$posOfDot=strpos($urlPart,".");
 		if($posOfDot===FALSE)

@@ -295,6 +295,29 @@ protected function processSqlResults($rows,$keyOpVals){
 			return intval($registrationId);
 		}
 	}
+	
+	/**
+	 * overrides parent. instead of creating query parameters  to search for API registration
+	 * IDs, it searches for Transaction ids. This is done because 
+	 * @param type $idsAffected
+	 * @return type
+	 */
+	protected function getAffected($idsCreated,$idsUpdated){
+		$affectedResources=array();
+		if(!empty($idsCreated)){
+			$transactionIdsAffected=array();
+			foreach($idsCreated as $idCreated){
+				$transactionIdsAffected[]=intval($idCreated);
+			}
+			$createdResources=$this->getMany(array('Transaction.id__in'=>implode(",",$transactionIdsAffected)));
+			$affectedResources=array_merge($affectedResources,$createdResources);
+		}
+		if(!empty($idsUpdated)){
+			$updatedResources=$this->getMany(array('id__in'=>implode(",",$idsUpdated)));
+			$affectedResources=array_merge($affectedResources,$updatedResources);
+		}
+		return $affectedResources;
+	}
 	/**
 	 * overrides parent's createorUpdateOne. Should create something in our db according to this
 	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
@@ -303,13 +326,20 @@ protected function processSqlResults($rows,$keyOpVals){
     function performCreateOrUpdate($apiInput){
 			
 		//construct list of key-value pairs, for insertion or update
-		
-		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,array());
-		$relatedModels=$this->getFullRelatedModels();
 		$attendeeRowId=$this->convertAPIRegistrationIdToDbAttendeeId($apiInput[$this->modelName]['id']);
+		//first: extract related event info
+		$relatedModels=$this->getFullRelatedModels();
+		if(array_key_exists('Event',$apiInput)){
+			$dbEntries=$relatedModels['Event']['class']->extractMyColumnsFromApiInput($apiInput['Event'],array(),array('correspondingAttendeeId'=>$attendeeRowId));
+		}else{
+			$dbEntries=array();
+		}
+		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,$dbEntries);
+		
+		
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
-				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']])){
+				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']]) && $relatedModelInfo['modelName']!='Event'){
 					$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>$attendeeRowId));
 					//$dbEntries=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntries,$dbEntriesForThisModel);
 				}else{
@@ -337,6 +367,8 @@ protected function processSqlResults($rows,$keyOpVals){
 		return $this->updateAndCreateDbEntries($dbEntries);
 	}
 	
+
+
 	/**
 	 * gets all the database column values from api input
 	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
@@ -344,50 +376,124 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
+		global $wpdb;
 		$models=$this->extractModelsFromApiInput($apiInput);
-		
 		foreach($models as $thisModel){
-			foreach($thisModel as $apiField=>$apiValue){
+			if(!array_key_exists('id', $thisModel)){
+				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
+			}
+			$thisModelId=$thisModel['id'];
+			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
+				$forCreate=true;
+			}else{
+				$forCreate=false;
+			}
+			
+			if(!empty($dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['event_id'])){
+				$relatedEventId=$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['event_id'];
+			}else{
+				$attendeeRowId=intval($thisModelId);
+				$currentAttendeeRow=$wpdb->get_row("SELECT * FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=".$attendeeRowId,ARRAY_A);
+				$relatedEventId=$currentAttendeeRow['event_id'];
+			}
+			$relatedEvent=$wpdb->get_row("SELECT * FROM ".EVENTS_DETAIL_TABLE." WHERE id=".$relatedEventId,ARRAY_A);
+			if(array_key_exists(EVENTS_DETAIL_TABLE,$dbEntries) && array_key_exists($relatedEventid,$dbEntries[EVENTS_DETAIL_TABLE])){
+				$relatedEvent=EspressoAPI_Functions::array_merge_recursive_overwrite($relatedEvent, $dbEntries[EVENTS_DETAIL_TABLE][$relatedEventId]);
+			}
+			foreach($this->requiredFields as $fieldInfo){
+				$apiField=$fieldInfo['var'];
+				
+				if(array_key_exists($apiField,$thisModel)){//provide default value
+					$apiValue=$thisModel[$apiField];
+					$fieldMissing=false;
+				}else{
+					$fieldMissing=true;
+				}
+				//howe we assign the dbValue:
+				//case 1: if the field is missing and we're creating: provide a default
+				//case 2: if the field is present and we're creating: use it
+				//case 3: if the field is missing and we're updating: ignore it (continue)
+				//case 4: if the field is present and we're updating: use it
+				if($fieldMissing && !$forCreate){//case 2
+					continue;
+				}
+				$useDefault=$fieldMissing && $forCreate;//if $useDefault is true: case 1, otherwise case 2 or 4
+				
 				switch($apiField){
 					case 'id':
 						$dbCol='id';
-						$dbValue=$apiValue;
-						$thisModelId=$dbValue;
+						if($useDefault){
+							throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
+						}else{
+							$dbValue=$apiValue;
+							$thisModelId=$dbValue;
+						}
 						break;
 					case 'status':
 						$dbCol='pre_approve';
-						if($apiValue=='approved'){
-							$dbValue=1;
+						if($useDefault){
+							if($relatedEvent['requires_pre_approval']){
+								$dbValue=0;
+							}else{
+								$dbValue=1;
+							}
 						}else{
-							$dbValue=0;
+							if($apiValue=='approved'){
+								$dbValue=1;
+							}else{
+								$dbValue=0;
+							}
 						}
 						break;
 					case 'date_of_registration':
 						$dbCol='date';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=date("Y-m-d H:i:s");
+						}else{
+							$dbValue=$apiValue;
+						}
+						
 						break;
 					case 'final_price':
 						$dbCol='final_price';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=0;
+						}else{
+							$dbValue=$apiValue;
+						}
+						
 						break;
 					case 'code':
 						$dbCol='registration_id';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=espresso_build_registration_id($relatedEventId);
+						}else{
+							
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'is_primary':
 						$dbCol='is_primary';
-						if($apiValue=='true'){
+						if($useDefault){//@todo deciding if a registration is primary probably requires more logic than just assuming they are...
 							$dbValue=1;
 						}else{
-							$dbValue=0;
+							if($apiValue=='true'){
+								$dbValue=1;
+							}else{
+								$dbValue=0;
+							}
 						}
 						break;
 					case'is_checked_in':
 						$dbCol='checked_in';
-						if($apiValue=='true'){
-							$dbValue=1;
-						}else{
+						if($useDefault){
 							$dbValue=0;
+						}else{
+							if($apiValue=='true'){
+								$dbValue=1;
+							}else{
+								$dbValue=0;
+							}
 						}
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;

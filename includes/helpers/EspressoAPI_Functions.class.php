@@ -46,6 +46,11 @@ class EspressoAPI_Functions {
 	 * @return array 
 	 */
 	static function array_merge_recursive_overwrite($Arr1, $Arr2){
+		if(!is_array($Arr1))
+			return $Arr2;
+		if(!is_array($Arr2)){
+			return $Arr1;
+		}
 		foreach($Arr2 as $key => $Value)
 		{
 			if(array_key_exists($key, $Arr1) && is_array($Value))

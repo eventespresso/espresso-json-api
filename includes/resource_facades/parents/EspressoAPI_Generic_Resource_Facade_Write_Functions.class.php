@@ -8,26 +8,53 @@
 require_once(dirname(__FILE__).'/EspressoAPI_Generic_Resource_Facade_Read_Functions.class.php');
 abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends EspressoAPI_Generic_Resource_Facade_Read_Functions{
 	function createOrUpdateMany($apiInput){
-		$apiInput=$this->validator->validate($apiInput,array('single'=>false,'requireRelated'=>false,'allowTempIds'=>true));
-		$idsAffected=array();
+		$apiInput=$this->validator->validate($apiInput,array('single'=>false,'requireRelated'=>false,'allowTempIds'=>true,'requireAllFields'=>false));
+		$idsCreated=array();
+		$idsUpdated=array();
 		foreach($apiInput[$this->modelNamePlural] as $inputPerModelInstance){
 			$this->performCreateOrUpdate(array($this->modelName=>$inputPerModelInstance));
 			if(EspressoAPI_Temp_Id_Holder::isTempId($inputPerModelInstance['id'])){
 				if(EspressoAPI_Temp_Id_Holder::previouslySet($inputPerModelInstance['id'])){
-						$idsAffected[]=EspressoAPI_Temp_Id_Holder::get($inputPerModelInstance['id']);
+						$idsCreated[]=EspressoAPI_Temp_Id_Holder::get($inputPerModelInstance['id']);
 				}else{
 					throw new EspressoAPI_SpecialException(sprintf(__('Internal Error. "%s" is a temporary id, but hasn\'t yet been set. Contact Event Espresso support with the HTTP request info and DB dump.','event_espresso'),$inputPerModelInstance['id']));
 				}
 			}else{
-				$idsAffected[]=$inputPerModelInstance['id'];
+				$idsUpdated[]=$inputPerModelInstance['id'];
 			}
 		}
-		
-				return $this->getMany(array('Transaction.id__in'=>implode(",",$idsAffected)));	
+		return $this->getAffected($idsCreated,$idsUpdated);//$this->getMany($this->generateAfterCreateOrUpdateManyQueryParams($idsCreated,$idsUpdated));//array('Transaction.id__in'=>implode(",",$idsAffected)));	
+	}
+	/**
+	 * after we createOrUpdateMany, we want to return the resource just updated or created.
+	 * In order to do that,we use getMany and pass it along some query parameters.
+	 * This is where that query is created. The query should be key-value pairs just like
+	 * what the api clients supply in the $_GET query parameters.
+	 * @param array $idsCreated is a list of all the  IDs of the toplevel resources affected. So
+	 * if createOrUpdateMany was called on registrations and we created 2 registrations 
+	 * (and maybe created some related attendees and events, doesn't matter actually) and updated 1,
+	 * then $idsCreated would be the DB row ids of the 2 newly-created registrations, and $idsUpdated would be the
+	 * id of the one registration which was updated
+	 * @param array $idsUpdated explained above
+	 * @return array just like getMany
+	 */
+	protected function getAffected($idsCreaetd,$idsUpdated){
+		$idsAffected=array_merge($idsCreaetd,$idsUpdated);
+		return $this->getMany(array('id_in'=>implode(",",$idsAffected)));
 	}
 	
+	/**
+	 * called by controllers to update one resource, specified by $id
+	 * @param type $id
+	 * @param type $apiInput
+	 * @return type
+	 * @throw EspressoAPI_BadRequestException if $id does not match $apiInput[modelName]['id']
+	 */
 	function updateOne($id,$apiInput){
-		$apiInput=$this->validator->validate($apiInput,array('single'=>true,'requireRelated'=>false,'allowTempIds'=>true));
+		$apiInput=$this->validator->validate($apiInput,array('single'=>true,'requireRelated'=>false,'allowTempIds'=>true,'requireAllFields'=>false));
+		if($id!=$apiInput[$this->modelName]['id']){
+			throw new EspressoAPI_BadRequestException(sprintf(__("The ID specified in the URL (%s) does not match the ID specified in the request body (%s)",'event_espresso'),$id,$apiInput[$this->modelName]['id']));
+		}
 		$this->performCreateOrUpdate($apiInput);
 		return $this->getOne($id);
 	}
@@ -75,7 +102,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 	 */
 	protected function loopThroughDbEntriesAndPerform($action,$dbEntries){
 		if(!in_array($action,array('create','update'))){
-			throw new EspressoAPI_SpecialException(sprintf(__("Internal error. Trying to loop thruogh DB entries to update or create, but supplied action was %s","event_espresso"),$action));
+			throw new EspressoAPI_SpecialException(sprintf(__("Internal error. Trying to loop thruogh DB entries to update or create, but supplied action was %s. It should be 'update' or 'create'.","event_espresso"),$action));
 		}
 		foreach($dbEntries as $tableName=>$rowsToUpdate){
 			foreach($rowsToUpdate as $rowId=>$columns){
@@ -125,6 +152,13 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 	 * @return id of row updated
 	 */
 	protected function updateOrCreateRow($tableName, array $keyValPairs,array $options=array()){
+		//skip updating if we only have 1 keyValPair,because it should be 'id'=>$modelId
+		//and any creates should always define more than 1 field. (maybe there will be
+		//an exception some day, but that would require a table to only have 2 columns: an id and a value. 
+		//(even meta-tables have at least 3: id, meta-key, meta-value))
+		if(count($keyValPairs)<2){
+			return true;
+		}
 		global $wpdb;
 		if(array_key_exists('whereClauses',$options)){
 			$wheres=$options['whereClauses'];
@@ -140,7 +174,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Write_Functions extends Espre
 		
 		
 		$format=array();
-		$create=true;//start off assuming we're inserting a new row
+		$create=true;//start off assuming we're inserting a new row. 
 		$keyValPairsSansTemps=array();//keyValPairs but we've replaced all the temp ids with their real values
 		foreach($keyValPairs as $columnName=>$columnValue){
 			if($columnName!=$idCol){
