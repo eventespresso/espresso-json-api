@@ -115,7 +115,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 				$operator= ">";
 				break;
 			case 'gte':
-				$operator= ">";
+				$operator= ">=";
 				break;
 			case 'like':
 			case 'LIKE':

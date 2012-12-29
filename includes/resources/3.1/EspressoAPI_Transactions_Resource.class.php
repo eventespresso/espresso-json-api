@@ -180,6 +180,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
 	
+	
 	/**
 	 * gets all the database column values from api input
 	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
@@ -187,55 +188,121 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
-		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
+		global $wpdb;
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null,'correspondingEvent'=>null),$options);
 		$models=$this->extractModelsFromApiInput($apiInput);
 		//$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			//$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
-			foreach($thisModel as $apiField=>$apiValue){
+			///////////////////////
+			if(!array_key_exists('id', $thisModel)){
+				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
+			}
+			$thisModelId=$options['correspondingAttendeeId']?$options['correspondingAttendeeId']:$thisModel['id'];
+			/*if(EspressoAPI_Temp_Id_Holder::isTempId($options['correspondingAttendeeId'])
+					&& EspressoAPI_Temp_Id_Holder::isTempId($thisModel['id'])){
+				$thisModelId=$options['correspondingAttendeeId'];
+			}else{
+				$thisModelId=intval($thisModel['id']);
+			}*/
+						
+			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
+				$forCreate=true;
+			}else{
+				$forCreate=false;
+			}
+			foreach($this->requiredFields as $fieldInfo){
+				$apiField=$fieldInfo['var'];
+				
+				if(array_key_exists($apiField,$thisModel)){//provide default value
+					$apiValue=$thisModel[$apiField];
+					$fieldMissing=false;
+				}else{
+					$fieldMissing=true;
+				}
+				//howe we assign the dbValue:
+				//case 1: if the field is missing and we're creating: provide a default
+				//case 2: if the field is present and we're creating: use it
+				//case 3: if the field is missing and we're updating: ignore it (continue)
+				//case 4: if the field is present and we're updating: use it
+				if($fieldMissing && !$forCreate){//case 2
+					continue;
+				}
+				$useDefault=$fieldMissing && $forCreate;//if $useDefault is true: case 1, otherwise case 2 or 4
+				////////////////
 				switch($apiField){
 					case 'id':
 						$dbCol=$apiField;
 						//if both this trasnaction's id is a temp ID, and its been suuplied a 'correspondingAttendeeId' 
 						//that's a temp ID, set the two of them to be equal
-						if(EspressoAPI_Temp_Id_Holder::isTempId($options['correspondingAttendeeId'])
-								&& EspressoAPI_Temp_Id_Holder::isTempId($apiValue)){
-							$dbValue=$options['correspondingAttendeeId'];
-						}else{
-							$dbValue=$apiValue;
-						}
-						$thisModelId=$dbValue;
+						$dbValue=$thisModelId;
 						break;
 					case 'timestamp':
 						$dbCol='date';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=date("Y-m-d H:i:s");
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'total':
 						$dbCol='total_cost';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=0;
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'amount_paid':
 						$dbCol='amount_pd';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue=0;
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'payment_gateway':
 						$dbCol='txn_type';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue='';
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'status':
 						$dbCol='payment_status';
-						$statusMappingFlipped=array_flip($this->statusMapping);
-						$dbValue=$statusMappingFlipped[$apiValue];
+						if($useDefault){
+							if(!empty($options['correspondingEvent'])){
+								$eventMeta=maybe_unserialize($options['correspondingEvent']['event_meta']);
+								$defaultPaymentStatusOnEvent=$eventMeta['default_payment_status'];
+								if(empty($defaultPaymentStatusOnEvent)){
+									$defaultPaymentStatusOnEvent='Incomplete';
+								}
+								$dbValue=$defaultPaymentStatusOnEvent;
+							}else{
+								$dbValue='Incomplete';
+							}
+						}else{
+							$statusMappingFlipped=array_flip($this->statusMapping);
+							$dbValue=$statusMappingFlipped[$apiValue];
+						}
 						break;
+					case 'checked_in_quantity':
+						$dbCol=$apiField;
+						if($useDefault){
+							$dbValue=0;
+						}else{
+							$dbValue=$apiValue;
+						}
 					case 'details':
 					case 'tax_data':
 					case 'session_data':
-					case 'checked_in_quantity':
 						continue;			
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
+			//@todo determine quantity more intelligently
+			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['quantity']=1;
 			
 		}
 		return $dbEntries;

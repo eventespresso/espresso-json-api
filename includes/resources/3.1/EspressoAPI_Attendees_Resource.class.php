@@ -112,28 +112,55 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 		$models=$this->extractModelsFromApiInput($apiInput);
 		
 		foreach($models as $thisModel){
-			//$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModel['id']]=array();
-			foreach($thisModel as $apiField=>$apiValue){
+			if(!array_key_exists('id', $thisModel)){
+				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
+			}
+			$thisModelId=$options['correspondingAttendeeId']?$options['correspondingAttendeeId']:$thisModel['id'];
+			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
+				$forCreate=true;
+			}else{
+				$forCreate=false;
+			}
+			foreach($this->requiredFields as $fieldInfo){
+				$apiField=$fieldInfo['var'];
+				if(array_key_exists($apiField,$thisModel)){//provide default value
+					$apiValue=$thisModel[$apiField];
+					$fieldMissing=false;
+				}else{
+					$fieldMissing=true;
+				}
+				//howe we assign the dbValue:
+				//case 1: if the field is missing and we're creating: provide a default
+				//case 2: if the field is present and we're creating: use it
+				//case 3: if the field is missing and we're updating: ignore it (continue)
+				//case 4: if the field is present and we're updating: use it
+				if($fieldMissing && !$forCreate){//case 2
+					continue;
+				}
+				$useDefault=$fieldMissing && $forCreate;//if $useDefault is true: case 1, otherwise case 2 or 4
 				switch($apiField){
 					case 'id':
 						$dbCol=$apiField;
-						////if both this trasnaction's id is a temp ID, and its been suuplied a 'correspondingAttendeeId' 
+						////if both this attendee's id is a temp ID, and its been suuplied a 'correspondingAttendeeId' 
 						//that's a temp ID, set the two of them to be equal
-						if(EspressoAPI_Temp_Id_Holder::isTempId($options['correspondingAttendeeId'])
-								&& EspressoAPI_Temp_Id_Holder::isTempId($apiValue)){
-							$dbValue=$options['correspondingAttendeeId'];
-						}else{
-							$dbValue=$apiValue;
-						}
-						$thisModelId=$dbValue;
+						$dbValue=$thisModelId;
 						break;
 					case 'firstname':
 						$dbCol='fname';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue='';
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'lastname':
 						$dbCol='lname';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue='';
+						}else{
+							$dbValue=$apiValue;
+						}
+						
 						break;
 					case 'address':
 					case 'address2':
@@ -143,11 +170,19 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 					case 'email':
 					case 'phone':
 						$dbCol=$apiField;
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue='';
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 					case 'country':
 						$dbCol='country_id';
-						$dbValue=$apiValue;
+						if($useDefault){
+							$dbValue='';
+						}else{
+							$dbValue=$apiValue;
+						}
 						break;
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;

@@ -120,7 +120,7 @@ class EspressoAPI_Validator {
 						//validate the key of the response
 						if($options['requireAllFields'] && !array_key_exists($variableInfo['var'],$response)){
 							if(WP_DEBUG){
-								throw new Exception(sprintf(__("Response in wrong Event Espresso Format! Expected value: %s but it wasnt set in %s","event_espresso"),$variableInfo['var'],print_r($response,true)));
+								throw new Exception(sprintf(__("%s in wrong Event Espresso Format! Expected value: %s but it wasnt set in %s. ","event_espresso"),$this->resource->modelName,$variableInfo['var'],print_r($response,true)));
 							}
 							else{ 
 								throw new Exception(__("Response in wrong format. For more information please turn on WP_DEBUG in wp-config","event_espresso"));
@@ -160,15 +160,15 @@ class EspressoAPI_Validator {
 				}
 			}else{//it's a string key, require it in the response
 				if(!isset($response[$key])){
-					//if it's a related model, and we're not requiring them, ignore it and carry on
-					if($this->resource->isARelatedModel($key) && !$options['requireRelated']){
+					//if it's a related model, and we're not requiring them, ignore it and carry on (pricetype is an exception: it's often an indirectly related model)
+					if(($this->resource->isARelatedModel($key) || $key=='Pricetype' )&& !$options['requireRelated']){
 						continue;
 					}
-					if(WP_DEBUG)
-						throw new Exception(__("Response in wrong Event Espresso Format! Expected value: ","event_espresso").print_r($value,true).__(" but it wasnt set in ","event_espresso").print_r($response,true));
-					else 
+					if(WP_DEBUG){
+						throw new Exception(sprintf(__("%s in wrong Event Espresso Format! Expected value: %s but it wasnt set in %s. ","event_espresso"),$this->resource->modelName,$key,print_r($response,true)));
+					}else {
 						throw new Exception(__("Response in wrong format. For more information please turn on WP_DEBUG in wp-config","event_espresso"));
-						
+					}	
 				}else{ 
 					//we're looking at a related, nested model. Eg: an Event's Datetime.
 					//with key 'Datetime' and value of array('id'=>12,'start_time'=>'2012-23-12 12:23:34', etc.

@@ -189,7 +189,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		global $wpdb;
-		$options=shortcode_atts(array('correspondingAttendeeId'=>null),$options);
+		$options=shortcode_atts(array('correspondingAttendeeId'=>null,'correspondingEvent'=>null),$options);
 		
 		$models=$this->extractModelsFromApiInput($apiInput);
 		/*$dbEntries=array(EVENTS_DETAIL_TABLE=>array(),EVENTS_START_END_TABLE=>array());
@@ -197,6 +197,8 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			$dbEntries[EVENTS_ATTENDEE_TABLE]=array();
 		}*/
 		foreach($models as $thisModel){
+			$correspondingEventId=$options['correspondingEvent']['id'];
+			/*
 			$sql='SELECT * FROM '.EVENTS_START_END_TABLE.' WHERE id='.$thisModel['id'];
 			$correspondingEventRow=$wpdb->get_row($sql,ARRAY_A );
 			if(empty($correspondingEventRow)){
@@ -205,6 +207,8 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			$correspondingEventId=$correspondingEventRow['event_id'];
 			//$dbEntries[EVENTS_START_END_TABLE][$thisModel['id']]=array();
 			$dbEntries[EVENTS_DETAIL_TABLE][$correspondingEventId]['id']=$correspondingEventId;
+			 
+			 */
 			/*if(isset($options['correspondingAttendeeId'])){
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$options['correspondingAttendeeId']]=array();
 			}*/

@@ -327,22 +327,27 @@ protected function processSqlResults($rows,$keyOpVals){
 			
 		//construct list of key-value pairs, for insertion or update
 		$attendeeRowId=$this->convertAPIRegistrationIdToDbAttendeeId($apiInput[$this->modelName]['id']);
+		if(EspressoAPI_Temp_Id_Holder::isTempId($apiInput[$this->modelName]['id'])){
+			$create=true;
+		}else{
+			$create=false;
+		}
 		//first: extract related event info
 		$relatedModels=$this->getFullRelatedModels();
-		if(array_key_exists('Event',$apiInput)){
-			$dbEntries=$relatedModels['Event']['class']->extractMyColumnsFromApiInput($apiInput['Event'],array(),array('correspondingAttendeeId'=>$attendeeRowId));
+		if(array_key_exists('Event',$apiInput[$this->modelName])){
+			$dbEntries=$relatedModels['Event']['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],array(),array('correspondingAttendeeId'=>$attendeeRowId));
 		}else{
 			$dbEntries=array();
 		}
+		$eventRow=$this->getDbEventForAttendeeId($attendeeRowId,$dbEntries);//we need the event data correponding to this registration
 		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,$dbEntries);
 		
 		
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']]) && $relatedModelInfo['modelName']!='Event'){
-					$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>$attendeeRowId));
-					//$dbEntries=  EspressoAPI_Functions::array_merge_recursive_overwrite($dbEntries,$dbEntriesForThisModel);
-				}else{
+					$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>$attendeeRowId,'correspondingEvent'=>$eventRow));
+				}/*else{
 					//they only provided the id of the related model, 
 					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
 					//instead of array('Registration'=>array('id'=>1...'Event'=>array('id'=>1,'name'=>'party1'...)
@@ -359,14 +364,45 @@ protected function processSqlResults($rows,$keyOpVals){
 					throw new EspressoAPI_MethodNotImplementedException(__("We have yet to handle such updating of transactions","event_espresso"));
 					// @todo if it's Datetime, then we hsould update the times in the current row
 					throw new EspressoAPI_MethodNotImplementedException(__("We have yet to handle such updating of datetimes","event_espresso"));
-				}
+				}*/
 			}elseif(array_key_exists($relatedModelInfo['modelNamePlural'],$apiInput[$this->modelName])){
 				throw new EspressoAPI_MethodNotImplementedException(sprintf(__("We do not yet handle bulk updating/creating on %s","event_espresso"),$this->modelNamePlural));
+			}elseif($create){
+				throw new EspressoAPI_MethodNotImplementedException(__("When creating a new registration, you must at least indicate the ID of the related attendee, transaction, event, price and datetime",'event_espresso'));
 			}
 		}
 		return $this->updateAndCreateDbEntries($dbEntries);
 	}
 	
+	/**
+	 * handles getting the related Event DB row for a given $attendeeId. 
+	 * If the event already exists in the database, fetches it.
+	 * If the event doesn't already exist, uses what's provided in the API input.
+	 * If the event exists but there are updates from teh API input, merges the two
+	 * @param type $attendeeId
+	 * @param type $dbEntries
+	 */
+	protected function getDbEventForAttendeeId($attendeeId,$dbEntries){
+		global $wpdb;
+		//check if we are dealign with a temp Id
+		$eventRow=array();
+		$eventId=$dbEntries[EVENTS_ATTENDEE_TABLE][$attendeeId]['event_id'];//must get the event ID from api input
+		if(empty($eventId)){//try getting the attendee row from the db
+			if(!EspressoAPI_Temp_Id_Holder::isTempId($attendeeId)){
+				$attendeeRow=$wpdb->get_row("SELECT * FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=".$attendeeId,ARRAY_A);
+				$eventId=$attendeeRow['event_id'];
+			}
+			if(empty($eventId)){
+				throw new EspressoAPI_BadRequestException(__("You must provide a related event id in this request",'event_espresso'));
+			}
+		}
+		//we definitely have an event Id. now we find the whole row  from teh db and mix with api input (if it exists)
+		$eventRow=$wpdb->get_row("SELECT * FROM ".EVENTS_DETAIL_TABLE." WHERE id=".$eventId,ARRAY_A);
+		if(isset($dbEntries[EVENTS_DETAIL_TABLE][$eventId])){
+			$eventRow=EspressoAPI_Functions::array_merge_recursive_overwrite($eventRow,$dbEntries[EVENTS_DETAIL_TABLE][$eventId]);
+		}
+		return $eventRow;
+	}
 
 
 	/**
@@ -376,30 +412,22 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
-		global $wpdb;
+		$options=shortcode_atts(array('correspondingEvent'=>null),$options);
 		$models=$this->extractModelsFromApiInput($apiInput);
 		foreach($models as $thisModel){
 			if(!array_key_exists('id', $thisModel)){
 				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
 			}
-			$thisModelId=$thisModel['id'];
-			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
+			
+			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModel['id'])){
 				$forCreate=true;
+				$thisModelId=$thisModel['id'];
 			}else{
 				$forCreate=false;
+				$thisModelId=intval($thisModel['id']);
 			}
 			
-			if(!empty($dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['event_id'])){
-				$relatedEventId=$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['event_id'];
-			}else{
-				$attendeeRowId=intval($thisModelId);
-				$currentAttendeeRow=$wpdb->get_row("SELECT * FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=".$attendeeRowId,ARRAY_A);
-				$relatedEventId=$currentAttendeeRow['event_id'];
-			}
-			$relatedEvent=$wpdb->get_row("SELECT * FROM ".EVENTS_DETAIL_TABLE." WHERE id=".$relatedEventId,ARRAY_A);
-			if(array_key_exists(EVENTS_DETAIL_TABLE,$dbEntries) && array_key_exists($relatedEventid,$dbEntries[EVENTS_DETAIL_TABLE])){
-				$relatedEvent=EspressoAPI_Functions::array_merge_recursive_overwrite($relatedEvent, $dbEntries[EVENTS_DETAIL_TABLE][$relatedEventId]);
-			}
+			$relatedEvent=$options['correspondingEvent'];
 			foreach($this->requiredFields as $fieldInfo){
 				$apiField=$fieldInfo['var'];
 				
@@ -466,7 +494,7 @@ protected function processSqlResults($rows,$keyOpVals){
 					case 'code':
 						$dbCol='registration_id';
 						if($useDefault){
-							$dbValue=espresso_build_registration_id($relatedEventId);
+							$dbValue=espresso_build_registration_id($relatedEvent['id']);
 						}else{
 							
 							$dbValue=$apiValue;
