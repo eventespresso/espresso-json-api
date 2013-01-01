@@ -112,12 +112,12 @@ protected function processSqlResults($rows,$keyOpVals){
 			$row['Registration.url_link']=null;
 			$row['Registration.is_group_registration']=$this->determineIfGroupRegistration($row);
 			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
-			$row['Registration.is_checked_in']=$row['Attendee.checked_in']?true:false;
 			
 			//in 3.2, every single row in registrationtable relates to a ticket for somebody
 			//to get into the event. In 3.1 it sometimes does and sometimes doesn't. Which is somewhat 
 			//confusing. So it really should,instead, 
 			$baseRegId=$row['Registration.id'];
+			$checkedInQuantity=$row['Attendee.checked_in_quantity'];
 			for($i=1;$row['Attendee.quantity']>=$i;$i++){
 				$row['Registration.id']="$baseRegId.$i";
 				 if($i>1){  
@@ -125,6 +125,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				}  
 				if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 					continue;		
+				$row['Registration.is_checked_in']=($i<=$checkedInQuantity || ($i==1 && $row['Attendee.checked_in']))?true:false;
 			
 				$processedRows[]=$row;
 			}	
