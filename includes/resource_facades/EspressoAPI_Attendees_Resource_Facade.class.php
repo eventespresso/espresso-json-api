@@ -38,14 +38,4 @@ abstract class EspressoAPI_Attendees_Resource_Facade extends EspressoAPI_Generic
 		array('var'=>'email','type'=>'string'),
 		array('var'=>'phone','type'=>'string')
 		);
-	/**
-	 * array of requiredFields allowed for querying and which must be returned. other requiredFields may be returned, but this is the minimum set
-	 * @var type 
-	 */
-	
-	 function create($createParameters){
-         return $this->_createAttendee($createParameters);
-     }
-     abstract protected function _create($createParameters);
-	 
 }

@@ -30,8 +30,22 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 		Attendee.zip as 'Attendee.zip',
 		Attendee.email as 'Attendee.email',
 		Attendee.phone as 'Attendee.phone'";
-	var $relatedModels=array();
-	
+	var $relatedModels=array(
+		"Event"=>array('modelName'=>'Event', 'modelNamePlural'=>"Events",'hasMany'=>true),
+		"Registration"=>array('modelName'=>'Registration','modelNamePlural'=>"Registrations",'hasMany'=>true));
+	function getManyConstructQuery($sqlSelect,$whereSql){
+		global $wpdb;
+		$sql = "
+            SELECT
+				{$this->selectFields},				
+				{$sqlSelect}
+            FROM
+                {$wpdb->prefix}events_attendee Attendee
+			LEFT JOIN
+				{$wpdb->prefix}events_detail Event ON Event.id=Attendee.event_id
+			$whereSql";		
+		return $sql;
+	}
 	/**
 	 *for taking the info in the $sql row and formatting it according
 	 * to the model
@@ -57,50 +71,8 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 			return $attendee;
 	}
 	
-    function _create($createParameters){
-        return array("status"=>"Not Yet Implemented","status_code"=>"500");
-    }
-    /**
-     *for handling requests liks '/events/14'
-     * @param int $id id of event
-     */
-	protected function _getOne($id) {
-		global $wpdb;
-		$result=$wpdb->get_row("SELECT * FROM {$wpdb->prefix}events_attendee WHERE id='$id'",ARRAY_A);
-		if(empty($result))
-			throw new EspressoAPI_ObjectDoesNotExist($id);
-		if(EspressoAPI_Permissions_Wrapper::espresso_is_my_event($result['event_id']))
-			return array("attendee"=>$result);
-		else
-			throw new EspressoAPI_UnauthorizedException();
-	
-	}
-	
-	/*protected function extractMyColumnsFromApiInput($apiInput){
-		$models=$this->extractModelsFromApiInput($apiInput);
-		
-		$dbEntries=array(
-			EVENTS_ATTENDEE_TABLE=>array());
-		foreach($models as $model){
-			//$dbEntries[EVENTS_ATTENDEE_TABLE][]
-		
-				$attendeeModel['id']=array(
-					'id'=>$attendeeModel['id'],
-					'fname'=>$attendeeModel['firstname'],
-					'lname'=>$attendeeModel['lastname'],
-					'address'=>$attendeeModel['address'],
-					'address2'=>$attendeeModel['address2'],
-					'city'=>$attendeeModel['city'],
-					'state'=>$attendeeModel['state'],
-					'country_id'=>$attendeeModel['country'],
-					'zip'=>$attendeeModel['zip'],
-					'email'=>$attendeeModel['email'],
-					'phone'=>$attendeeModel['phone']
-			);		
-		}
-		return $dbEntries;
-	}*/
-	
+
+
 	/**
 	 * gets all the database column values from api input
 	 * @param array $apiInput either like array('events'=>array(array('id'=>... 

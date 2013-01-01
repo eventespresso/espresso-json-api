@@ -93,25 +93,6 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		}
 		return parent::constructSQLWhereSubclause($columnName,$operator,$value);
 	}
-	/*
-	 * overrides parent constructSQLWherSubclauses in order to attach an additional wherecaluse
-	 * which will ensure the prices found match the ones the attendees purchased
-	 */
-	protected function constructSQLWhereSubclauses($keyOpVals){
-		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
-		//$whereSqlArray[]="
-		//";
-		return $whereSqlArray;
-	}
-	/*protected function processSqlResults($results,$keyOpVals){
-		$resultsICanView = array();
-		foreach ($results as $event) {
-			if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event['Event.id']))
-				$resultsICanView[] = $event;
-		}
-		return $resultsICanView;
-	}
-	*/
 protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
 		if(!function_exists('is_attendee_approved')){
