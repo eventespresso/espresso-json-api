@@ -140,8 +140,12 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
 		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['Startend.end_time'])){
 			$sqlResult['StartEnd.id']="0";
-			$myTimeToStart=$sqlResult['Attendee.event_time'];
-			$myTimeToEnd=$sqlResult['Attendee.end_time'];
+			if(array_key_exists('Attendee.event_time',$sqlResult)){
+				$myTimeToStart=$sqlResult['Attendee.event_time'];
+			}
+			if(array_key_exists('Attendee.end_time',$sqlResult)){
+				$myTimeToEnd=$sqlResult['Attendee.end_time'];
+			}
 		}else{
 			$myTimeToStart=$sqlResult['StartEnd.start_time'];
 			$myTimeToEnd=$sqlResult['Startend.end_time'];
@@ -151,11 +155,12 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			$myTimeToEnd="00:00";
 			$myTimeToStart="00:00";
 		}
-		
+		$registrationStartTime=(empty($sqlResult['Event.registration_startT']))?"00:00":$sqlResult['Event.registration_startT'];
+		$registrationEndTime=(empty($sqlResult['Event.registration_endT']))?"00:00":$sqlResult['Event.registration_endT'];
 		$eventStart=$sqlResult['Event.start_date']." $myTimeToStart:00";
 		$eventEnd=$sqlResult['Event.end_date']." $myTimeToEnd:00";
-		$registrationStart=$sqlResult['Event.registration_start']." ".$sqlResult['Event.registration_startT'].":00";
-		$registrationEnd=$sqlResult['Event.registration_end']." ".$sqlResult['Event.registration_endT'].":00";
+		$registrationStart=$sqlResult['Event.registration_start']." ".$registrationStartTime.":00";
+		$registrationEnd=$sqlResult['Event.registration_end']." ".$registrationEndTime.":00";
 
 			
 		$datetime=array(
