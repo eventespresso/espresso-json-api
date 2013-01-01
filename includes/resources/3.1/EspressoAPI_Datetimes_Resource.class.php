@@ -99,12 +99,12 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		foreach($rows as $row){
 			if(empty($attendeesPerEvent[$row['Event.id']])){
 				//because in 3.1 there can't be a limit per datetime, only per event, just count total attendees of an event
-				$quantitiesAttendingPerRow=$wpdb->get_col( $wpdb->prepare( "SELECT quantity FROM {$wpdb->prefix}events_attendee WHERE event_id=%d;", $row['Event.id']) );
+				/*$quantitiesAttendingPerRow=$wpdb->get_col( $wpdb->prepare( "SELECT quantity FROM {$wpdb->prefix}events_attendee WHERE event_id=%d AND ;", $row['Event.id']) );
 				$totalAttending=0;
 				foreach($quantitiesAttendingPerRow as $quantity){
 					$totalAttending+=intval($quantity);
-				}
-				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
+				}*/
+				$attendeesPerEvent[$row['Event.id']]=get_number_of_attendees_reg_limit($row['Event.id'],'num_attendees');//basically cache the result
 			}
 			$row['StartEnd.reg_limit']=intval($row['Event.reg_limit']);
 			$row['Datetime.tickets_left']=intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];

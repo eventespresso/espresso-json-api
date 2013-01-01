@@ -201,7 +201,7 @@ class EspressoAPI_Validator {
 				return true;
 			switch($type){
 				case 'int':
-					if(ctype_digit($value) || is_int($value)){
+					if(ctype_digit($value) || is_numeric($value)){
 						continue;
 					}
 					else{
