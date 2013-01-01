@@ -23,12 +23,10 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		'Transaction.timestamp',
 		'Transaction.total',
 		'Transaction.amount_paid',
-		'Transaction.registrations_on_transaction',
 		'Transaction.payment_gateway',
 		'Transaction.details',
 		'Transaction.tax_data',
-		'Transaction.session_data',
-		'Transaction.checked_in_quantity');
+		'Transaction.session_data');
 	
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
@@ -48,13 +46,6 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	 * @var type 
 	 */
 	private $primaryTransactions=array();
-	/**
-	 * used for caching the count of registrations per transaction.
-	 * in 3.1, that means how many attendee rows*quantity on each row, who share
-	 * the same registration_id
-	 * @var type 
-	 */
-	private $registrationsPerTransaction=array();
 	/**
 	 * used for converting between api version of Transaction.status and the DB version
 	 * keys are DB versions, valuesare teh api versions
@@ -86,7 +77,6 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				$row['Transaction.amount_paid']=$row['Attendee.amount_pd'];
 				$row['Transaction.payment_gateway']=$row['Attendee.txn_type'];
 			}
-			$row['Transaction.registrations_on_transaction']=$this->countRegistrationsPerTransaction($row);
 			$row['Transaction.status']=$this->statusMapping[$row['Attendee.payment_status']];
 			$row['Transaction.details']=null;
 			$row['Transaction.tax_data']=null;
@@ -112,35 +102,13 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'timestamp'=>$sqlResult['Transaction.timestamp'],
 				'total'=>$sqlResult['Transaction.total'],
 				'amount_paid'=>$sqlResult['Transaction.amount_paid'],
-				'registrations_on_transaction'=>$sqlResult['Transaction.registrations_on_transaction'],
 				'status'=>$sqlResult['Transaction.status'],
 				'details'=>$sqlResult['Transaction.details'],
 				'tax_data'=>$sqlResult['Transaction.tax_data'],
 				'session_data'=>$sqlResult['Transaction.session_data'],
-				'payment_gateway'=>$sqlResult['Transaction.payment_gateway'],
-				'checked_in_quantity'=>$sqlResult['Attendee.checked_in_quantity']
+				'payment_gateway'=>$sqlResult['Transaction.payment_gateway']
 				);
 			return $transaction;
-	}
-	
-	private function countRegistrationsPerTransaction($sqlResult){
-		if(empty($sqlResult['Attendee.registration_id'])){
-			throw new EspressoAPI_OperationFailed(__("Error counting registrations per transaction. There is no registration_id on the results on the row we're using to count","event_espresso"));
-		}
-		if(!array_key_exists($sqlResult['Attendee.registration_id'],$this->registrationsPerTransaction)){
-			global $wpdb;
-			$quantitieRows=$wpdb->get_results("SELECT quantity FROM {$wpdb->prefix}events_attendee Attendee
-				WHERE Attendee.registration_id='{$sqlResult['Attendee.registration_id']}'",ARRAY_A);
-			if(empty($quantitieRows)){
-				throw new EspressoAPI_OperationFailed(__("Error counting registrations per transaction. Somehow there are no registrations for this transaction...","event_espresso"));
-			}
-				$count=0;
-			foreach($quantitieRows as $quantityRow){
-				$count+=intval($quantityRow['quantity']);
-			}
-			$this->registrationsPerTransaction[$sqlResult['Attendee.registration_id']]=$count;
-		}
-		return $this->registrationsPerTransaction[$sqlResult['Attendee.registration_id']];
 	}
 
 	/**
@@ -194,17 +162,11 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		//$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
 		
 		foreach($models as $thisModel){
-			///////////////////////
 			if(!array_key_exists('id', $thisModel)){
 				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
 			}
 			$thisModelId=$options['correspondingAttendeeId']?$options['correspondingAttendeeId']:$thisModel['id'];
-			/*if(EspressoAPI_Temp_Id_Holder::isTempId($options['correspondingAttendeeId'])
-					&& EspressoAPI_Temp_Id_Holder::isTempId($thisModel['id'])){
-				$thisModelId=$options['correspondingAttendeeId'];
-			}else{
-				$thisModelId=intval($thisModel['id']);
-			}*/
+
 						
 			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
 				$forCreate=true;
@@ -229,7 +191,6 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 					continue;
 				}
 				$useDefault=$fieldMissing && $forCreate;//if $useDefault is true: case 1, otherwise case 2 or 4
-				////////////////
 				switch($apiField){
 					case 'id':
 						$dbCol=$apiField;
@@ -287,13 +248,6 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 							$dbValue=$statusMappingFlipped[$apiValue];
 						}
 						break;
-					case 'checked_in_quantity':
-						$dbCol=$apiField;
-						if($useDefault){
-							$dbValue=0;
-						}else{
-							$dbValue=$apiValue;
-						}
 					case 'details':
 					case 'tax_data':
 					case 'session_data':
