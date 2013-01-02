@@ -70,7 +70,7 @@
 						<h3 class="hndle"><?php _e("Developers",'event_espresso')?></h3>
 						<div class='inside'>
 							<div class="padding">
-								<p><?php _e("For information on how to use the API, please read the",'event_espresso')?> <a href='http://codex.eventespresso.com/index.php?title=Rest_api'><?php _e("Event Espresso Codex Documentation",'event_espresso')?></a></p>
+								<p><?php _e("For information on how to use the API, please read the",'event_espresso')?> <a href='http://codex.eventespresso.com/index.php?title=Rest_api' target='_blank'><?php _e("Event Espresso Codex Documentation",'event_espresso')?></a></p>
 							</div>
 						</div>
 					</div>
