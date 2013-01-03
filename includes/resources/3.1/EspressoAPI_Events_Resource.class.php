@@ -163,7 +163,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				'id'=>$sqlResult['Event.id'],
 				'code'=>$sqlResult['Event.event_code'],
 				'name'=>stripslashes_deep($sqlResult['Event.event_name']),
-				'description'=>stripslashes_deep($sqlResult['Event.event_desc']),
+				'description'=>espresso_format_content(stripslashes_deep($sqlResult['Event.event_desc'])),
 				'metadata'=>$metaDatas,	
 				'status'=>$this->statusConversions[$statusUnconverted],
 				'limit'=>$sqlResult['Event.reg_limit'],
