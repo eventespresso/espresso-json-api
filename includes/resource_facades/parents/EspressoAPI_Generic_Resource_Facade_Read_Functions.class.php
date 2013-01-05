@@ -322,14 +322,14 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			 }
 			 if(array_key_exists('limit',$queryParameters)){
 				 if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
+					 $limitParts=explode(",",$queryParameters['limit']);
+					 if(count($limitParts)>2){
+						 throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
+					 }
 					 $limit=$queryParameters['limit'];
-					 //$firstPartOfLimit=explode(",",$queryParameters['limit'],1);
-					 //$final_limit=intval($firstPartOfLimit[0]);
-					 //echo "final limit:$final_limit";
 					 unset($queryParameters['limit']);
 				 }else{
 					 $limit=50;
-					 $final_limit=$limit;
 				 }
 			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
@@ -337,7 +337,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		else{
 			$cacheResult=false;
 			$limit=50;
-			$final_limit=$limit;
 			$keyOpVals=array();
 		}
 		//validate query parameter input first by normalizing input into 'Model.parameter'
