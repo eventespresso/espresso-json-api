@@ -3,6 +3,10 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Category.id';
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Category.id',
 		'name'=>'Category.category_name',
@@ -18,7 +22,6 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 		Category.category_desc AS 'Category.description',
 		Category.wp_user AS 'Category.wp_user'";
 	var $relatedModels=array();
-	
 	/**
 	 * takes the results acquired from a DB selection, and extracts
 	 * each instance of this model, and compiles into a nice array like

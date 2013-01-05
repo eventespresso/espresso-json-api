@@ -3,6 +3,10 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Promocode.id';
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Promocode.id',
 		'coupon_code'=>'Promocode.coupon_code',
@@ -32,7 +36,6 @@ class EspressoAPI_Promocodes_Resource extends EspressoAPI_Promocodes_Resource_Fa
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
-	
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
 		$processedRows=array();

@@ -10,6 +10,10 @@
  * that have teh same 'code' (registration_id in the db) 
  */
 class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Attendee.id';
 	var $APIqueryParamsToDbColumns=array();
 		//'id'=>'Attendee.id',
 		//'timestamp'=>'Attendee.date',

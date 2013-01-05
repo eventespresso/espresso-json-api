@@ -20,6 +20,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * @var type 
 	 */
 	protected $validator;
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn;
+	
 	function __construct(){
 		$this->validator=new EspressoAPI_Validator($this);
 	}

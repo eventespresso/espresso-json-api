@@ -11,6 +11,10 @@ define('ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR',.1);
 define('ESPRESSOAPI_PRICE_MEMBER_INDICATOR',.2);
 
 class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Price.id';
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Price.id',
 		'name'=>'Price.price_type',
@@ -39,7 +43,6 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	function __construct(){
 		$this->pricetypeModel=EspressoAPI_ClassLoader::load("Pricetypes",'Resource');;
 	}
-	
 	/**
 	 * this APImodel overrides this function in order to return mutliple 'models' 
 	 * from a single row, which is obviously not standard

@@ -3,6 +3,10 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='StartEnd.id';
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'StartEnd.id',
 		'limit'=>'StartEnd.reg_limit'
@@ -91,7 +95,6 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}
-	
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
 		$attendeesPerEvent=array();

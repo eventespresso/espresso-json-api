@@ -320,10 +320,24 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			 }else{
 				 $cacheResult=false;
 			 }
+			 if(array_key_exists('limit',$queryParameters)){
+				 if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
+					 $limit=$queryParameters['limit'];
+					 //$firstPartOfLimit=explode(",",$queryParameters['limit'],1);
+					 //$final_limit=intval($firstPartOfLimit[0]);
+					 //echo "final limit:$final_limit";
+					 unset($queryParameters['limit']);
+				 }else{
+					 $limit=50;
+					 $final_limit=$limit;
+				 }
+			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
 		}
 		else{
 			$cacheResult=false;
+			$limit=50;
+			$final_limit=$limit;
 			$keyOpVals=array();
 		}
 		//validate query parameter input first by normalizing input into 'Model.parameter'
@@ -336,14 +350,21 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		else
 			$sqlWhere = "WHERE " . implode(" AND ",$whereSubclauses);
 		global $wpdb;
+		//perform first query to get all the IDs of the primary models we want
+		$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $limit";
+		if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
+		$ids=$wpdb->get_col($getIdsQuery);
+		//now construct query which will get us all the fields and data we want, using the ids from the first query
+		$sqlWhereInIds="WHERE {$this->primaryIdColumn} IN (".implode(",",$ids).")";
 		$relatedModelInfos=$this->getFullRelatedModels();
-		$relatedModelFields=array();
+		$modelFields=array($this->modelNamePlural=>$this->selectFields);
 		foreach($relatedModelInfos as $modelInfo){
-			$relatedModelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
+			$modelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
 		}
-		$sqlSelect=implode(",",$relatedModelFields);
-		$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhere);
-		if(isset($_GET['debug']))echo "generic api facade 301: sql:$sqlQuery";
+		$sqlSelect=implode(",",$modelFields);
+		$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhereInIds);
+		
+		if(isset($_GET['debug']))echo "<br><br>generic api facade 362: sql:$sqlQuery";
 		$results = $wpdb->get_results($sqlQuery, ARRAY_A);
 		//process results (calculate 'calculated columns' and filter on them)
 		$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
@@ -390,7 +411,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		$model= array($this->modelName=>$singleResult);
 		return $model;
 	 }
-
+	 
 	
 	
 

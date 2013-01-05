@@ -3,6 +3,10 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Attendee.id';
 	var $APIqueryParamsToDbColumns=array(
 		//"id"=>"Attendee.id",
 		"date_of_registration"=>"Attendee.date_of_registration",
@@ -41,8 +45,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
-            SELECT
-				{$this->selectFields},				
+            SELECT			
 				{$sqlSelect}
             FROM
                 {$wpdb->prefix}events_attendee Attendee

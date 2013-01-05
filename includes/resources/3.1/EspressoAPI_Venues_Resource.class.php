@@ -3,6 +3,10 @@
  *this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Venues_Resource extends EspressoAPI_Venues_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Venue.id';
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>'Venue.id',
 		'name'=>'Venue.name',

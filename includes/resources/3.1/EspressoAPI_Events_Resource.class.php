@@ -4,6 +4,10 @@
  * this file should actually exist in the Event Espresso Core Plugin 
  */
 class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn='Event.id';
 	var $APIqueryParamsToDbColumns = array(
 		'id'=>'Event.id',
 		'name'=>'Event.event_name',
@@ -72,7 +76,6 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		global $wpdb;
 		$sql = "
             SELECT
-				{$this->selectFields},
 				{$sqlSelect}
             FROM
                 {$wpdb->prefix}events_detail Event

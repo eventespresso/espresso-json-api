@@ -7,6 +7,10 @@ define('ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE',2);
 define('ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE',3);
 define('ESPRESSOAPI_PRICETYPE_MEMBER_BASE',4);
 class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Facade{
+	/**
+	 * primary ID column for SELECT query when selecting ONLY the primary id
+	 */
+	protected $primaryIdColumn;//SHOULDN'T BE USED BECAUSE THIS IS NEVER PART OF A MYSQL QUERY IN 3.1
 	var $APIqueryParamsToDbColumns=array(
 		'id'=>null,
 		'name'=>null,
@@ -74,6 +78,12 @@ class EspressoAPI_Pricetypes_Resource extends EspressoAPI_Pricetypes_Resource_Fa
     function _create($createParameters){
        return new EspressoAPI_MethodNotImplementedException();
     }
+	 /**
+	  * shouldn't ever get called
+	  */
+	 protected function getPrimaryIdColInDb(){
+		 return new EspressoAPI_MethodNotImplementedException();
+	 }
     /**
      *for handling requests liks '/events/14'
      * @param int $id id of event
