@@ -22,7 +22,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		'virtual_url'=>'Event.virtual_url',
 		'call_in_number'=>'Event.virtual_phone',
 		'phone'=>'Event.phone');
-	var $calculatedColumnsToFilterOn=array('status');
+	var $calculatedColumnsToFilterOn=array();
 	
 
 	

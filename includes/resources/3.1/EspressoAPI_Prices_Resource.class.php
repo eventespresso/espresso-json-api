@@ -21,7 +21,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 		'amount'=>'Price.event_cost',
 		'limit'=>'Event.reg_limit'
 	);
-	var $calculatedColumnsToFilterOn=array('Price.remaining','Price.start_date','Price.end_date','Price.remaining','Price.description');
+	var $calculatedColumnsToFilterOn=array('Price.remaining','Price.start_date','Price.end_date','Price.description');
 	var $selectFields="
 		Price.id AS 'Price.id',
 		Price.event_id AS 'Price.event_id',

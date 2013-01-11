@@ -323,20 +323,27 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			 if(array_key_exists('limit',$queryParameters)){
 				 if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
 					 $limitParts=explode(",",$queryParameters['limit']);
+					 
 					 if(count($limitParts)>2){
 						 throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
 					 }
-					 $limit=$queryParameters['limit'];
+					 $limit=(count($limitParts)==2)?intval($limitParts[1]):intval($limitParts[0]);
+					 $limitStart=(count($limitParts)==2)?intval($limitParts[0]):0;
 					 unset($queryParameters['limit']);
 				 }else{
-					 $limit=50;
+					throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 integer values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
 				 }
+			 }else{//they didnt specify a limit, but they did specify other query parameters
+				  $limit=50;
+				  $limitStart=0;
+				  
 			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
 		}
 		else{
 			$cacheResult=false;
 			$limit=50;
+			$limitStart=0;
 			$keyOpVals=array();
 		}
 		//validate query parameter input first by normalizing input into 'Model.parameter'
@@ -349,47 +356,66 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		else
 			$sqlWhere = "WHERE " . implode(" AND ",$whereSubclauses);
 		global $wpdb;
-		//perform first query to get all the IDs of the primary models we want
-		$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $limit";
-		if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
-		$ids=$wpdb->get_col($getIdsQuery);
-		//now construct query which will get us all the fields and data we want, using the ids from the first query
-		$sqlWhereInIds="WHERE {$this->primaryIdColumn} IN (".implode(",",$ids).")";
 		$relatedModelInfos=$this->getFullRelatedModels();
-		$modelFields=array($this->modelNamePlural=>$this->selectFields);
-		foreach($relatedModelInfos as $modelInfo){
-			$modelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
-		}
-		$sqlSelect=implode(",",$modelFields);
-		$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhereInIds);
+		//fetch a few entries from teh DB and try to meet our limit
+		$apiItemsFetched=array();
+		$currentLimit=$limit;
+		$currentLimitStart=$limitStart;
+		$totalItemsInDB = intval($wpdb->get_var( "SELECT COUNT(id) FROM wp_events_attendee"));
+		while(count($apiItemsFetched)<=$limit){
 		
-		if(isset($_GET['debug']))echo "<br><br>generic api facade 362: sql:$sqlQuery";
-		$results = $wpdb->get_results($sqlQuery, ARRAY_A);
-		//process results (calculate 'calculated columns' and filter on them)
-		$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
-		//begin constructing response array
-		$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
-		$completeResults=array();
-		foreach($topLevelModels as $key=>$model){
-			foreach($relatedModelInfos as $relatedModelInfo){
-				//only add the related model's info if the current user has permission to access it
-				if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
-					$modelClass=$relatedModelInfo['class'];
-					if($relatedModelInfo['hasMany']){
-						$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
-					}else{
-						$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+			//perform first query to get all the IDs of the primary models we want
+			$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $currentLimitStart,$currentLimit";
+			if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
+			$ids=$wpdb->get_col($getIdsQuery);
+			//now construct query which will get us all the fields and data we want, using the ids from the first query
+			$sqlWhereInIds="WHERE {$this->primaryIdColumn} IN (".implode(",",$ids).")";
+			
+			$modelFields=array($this->modelNamePlural=>$this->selectFields);
+			foreach($relatedModelInfos as $modelInfo){
+				$modelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
+			}
+			$sqlSelect=implode(",",$modelFields);
+			$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhereInIds);
+
+			if(isset($_GET['debug']))echo "<br><br>generic api facade 362: sql:$sqlQuery";
+			$results = $wpdb->get_results($sqlQuery, ARRAY_A);
+			//process results (calculate 'calculated columns' and filter on them)
+			$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
+			//begin constructing response array
+			$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
+			$apiItemsFetched=array();
+			foreach($topLevelModels as $key=>$model){
+				foreach($relatedModelInfos as $relatedModelInfo){
+					//only add the related model's info if the current user has permission to access it
+					if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
+						$modelClass=$relatedModelInfo['class'];
+						if($relatedModelInfo['hasMany']){
+							$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+						}else{
+							$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+						}
 					}
 				}
+				$apiItemsFetched[$key]=$model;
 			}
-			$completeResults[$key]=$model;
+			
+			//increment the limits and where we start from
+			$currentLimitStart+=$currentLimit;
+			$currentLimit*=2;
+			//if the new limitStart is beyond the total number of items in the DB, break
+			if($currentLimitStart>=$totalItemsInDB || count($results)==0){
+				break;
+			}
 		}
-		$models= array($this->modelNamePlural => $completeResults);
+		$apiItemsFetched=array_slice($apiItemsFetched,0,$limit);
+		$models= array($this->modelNamePlural => $apiItemsFetched);
+		////i
 		$models=$this->validator->validate($models,array('single'=>false));
 		if($cacheResult){
 			$transientKey=EspressoAPI_Functions::generateRandomString(40);
 			set_transient($transientKey,$models,60*60);
-			return array("count"=>count($completeResults),"cached_result_key"=>$transientKey);
+			return array("count"=>count($apiItemsFetched),"cached_result_key"=>$transientKey);
 		}else
 			return $models;
      }

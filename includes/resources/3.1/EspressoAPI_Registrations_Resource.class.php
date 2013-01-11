@@ -14,7 +14,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		'code'=>'Attendee.registration_id',
 		//'is_primary'=>'Attendee.is_primary',
 		'is_checked_in'=>'Attendee.checked_in');
-	var $calculatedColumnsToFilterOn=array('Registration.id', 'Registration.status','Registration.url_link','Registration.is_going','Attendee.is_primary');
+	var $calculatedColumnsToFilterOn=array('Registration.id', 'Registration.status','Registration.url_link','Registration.is_going','Registration.is_primary');
 	var $selectFields="
 		Attendee.id AS 'Registration.id',
 		Attendee.id AS 'Attendee.id',
