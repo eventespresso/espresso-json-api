@@ -30,7 +30,8 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		'Transaction.payment_gateway',
 		'Transaction.details',
 		'Transaction.tax_data',
-		'Transaction.session_data');
+		'Transaction.session_data',
+		'Transaction.status');
 	
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
@@ -58,11 +59,9 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	private $statusMapping=array(
 				'Completed'=>'complete',
 				'Pending'=>'pending',
-				'Incomplete'=>'open');
-	
-	
+				'Payment Declined'=>'incomplete',//note: when array_flipping, this value gets forgotten
+				'Incomplete'=>'incomplete');
 	protected function processSqlResults($rows,$keyOpVals){
-		global $wpdb;
 		$processedRows=array();
 		foreach($rows as $row){
 			//if this is a primary registration, use this data
@@ -145,9 +144,16 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		switch($columnName){
 			case 'Transaction.status':
+				//if 'incomplete'
+				if(strpos($value,'incomplete')!==FALSE){
+					$exceptionValue=$this->constructValueInWhereClause($operator, 'Payment Declined');
+					$exceptionSQL="OR Attendee.payment_status $operator $exceptionValue";
+				}else{
+					$exceptionSQL='';
+				}
 				$apiStatusToDbStatus=array_flip($this->statusMapping);
 				$value=$this->constructValueInWhereClause($operator,$value,$apiStatusToDbStatus,'Transaction.status');
-				return "Attendee.payment_status $operator $value";	
+				return "Attendee.payment_status $operator $value $exceptionSQL";	
 		}
 		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
 	}

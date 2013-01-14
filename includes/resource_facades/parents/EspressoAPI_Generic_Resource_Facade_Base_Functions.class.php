@@ -110,9 +110,10 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * takes the api param value and produces a db value for using in a mysql WHERE clause.
 	 * also takes an option $mappingFromApiToDbColumn and $key, which, if value is 
 	 * a key in the array, convert the db value into the associated value in $mappingFromApiToDbColumn
-	 * @param type $valueInput
-	 * @param type $mappingFromApiToDbColumn eg array('true'=>'Y','false'=>'N')
-	 * @param type $apiKey
+	 * @param string $valueInput
+	 * @param array $mappingFromApiToDbColumn eg array('true'=>'Y','false'=>'N')
+	 * @param string $apiKey
+	 * @return string representing the db col value in mySQL
 	 * @throws EspressoAPI_BadRequestException 
 	 */
 	protected function constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
@@ -131,7 +132,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		}else{
 			return "'$valueInput'";
 		}
-
 	}
 	
 		/**

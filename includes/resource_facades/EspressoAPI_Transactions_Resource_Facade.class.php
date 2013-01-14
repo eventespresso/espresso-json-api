@@ -30,7 +30,7 @@ abstract class EspressoAPI_Transactions_Resource_Facade extends EspressoAPI_Gene
 		array('var'=>'timestamp','type'=>'datetime'),
 		array('var'=>'total','type'=>'float'),
 		array('var'=>'amount_paid','type'=>'float'),
-		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array('complete','open','pending')),
+		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array('complete','pending','incomplete')),
 		array('var'=>'details','type'=>'string'),
 		array('var'=>'tax_data','type'=>'string'),
 		array('var'=>'session_data','type'=>'string'),

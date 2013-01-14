@@ -362,49 +362,51 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		$currentLimit=$limit;
 		$currentLimitStart=$limitStart;
 		$totalItemsInDB = intval($wpdb->get_var( "SELECT COUNT(id) FROM wp_events_attendee"));
+		$apiItemsFetched=array();
 		while(count($apiItemsFetched)<=$limit){
 		
 			//perform first query to get all the IDs of the primary models we want
 			$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $currentLimitStart,$currentLimit";
 			if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
 			$ids=$wpdb->get_col($getIdsQuery);
-			//now construct query which will get us all the fields and data we want, using the ids from the first query
-			$sqlWhereInIds="WHERE {$this->primaryIdColumn} IN (".implode(",",$ids).")";
-			
-			$modelFields=array($this->modelNamePlural=>$this->selectFields);
-			foreach($relatedModelInfos as $modelInfo){
-				$modelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
-			}
-			$sqlSelect=implode(",",$modelFields);
-			$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhereInIds);
+			if(!empty($ids)){
+				//now construct query which will get us all the fields and data we want, using the ids from the first query
+				$sqlWhereInIds="WHERE {$this->primaryIdColumn} IN (".implode(",",$ids).")";
 
-			if(isset($_GET['debug']))echo "<br><br>generic api facade 362: sql:$sqlQuery";
-			$results = $wpdb->get_results($sqlQuery, ARRAY_A);
-			//process results (calculate 'calculated columns' and filter on them)
-			$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
-			//begin constructing response array
-			$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
-			$apiItemsFetched=array();
-			foreach($topLevelModels as $key=>$model){
-				foreach($relatedModelInfos as $relatedModelInfo){
-					//only add the related model's info if the current user has permission to access it
-					if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
-						$modelClass=$relatedModelInfo['class'];
-						if($relatedModelInfo['hasMany']){
-							$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
-						}else{
-							$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+				$modelFields=array($this->modelNamePlural=>$this->selectFields);
+				foreach($relatedModelInfos as $modelInfo){
+					$modelFields[$modelInfo['modelNamePlural']]=$modelInfo['class']->selectFields;
+				}
+				$sqlSelect=implode(",",$modelFields);
+				$sqlQuery=$this->getManyConstructQuery($sqlSelect,$sqlWhereInIds);
+
+				if(isset($_GET['debug']))echo "<br><br>generic api facade 362: sql:$sqlQuery";
+				$results = $wpdb->get_results($sqlQuery, ARRAY_A);
+				//process results (calculate 'calculated columns' and filter on them)
+				$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
+				//begin constructing response array
+				$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
+				foreach($topLevelModels as $key=>$model){
+					foreach($relatedModelInfos as $relatedModelInfo){
+						//only add the related model's info if the current user has permission to access it
+						if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
+							$modelClass=$relatedModelInfo['class'];
+							if($relatedModelInfo['hasMany']){
+								$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+							}else{
+								$model[$relatedModelInfo['modelName']]=$modelClass->extractMyUniqueModelFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
+							}
 						}
 					}
+					$apiItemsFetched[$key]=$model;
 				}
-				$apiItemsFetched[$key]=$model;
 			}
 			
 			//increment the limits and where we start from
 			$currentLimitStart+=$currentLimit;
 			$currentLimit*=2;
 			//if the new limitStart is beyond the total number of items in the DB, break
-			if($currentLimitStart>=$totalItemsInDB || count($results)==0){
+			if($currentLimitStart>=$totalItemsInDB){//erroneous logic: || count($results)==0
 				break;
 			}
 		}
@@ -427,7 +429,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	  * @return array 
 	  */
 	 function getOne($id){
-		$queryParam=array('id'=>$id);
+		$queryParam=array('id'=>$id,'limit'=>'1');
 		$fullResults=$this->getMany($queryParam);
 		$singleResult=array_shift($fullResults[$this->modelNamePlural]);
 		if(empty($singleResult)){
