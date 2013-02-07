@@ -214,7 +214,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		//if its 'Incomplete' then stop
 			throw new EspressoAPI_SpecialException(__("Checkin denied. Payment not complete and 'ignore_payment' flag not set.",412));
 		}
-		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity + $quantity, checked_in=1 WHERE registration_id='{$registration['registration_id']}'";
+		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity + $quantity, checked_in=1 WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
@@ -253,7 +253,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! No one is currently checked-in for registration %s","event_espresso"),$registration['quantity']));
 		}
 		
-		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE registration_id='{$registration['registration_id']}'";
+		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
