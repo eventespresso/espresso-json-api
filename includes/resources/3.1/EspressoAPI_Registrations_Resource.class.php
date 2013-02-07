@@ -193,9 +193,12 @@ protected function processSqlResults($rows,$keyOpVals){
 		//soo just strip everything out after the "."
 		$idParts=explode(".",$id);
 		if(count($idParts)!=2){
-			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+			$rowId=$id;
+			//throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+		}else{
+			$rowId=$idParts[0];
 		}
-		$rowId=$idParts[0];
+		
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
