@@ -193,12 +193,9 @@ protected function processSqlResults($rows,$keyOpVals){
 		//soo just strip everything out after the "."
 		$idParts=explode(".",$id);
 		if(count($idParts)!=2){
-			$rowId=$id;
-			//throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
-		}else{
-			$rowId=$idParts[0];
+			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
 		}
-		
+		$rowId=$idParts[0];
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
@@ -217,7 +214,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		//if its 'Incomplete' then stop
 			throw new EspressoAPI_SpecialException(__("Checkin denied. Payment not complete and 'ignore_payment' flag not set.",412));
 		}
-		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity + $quantity, checked_in=1 WHERE registration_id='{$registration['registration_id']}'";
+		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity + $quantity, checked_in=1 WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
@@ -256,7 +253,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! No one is currently checked-in for registration %s","event_espresso"),$registration['quantity']));
 		}
 		
-		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE registration_id='{$registration['registration_id']}'";
+		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
