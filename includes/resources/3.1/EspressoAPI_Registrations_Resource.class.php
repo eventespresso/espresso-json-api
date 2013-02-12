@@ -214,7 +214,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		$ignorePayment=(isset($queryParameters['ignore_payment']) && $queryParameters['ignore_payment']=='true')?true:false;
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
 		if(intval($registration['checked_in_quantity'])+$quantity>$registration['quantity']){
-			throw new EspressoAPI_SpecialException(sprintf(__("Checkins Exceeded! Only %s checkins are permitted on for this attendee on this event, but you have requested to checkin %s when there were alrady %s","event_espresso"),$registration['quantity'],$quantity,$registration['checked_in_quantity']));
+			throw new EspressoAPI_SpecialException(sprintf(__("Checkins Exceeded! Only %s checkins are permitted on for this attendee on this event, but you have requested to checkin %s when there were already %s","event_espresso"),$registration['quantity'],$quantity,$registration['checked_in_quantity']));
 		}
 		
 		//check payment status
