@@ -285,7 +285,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		}
 		//check not too many checkouts
 		if($newCheckedInQuantity<0){
-			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! You tried to checkout %s when there were only %s checked in on registration %s","event_espresso"),$quantityToChange,$registration['quantity'],$id));
+			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! You tried to checkout %s when there were only %s checked in on registration %s","event_espresso"),$quantityToChange,$registration['checked_in_quantity'],$id));
 		}
 		//decide on what we're going to set the new 'checked_in' value to, 
 		//based on whether new checked_in_quantity will be 0 or not
