@@ -182,6 +182,11 @@ protected function processSqlResults($rows,$keyOpVals){
 			);
 		return $transaction;
 	}
+	
+	
+	
+	
+	
 	function _checkin($id,$queryParameters=array()){
 		global $wpdb;
 		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
@@ -192,10 +197,13 @@ protected function processSqlResults($rows,$keyOpVals){
 		//if that's the case, we row we want to update is 1 or 343, respectively.
 		//soo just strip everything out after the "."
 		$idParts=explode(".",$id);
-		if(count($idParts)!=2){
-			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+		if(count($idParts)>2){
+			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not strings. You provided: %s","event_espresso"),$id));
+		}elseif(count($idParts)==2){
+			$rowId=$idParts[0];
+		}else{
+			$rowId=$id;
 		}
-		$rowId=$idParts[0];
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
@@ -206,7 +214,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		$ignorePayment=(isset($queryParameters['ignore_payment']) && $queryParameters['ignore_payment']=='true')?true:false;
 		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
 		if(intval($registration['checked_in_quantity'])+$quantity>$registration['quantity']){
-			throw new EspressoAPI_SpecialException(__("Checkins Exceeded! Checkins permitted on this registration: ","event_espresso").$registration['quantity']);
+			throw new EspressoAPI_SpecialException(sprintf(__("Checkins Exceeded! Only %s checkins are permitted on for this attendee on this event, but you have requested to checkin %s when there were alrady %s","event_espresso"),$registration['quantity'],$quantity,$registration['checked_in_quantity']));
 		}
 		
 		//check payment status
@@ -219,11 +227,20 @@ protected function processSqlResults($rows,$keyOpVals){
 		$result=$wpdb->query($sql);
 		if($result){
 			//refetch the registration again
-			return $this->getOne($id);
+			//return $this->getOne($id);
+			
+			$allRegistrations= $this->getMany(array('Attendee.id'=>$rowId,'Event.id'=>$registration['event_id']));
+			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $registration['checked_in_quantity'], $quantity, true);
+			return array('Registrations'=>$updatedRegistrations);
 		}else{
 			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked in failed:","event_espresso").$result);
 		}
 	}
+	
+	
+	
+	
+	
 	
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb;
@@ -235,10 +252,14 @@ protected function processSqlResults($rows,$keyOpVals){
 		//if that's the case, we row we want to update is 1 or 343, respectively.
 		//soo just strip everything out after the "."
 		$idParts=explode(".",$id);
-		if(count($idParts)!=2){
-			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not integers (eg: 1 or 12). You provided: %s","event_espresso"),$id));
+		if(count($idParts)>2){
+			throw new EspressoAPI_SpecialException(sprintf(__("You did not provide a properly formatted ID of a registration. Remember registration IDs are actually floats (eg: 1.2, or 10.34) not strings. You provided: %s","event_espresso"),$id));
+		}elseif(count($idParts)==2){
+			$rowId=$idParts[0];
+		}else{
+			$rowId=$id;
 		}
-		$rowId=$idParts[0];
+		
 		
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
@@ -247,18 +268,39 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_ObjectDoesNotExist($id);
 		if(!EspressoAPI_Permissions_Wrapper::espresso_is_my_event($registration['event_id']))
 			throw new EspressoAPI_UnauthorizedException();
-		$quantity=(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity']))?$queryParameters['quantity']:1;
-		//check not too many checkouts
-		if(intval($registration['checked_in_quantity'])-$quantity<0){
-			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! No one is currently checked-in for registration %s","event_espresso"),$registration['quantity']));
+		//handle a special case.
+		//there was a bug where sometimes checked_in was set to 1 (true), but
+		//checked_in_quantity was left at 0. In this case, pretend 
+		//checked_in_quantity were maxed-out (at 'quantity')
+		if(intval($registration['checked_in'])==1 && intval($registration['checked_in_quantity'])==0){
+			$registration['checked_in_quantity']=$registration['quantity'];
 		}
 		
-		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = checked_in_quantity - $quantity, checked_in=0 WHERE id='{$registration['id']}'";
+		if(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity'])){
+			$quantityToChange=$queryParameters['quantity'];
+			$newCheckedInQuantity=intval($registration['checked_in_quantity'])-$quantityToChange;
+		}else{
+			$quantityToChange=1;
+			$newCheckedInQuantity=intval($registration['checked_in_quantity'])-$quantityToChange;
+		}
+		//check not too many checkouts
+		if($newCheckedInQuantity<0){
+			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! You tried to checkout %s when there were only %s checked in on registration %s","event_espresso"),$quantityToChange,$registration['checked_in_quantity'],$id));
+		}
+		//decide on what we're going to set the new 'checked_in' value to, 
+		//based on whether new checked_in_quantity will be 0 or not
+		$newCheckedInvalue=$newCheckedInQuantity==0?0:1;
+		
+		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = $newCheckedInQuantity, checked_in=$newCheckedInvalue WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
-			//refetch the registration again
-			return $this->getOne($id);
+			//fetch the updated registrations. if we updated 4, we ought to return
+			//4. If our first non-checked-in ID was 555.6, that means we should return 6 through 2 (so from .etc.
+			//
+			$allRegistrations= $this->getMany(array('Attendee.id'=>$rowId,'Event.id'=>$registration['event_id']));
+			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $newCheckedInQuantity, $quantityToChange, true);
+			return array('Registrations'=>$updatedRegistrations);
 		}else{
 			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked out failed:","event_espresso").$result);
 		}

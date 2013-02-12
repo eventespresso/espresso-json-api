@@ -398,6 +398,8 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 							}
 						}
 					}
+					//echo "key:$key,floatval:".floatval($key);
+					//$key=$key*1000;
 					$apiItemsFetched[$key]=$model;
 				}
 			}
