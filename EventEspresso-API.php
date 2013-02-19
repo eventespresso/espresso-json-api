@@ -5,6 +5,7 @@ Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
 Version: 2.0.0.B
 Author: Event Espresso, (Mike Nelson)
+Requiresa at least: Event Espresso 3.1.30, and Wordpress 3.3.0
  *  For Developers: How this plugin generally works:
  *  /includes/EspressoAPI_URL_Rewrite.class.php hooks in our URLs into wordpress, so that 
  * if a URL like /espresso-api/v1/ is requested, the /includes/EspressoAPI_Router.class.php will detect that request and hook in our code to generate a response.
