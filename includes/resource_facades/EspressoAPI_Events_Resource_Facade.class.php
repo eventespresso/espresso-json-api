@@ -32,14 +32,20 @@ abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Re
 		array('var'=>'name','type'=>'string'),
 		array('var'=>'description','type'=>'string'),
 		array('var'=>'status','type'=>'enum','allowedEnumValues'=>array(
-				'secondary/waitlist',
-				'expired',
-				'active',
-				'denied',
-				'inactive',
-				'ongoing',
-				'pending',
-				'draft')),
+			'active',	//3.1, 3.2
+			'inactive',//3.1 'not_active' in 3.2
+			'pending',//3.1, 3.2
+			'draft',//3.1, 3.2
+			'secondary/waitlist',//3.1, 3.2
+			'ongoing',//3.1, 3.2
+			'denied',//3.1, 3.2
+			'deleted'//3.1,3.2 
+				
+				
+				
+				
+				
+				)),
 		array('var'=>'limit','type'=>'int'),
 		array('var'=>'group_registrations_allowed','type'=>'bool'),
 		array('var'=>'group_registrations_max','type'=>'int'),

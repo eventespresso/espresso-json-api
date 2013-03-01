@@ -77,7 +77,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$otherFacade=EspressoAPI_ClassLoader::load($this->relatedModels[$modelName]['modelNamePlural'],'Resource');
 			return $otherFacade->constructSQLWhereSubclause($apiParam,$operator,$value);
 		}
-		
 	}
 	/**
 	 * constructs a complete value for a where clause, inluding quotes and parentheses. eg, 123, 'monkey', (1,23), ('foo','bar','weee').

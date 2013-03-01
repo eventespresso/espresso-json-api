@@ -155,4 +155,21 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		$this->relatedModels=$relatedModels;
 		return $relatedModels;
 	}
+	
+	/**
+	 * searches througha  list of keyOpVals to find the index of the keyOpVal where the key matches $keyOfQueryParameter
+	 * @param $keyOfQueryParameter string, including teh model's name. Eg 'Event.status', 'Price.amount', etc.
+	 * @param $keyOpVals array like array(0=>array('key'=>'Event.name','operator'=>'=','value'=>'Fun Times'), 1=>...)
+	 * @return int index into the $keyOpVals array. Eg, if we were looking for the query parameter named 'Event.name. in the above
+	 * $keyOpVals array, it would return its index, which is 0.
+	 * If it is not found, return -1. 
+	 */
+	protected function getIndexOfKeyInKeyOpVals($keyOfQueryParameter, $keyOpVals){
+		foreach($keyOpVals as $index=>$keyOpVal){
+			if($keyOfQueryParameter == $keyOpVal['key']){
+				return $index;
+			}
+		}
+		return -1;
+	}
 }

@@ -49,23 +49,36 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		'Price'=>array('modelName'=>'Price','modelNamePlural'=>'Prices','hasMany'=>true));
 	var $statusConversions=array(
 				'S'=>'secondary/waitlist',
-				'X'=>'expired',
 				'A'=>'active',
-				'D'=>'denied',
+				'X'=>'denied',
 				'IA'=>'inactive',
 				'O'=>'ongoing',
 				'P'=>'pending',
-				'R'=>'draft');
+				'R'=>'draft',
+				'D'=>'deleted');
 	/*
 	 * overrides parent constructSQLWherSubclauses in order to attach an additional wherecaluse
-	 * which will ensure the prices found match the ones the attendees purchased
+	 * which will ensure we're only getting active events, unless they specify otherwise.
+	 * and if they're not logged in, only allow them to set active events
 	 */
 	protected function constructSQLWhereSubclauses($keyOpVals){
-		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
 		global $current_user;
 		if($current_user->ID==0){//public users can only see active events
-			$whereSqlArray[]="Event.event_status IN ('A','O','S') AND Event.is_active='Y'";
+			$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,draft,secondary/waitlist');
+			$keyOpVals[]=array('key'=>'Event.active', 'operator'=>'=', 'value'=>'true');
+		}else{
+			//if the user is logged in, allow them to override thed efault status if desired
+			//but otherwise set the default to active events only
+			if($this->getIndexOfKeyInKeyOpVals('Event.status',$keyOpVals)==-1){
+				$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,ongoing,secondary/waitlist');//inactive,denied,pending,draft, AND CERTAINLY not deleted
+			}
+			if($this->getIndexOfKeyInKeyOpVals('Event.active',$keyOpVals)==-1){
+				$keyOpVals[]=array('key'=>'Event.active', 'operator'=>'=', 'value'=>'true');
+			}
 		}
+		
+		$whereSqlArray=parent::constructSQLWhereSubclauses($keyOpVals);
+		//$whereSqlArray[]="Event.event_status IN ('A','O','S') AND Event.is_active='Y'";
 		return $whereSqlArray;
 	}
 	
