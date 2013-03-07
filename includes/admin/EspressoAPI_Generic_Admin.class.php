@@ -40,6 +40,9 @@ class EspressoAPI_Generic_Admin {
 		if(isset($_POST[EspressoAPI_ALLOW_PUBLIC_API_ACCESS])){
 			update_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS,$_POST[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]);
 		}
+		if(isset($_POST[EspressoAPI_DEFAULT_QUERY_LIMITS])){
+			update_option(EspressoAPI_DEFAULT_QUERY_LIMITS,$_POST[EspressoAPI_DEFAULT_QUERY_LIMITS]);
+		}
 		$templateVars=array();
 		$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT]=get_option(EspressoAPI_ADMIN_SESSION_TIMEOUT);
 		$templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS]=apply_filters("filter_hook_espresso_api_session_timeout_options",
@@ -51,6 +54,15 @@ class EspressoAPI_Generic_Admin {
 						'An Hour'=>60*60*24,
 						'6 Hours'=>60*60*24*7,
 						'Never'=>-1));
+		$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=get_option(EspressoAPI_DEFAULT_QUERY_LIMITS);
+		if(empty($templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS])){
+			$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=array(
+				'Events'=>50,
+				'Attendees'=>100,
+				'Registrations'=>100);
+		}
+		
+		
 		$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
 		$this->includeVersionedTemplate('settings.php',$templateVars);
 	}

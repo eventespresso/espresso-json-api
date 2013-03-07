@@ -319,31 +319,35 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			 }else{
 				 $cacheResult=false;
 			 }
-			 if(array_key_exists('limit',$queryParameters)){
-				 if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
-					 $limitParts=explode(",",$queryParameters['limit']);
-					 
-					 if(count($limitParts)>2){
-						 throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
-					 }
-					 $limit=(count($limitParts)==2)?intval($limitParts[1]):intval($limitParts[0]);
-					 $limitStart=(count($limitParts)==2)?intval($limitParts[0]):0;
-					 unset($queryParameters['limit']);
-				 }else{
-					throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 integer values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
-				 }
-			 }else{//they didnt specify a limit, but they did specify other query parameters
-				  $limit=50;
-				  $limitStart=0;
-				  
-			 }
 			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
 		}
 		else{
 			$cacheResult=false;
-			$limit=50;
 			$limitStart=0;
 			$keyOpVals=array();
+		}
+		//figure out query limit
+		if(!empty($queryParameters) && array_key_exists('limit',$queryParameters)){
+			if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
+				$limitParts=explode(",",$queryParameters['limit']);
+
+				if(count($limitParts)>2){
+					throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
+				}
+				$limit=(count($limitParts)==2)?intval($limitParts[1]):intval($limitParts[0]);
+				$limitStart=(count($limitParts)==2)?intval($limitParts[0]):0;
+				unset($queryParameters['limit']);
+			}else{
+			   throw new EspressoAPI_BadRequestException(sprintf(__("You may provide at most 2 integer values for limit, eg. '32', or '100,50'. You provided '%s'","event_espresso"),$queryParameters['limit']));
+			}
+		}else{//they didnt specify a limit
+			$defaultLimits = get_option(EspressoAPI_DEFAULT_QUERY_LIMITS);
+			if(array_key_exists($this->modelNamePlural,$defaultLimits)){
+				$limit=intval($defaultLimits[$this->modelNamePlural]);
+			}else{
+				$limit=50;//if somehow we can't find the defaults specified in the admin page, just use 50 as the limit
+			}
+			$limitStart=0;
 		}
 		//validate query parameter input first by normalizing input into 'Model.parameter'
 		$keyOpVals=$this->validator->validateQueryParameters($keyOpVals);

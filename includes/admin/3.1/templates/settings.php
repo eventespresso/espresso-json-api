@@ -47,15 +47,24 @@
 									<p><?php _e("Force API users to re-authenticate (login) after this much time of inactivity. Requiring users to login more frequently 
 									may help improve security, but may also be tedious for API users.","event_espresso")?></p>
 									<br/>
-									<label for='<?php EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'>Allow Public API Access?</label>
+									<label for='<?php EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'><?php _e("Allow Public API Access?",'event_espresso');?></label>
 									
 									<select name="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>" id="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>">
 										<option value="1" <?php echo $templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Allow</option>
 										<option value="0" <?php echo !$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Don't Allow</option>
 									</select>
-									<p>Enabling will allow non-logged-in api clients to get certain information from your website via the API. Accessible information consists of:
+									<p><?php _e("Enabling will allow non-logged-in api clients to get certain information from your website via the API. Accessible information consists of:
 									events, event categories, dates and times of events, prices, price types, venues and questions. However, they will NOT be able to see: promocodes, attendees,
-									registrations, transactions, or answers</p>
+									registrations, transactions, or answers",'event_espresso');?></p>
+									<label for'<?php echo EspressoAPI_DEFAULT_QUERY_LIMITS?>' id='<?php echo EspressoAPI_DEFAULT_QUERY_LIMITS?>'><?php _e("Default Query Limits",'event_espresso')?></label>
+									<p><?php _e('When an api API clients make a request to the following endpoints, and they do not specify a "limit", how many results should be returned?','event_espresso');?>
+									<p><?php _e('Note: returning a smaller number by default will increase speed, but api clients may not see all the results they would like.','event_espresso');?>
+										<?php _e('Also note: the api clients can always override these limits by specifying a "limit" query parameter.','event_espresso');?></p>
+										<br/>
+										<?php foreach($templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS] as $endpoint=>$limit){
+										$name=EspressoAPI_DEFAULT_QUERY_LIMITS."[$endpoint]";?>
+										<label for='<?php echo $name?>'><?php echo $endpoint?></label><input type='text' name='<?php echo $name?>' value='<?php echo $limit?>'><br/>
+									<?php }?>
 									<input type='submit' class='button'value='Save'>
 								</form>
 							</div>
