@@ -58,12 +58,21 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				continue;
 			$prices=$this->_extractMyUniqueModelsFromSqlResults($sqlResult);
 				foreach($prices as $key=>$price){
-					if(isset($price['id']))
-					$filteredResults[$price['id']]=$price;
+					if(isset($price['id'])){
+						$filteredResults["{$price['id']}"]=$price;
+					}
 				}
 		}
 		return $filteredResults;
 	}	
+	
+	/**
+	 * 
+	 * @global type $wpdb
+	 * @param array $rows rows returned from a big join-query from the db, where results are all arrays (not objects)
+	 * @param array $keyOpVals like array('key'=>__,'operator'=>__,'value'=>__), I believe
+	 * @return array like $rows, but manipulated during this function
+	 */
 	protected function processSqlResults($rows,$keyOpVals){
 		global $wpdb;
 		$attendeesPerEvent=array();
@@ -138,17 +147,23 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			"Pricetype"=>$priceType
 			);
 		}
-		$pricesToReturn['member']=array(
-		'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_MEMBER_INDICATOR),
-		'amount'=>$sqlResult['Price.member_price'],
-		'name'=>$sqlResult['Price.member_price_type'],
-		'description'=>null,
-		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>$sqlResult['Price.remaining'],
-		'start_date'=>null,
-		'end_date'=>null,
-		"Pricetype"=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_MEMBER_BASE]
-		);
+		
+		//add member price, if the members addon is active
+		$member_plugin_is_active = get_option('events_members_active');
+		//echo "members plugin is active:$member_plugin_is_active";
+		if($member_plugin_is_active && 'true' == $member_plugin_is_active){
+			$pricesToReturn['member']=array(
+			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_MEMBER_INDICATOR),
+			'amount'=>$sqlResult['Price.member_price'],
+			'name'=>$sqlResult['Price.member_price_type'],
+			'description'=>null,
+			'limit'=>$sqlResult['Price.limit'],
+			'remaining'=>$sqlResult['Price.remaining'],
+			'start_date'=>null,
+			'end_date'=>null,
+			"Pricetype"=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_MEMBER_BASE]
+			);
+		}
 		return $pricesToReturn;
 	}
 	
