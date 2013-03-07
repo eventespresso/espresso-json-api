@@ -64,7 +64,7 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	protected function constructSQLWhereSubclauses($keyOpVals){
 		global $current_user;
 		if($current_user->ID==0){//public users can only see active events
-			$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,draft,secondary/waitlist');
+			$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,ongoing,secondary/waitlist');
 			$keyOpVals[]=array('key'=>'Event.active', 'operator'=>'=', 'value'=>'true');
 		}else{
 			//if the user is logged in, allow them to override thed efault status if desired
