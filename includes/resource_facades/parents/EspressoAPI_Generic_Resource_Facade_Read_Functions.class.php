@@ -311,22 +311,9 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		 if(!EspressoAPI_Permissions_Wrapper::current_user_can('get', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		 }
-		 //parse query parameter
-		 if (!empty($queryParameters)){
-			 if(array_key_exists('cache_result',$queryParameters)){
-				 $cacheResult=true;
-				 unset($queryParameters['cache_result']);
-			 }else{
-				 $cacheResult=false;
-			 }
-			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
-		}
-		else{
-			$cacheResult=false;
-			$limitStart=0;
-			$keyOpVals=array();
-		}
-		//figure out query limit
+		 
+		 //parse limit, and remove it from query parameters if present
+		 //figure out query limit
 		if(!empty($queryParameters) && array_key_exists('limit',$queryParameters)){
 			if(EspressoAPI_Validator::valueIs($queryParameters['limit'],'int')){
 				$limitParts=explode(",",$queryParameters['limit']);
@@ -349,6 +336,21 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			}
 			$limitStart=0;
 		}
+		 //parse query parameter
+		 if (!empty($queryParameters)){
+			 if(array_key_exists('cache_result',$queryParameters)){
+				 $cacheResult=true;
+				 unset($queryParameters['cache_result']);
+			 }else{
+				 $cacheResult=false;
+			 }
+			$keyOpVals=$this->seperateIntoKeyOperatorValues($queryParameters);
+		}
+		else{
+			$cacheResult=false;
+			$keyOpVals=array();
+		}
+		
 		//validate query parameter input first by normalizing input into 'Model.parameter'
 		$keyOpVals=$this->validator->validateQueryParameters($keyOpVals);
 		

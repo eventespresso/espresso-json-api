@@ -117,12 +117,27 @@ protected function processSqlResults($rows,$keyOpVals){
 			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
 			
 			//in 3.2, every single row in registrationtable relates to a ticket for somebody
-			//to get into the event. In 3.1 it sometimes does and sometimes doesn't. Which is somewhat 
-			//confusing. So it really should,instead, 
+			//to get into the event. In 3.1 each row in the event_attendee table corresponds to an attendee
+			//who may have multiple tickets/registrations for an event.
+			//so, in order to have multiple registrations per row, each having their own ID,
+			//we add a decimal point onto the row's ID, and make it unique for each row.
+			//Eg, if we 3.1 attendee row has 13 tickets on it, then we should get 13 registrations 
+			//from that single row. They should have the following IDs: 13.0, 13.1, 13.2, 13.3, 13.4, 13.5,
+			//13.6, 13.7, 13.8, 13.9, 13.11, 13.12, 13.13. Notice, however, that there wasn't a 13.10, because that's
+			//actually identical to 13.1. So the decimal value simply implies that it's unique, it cannot be 
+			//reliably used for counting registrations on an attendee
 			$baseRegId=$row['Registration.id'];
 			$checkedInQuantity=$row['Attendee.checked_in_quantity'];
-			for($i=1;$row['Attendee.quantity']>=$i;$i++){
-				$row['Registration.id']="$baseRegId.$i";
+			$i = 0;
+			$ids = array();
+			for($count = 0; $count < $row['Attendee.quantity']; $count++){
+				//make sure we don't already have this ID
+				while(in_array((float)"$baseRegId.$i",$ids)){
+					$i++;
+				}
+				$currentId="$baseRegId.$i";
+				$ids[]=(float)$currentId;
+				$row['Registration.id']=$currentId;
 				 if($i>1){  
 					$row['Registration.is_primary']=false;  
 				}  
