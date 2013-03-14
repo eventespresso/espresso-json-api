@@ -367,9 +367,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		$currentLimit=$limit;
 		$currentLimitStart=$limitStart;
 		$totalItemsInDB = intval($wpdb->get_var( "SELECT COUNT(id) FROM wp_events_attendee"));
-		$apiItemsFetched=array();
-		while(count($apiItemsFetched)<=$limit){
-		
+		while(count($apiItemsFetched)<$limit){
 			//perform first query to get all the IDs of the primary models we want
 			$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $currentLimitStart,$currentLimit";
 			if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
