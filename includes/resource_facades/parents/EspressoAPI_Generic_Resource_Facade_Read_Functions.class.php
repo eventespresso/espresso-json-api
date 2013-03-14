@@ -329,7 +329,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			}
 		}else{//they didnt specify a limit
 			$defaultLimits = get_option(EspressoAPI_DEFAULT_QUERY_LIMITS);
-			if(array_key_exists($this->modelNamePlural,$defaultLimits)){
+			if($defaultLimits && array_key_exists($this->modelNamePlural,$defaultLimits)){
 				$limit=intval($defaultLimits[$this->modelNamePlural]);
 			}else{
 				$limit=50;//if somehow we can't find the defaults specified in the admin page, just use 50 as the limit
