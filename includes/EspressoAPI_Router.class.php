@@ -110,7 +110,9 @@ class EspressoAPI_Router{
 		
 		EspressoAPI_Response_Formatter::setContentType($format);
 		echo EspressoAPI_Response_Formatter::format($response,$format);
-        die;
+		//prevent any silly shutdown functions from outputting warnings on 'shutdown', etc., like wp-e-commerce's wpsc-functions.php
+		remove_all_actions('shutdown',1000);
+        exit;
     }
 	/**
 	 * removes the format part of the URL. eg: espresso-api/v1/regisration/32trfwse4.xml 
