@@ -143,7 +143,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				}  
 				if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
 					continue;		
-				$row['Registration.is_checked_in']=($i<=$checkedInQuantity || ($i==1 && $row['Attendee.checked_in']))?true:false;
+				$row['Registration.is_checked_in']=($count<$checkedInQuantity || ($i==0 && $row['Attendee.checked_in']))?true:false;
 			
 				$processedRows[]=$row;
 			}	
