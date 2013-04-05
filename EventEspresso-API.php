@@ -26,7 +26,7 @@ which corresponds to the current Event Espresso Core version.
  * puts it into JSON or XML format and prints it to the output buffer.
 */
 define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
-define('EspressoAPI_VERSION','2.0.0.B');
+define('EspressoAPI_VERSION','2.0.1.B');
 
 //constants relating to responses
 define('EspressoAPI_STATUS','status');
