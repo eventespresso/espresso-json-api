@@ -15,16 +15,16 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	var $selectFields="
 		StartEnd.id AS 'Datetime.id',
 		StartEnd.id AS 'StartEnd.id',
+		Event.id AS 'Event.id',
 		StartEnd.start_time AS 'StartEnd.start_time',
-		StartEnd.end_time AS 'Startend.end_time',
+		StartEnd.end_time AS 'StartEnd.end_time',
 		Event.start_date AS 'Event.start_date',
 		Event.end_date AS 'Event.end_date',
 		Event.registration_start AS 'Event.registration_start',
 		Event.registration_end AS 'Event.registration_end',
 		StartEnd.reg_limit AS 'StartEnd.reg_limit',
 		Event.registration_startT AS 'Event.registration_startT',
-		Event.registration_endT AS 'Event.registration_endT'
-	";
+		Event.registration_endT AS 'Event.registration_endT'";
 	var $relatedModels=array();
 	
 	/**
@@ -109,8 +109,10 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				}*/
 				$attendeesPerEvent[$row['Event.id']]=get_number_of_attendees_reg_limit($row['Event.id'],'num_attendees');//basically cache the result
 			}
-			$row['StartEnd.reg_limit']=intval($row['Event.reg_limit']);
-			$row['Datetime.tickets_left']=intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
+			//first: figure out is there a ticket limit on this registration?
+			$ticket_limit_on_datetime = intval($row['StartEnd.reg_limit']) ? true : false;
+			$row['StartEnd.reg_limit']= $ticket_limit_on_datetime ? intval($row['StartEnd.reg_limit']) : intval($row['Event.reg_limit']);
+			$row['Datetime.tickets_left']= $ticket_limit_on_datetime ? $row['StartEnd.reg_limit'] - $this->getTicketsSoldForDateTime($row['Event.id'],$row['StartEnd.start_time'],$row['StartEnd.end_time']) : intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];
 			$row['Datetime.is_primary']=true;
 //now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
@@ -141,7 +143,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		// if the user signs up for a time, and then the time changes,  StartEnd.start_time won't be set! So 
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
-		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['Startend.end_time'])){
+		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['StartEnd.end_time'])){
 			$sqlResult['StartEnd.id']="0";
 			if(array_key_exists('Attendee.event_time',$sqlResult)){
 				$myTimeToStart=$sqlResult['Attendee.event_time'];
@@ -151,7 +153,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			}
 		}else{
 			$myTimeToStart=$sqlResult['StartEnd.start_time'];
-			$myTimeToEnd=$sqlResult['Startend.end_time'];
+			$myTimeToEnd=$sqlResult['StartEnd.end_time'];
 		}
 		//if we can't get teh time from either, just default to midnight. or we could just return null
 		if(empty($myTimeToEnd) || empty($myTimeToStart)){
@@ -278,6 +280,28 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			}
 		}
 		return $dbEntries;
+	}
+	
+	/**
+	 * Mimics code in eventespresso31/includes/functions/time_date.php event_espresso_time_dropdown which calculates
+	 * the tickets remaining for a particular time
+	 * @global type $wpdb
+	 * @param type $event_id
+	 * @param type $event_start_time
+	 * @param type $event_end_time
+	 * @return type
+	 */
+	protected function getTicketsSoldForDateTime($event_id, $event_start_time,$event_end_time){
+	global $wpdb;
+
+	$count_at_time_sql = "SELECT count(id) FROM ".EVENTS_ATTENDEE_TABLE." ATT 			
+		WHERE 
+			ATT.event_id= %d	
+			AND ATT.payment_status != 'Incomplete' 
+			AND ATT.event_time = %s 
+			AND ATT.end_time = %s ";
+	$tickets_sold = $wpdb->get_var($wpdb->prepare($count_at_time_sql,$event_id,$event_start_time,$event_end_time));
+	return $tickets_sold;
 	}
 }
 //new Events_Controller();
