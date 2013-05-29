@@ -258,7 +258,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
 				$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
 				if(!$scan_date){
-					throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+					throw new EspressoAPI_OperationFailed(__("Adding of date checked-in failed:","event_espresso").$scan_date);
 				}
 			}
 			
@@ -343,7 +343,7 @@ protected function processSqlResults($rows,$keyOpVals){
 				$data_formats = array( '%d', '%s', '%d', '%d', '%s', '%s', '%s', );
 				$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
 				if(!$scan_date){
-					throw new EspressoAPI_OperationFailed(__("Updating of date checked-out failed:","event_espresso").$scan_date);
+					throw new EspressoAPI_OperationFailed(__("Adding of date checked-out failed:","event_espresso").$scan_date);
 				}
 			}
 			
@@ -355,7 +355,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $newCheckedInQuantity, $quantityToChange, true);
 			return array('Registrations'=>$updatedRegistrations);
 		}else{
-			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked out failed:","event_espresso").$result);
+			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked-out failed:","event_espresso").$result);
 		}
 		
 	}
