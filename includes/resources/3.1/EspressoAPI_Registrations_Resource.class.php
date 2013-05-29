@@ -244,6 +244,20 @@ protected function processSqlResults($rows,$keyOpVals){
 			//refetch the registration again
 			//return $this->getOne($id);
 			
+			//Add the date checked-in into the events_attendee_checkin table
+			$columns_and_values = array(
+				'attendee_id'			=> $registration['id'],
+				'registration_id'		=> $registration['registration_id'],
+				'event_id'				=> $registration['event_id'],
+				'checked_in'			=> 1,//Checked-in
+				'date_scanned'			=> date('Y-m-d H:i:s'),
+			);
+			$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
+			$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
+			if(!$scan_date){
+				throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+			}
+			
 			$allRegistrations= $this->getMany(array('Attendee.id'=>$rowId,'Event.id'=>$registration['event_id']));
 			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $registration['checked_in_quantity'], $quantity, true);
 			return array('Registrations'=>$updatedRegistrations);
@@ -310,6 +324,22 @@ protected function processSqlResults($rows,$keyOpVals){
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
+			
+			//Add the date checked-out into the events_attendee_checkin table
+			$columns_and_values = array(
+				'attendee_id'			=> $registration['id'],
+				'registration_id'		=> $registration['registration_id'],
+				'event_id'				=> $registration['event_id'],
+				'checked_in'			=> 0,//Checked-out
+				'date_scanned'			=> date('Y-m-d H:i:s'),
+			);
+			$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
+			$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
+			if(!$scan_date){
+				throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+			}
+			
+			
 			//fetch the updated registrations. if we updated 4, we ought to return
 			//4. If our first non-checked-in ID was 555.6, that means we should return 6 through 2 (so from .etc.
 			//
