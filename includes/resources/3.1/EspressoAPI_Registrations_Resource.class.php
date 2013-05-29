@@ -203,7 +203,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	
 	function _checkin($id,$queryParameters=array()){
-		global $wpdb;
+		global $wpdb, $ticketing_installed;
 		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
@@ -244,25 +244,29 @@ protected function processSqlResults($rows,$keyOpVals){
 			//refetch the registration again
 			//return $this->getOne($id);
 			
-			//Add the date checked-in into the events_attendee_checkin table
-			$columns_and_values = array(
-				'attendee_id'			=> $registration['id'],
-				'registration_id'		=> $registration['registration_id'],
-				'event_id'				=> $registration['event_id'],
-				'checked_in'			=> 1,//Checked-in
-				'date_scanned'			=> date('Y-m-d H:i:s'),
-			);
-			$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
-			$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
-			if(!$scan_date){
-				throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+			if ($ticketing_installed == true){
+				//Add the date checked-in into the events_attendee_checkin table
+				$columns_and_values = array(
+					'attendee_id'			=> $registration['id'],
+					'registration_id'		=> $registration['registration_id'],
+					'event_id'				=> $registration['event_id'],
+					'checked_in'			=> $quantity,//Checked-in
+					'date_scanned'			=> date('Y-m-d H:i:s'),
+					'method'				=> 'api',
+					'type'					=> 'checkin',
+				);
+				$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
+				$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
+				if(!$scan_date){
+					throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+				}
 			}
 			
 			$allRegistrations= $this->getMany(array('Attendee.id'=>$rowId,'Event.id'=>$registration['event_id']));
 			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $registration['checked_in_quantity'], $quantity, true);
 			return array('Registrations'=>$updatedRegistrations);
 		}else{
-			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked in failed:","event_espresso").$result);
+			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked-in failed:","event_espresso").$result);
 		}
 	}
 	
@@ -272,7 +276,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	
 	function _checkout($id,$queryParameters=array()){
-		global $wpdb;
+		global $wpdb, $ticketing_installed;
 		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
@@ -325,18 +329,22 @@ protected function processSqlResults($rows,$keyOpVals){
 		$result=$wpdb->query($sql);
 		if($result){
 			
-			//Add the date checked-out into the events_attendee_checkin table
-			$columns_and_values = array(
-				'attendee_id'			=> $registration['id'],
-				'registration_id'		=> $registration['registration_id'],
-				'event_id'				=> $registration['event_id'],
-				'checked_in'			=> 0,//Checked-out
-				'date_scanned'			=> date('Y-m-d H:i:s'),
-			);
-			$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
-			$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
-			if(!$scan_date){
-				throw new EspressoAPI_OperationFailed(__("Updating of date checked in failed:","event_espresso").$scan_date);
+			if ($ticketing_installed == true){
+				//Add the date checked-out into the events_attendee_checkin table
+				$columns_and_values = array(
+					'attendee_id'			=> $registration['id'],
+					'registration_id'		=> $registration['registration_id'],
+					'event_id'				=> $registration['event_id'],
+					'checked_in'			=> $newCheckedInvalue,//Checked-out
+					'date_scanned'			=> date('Y-m-d H:i:s'),
+					'method'				=> 'api',
+					'type'					=> 'checkout',
+				);
+				$data_formats = array( '%d', '%s', '%d', '%d', '%s', '%s', '%s', );
+				$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
+				if(!$scan_date){
+					throw new EspressoAPI_OperationFailed(__("Updating of date checked-out failed:","event_espresso").$scan_date);
+				}
 			}
 			
 			
