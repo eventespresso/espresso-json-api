@@ -3,7 +3,7 @@
 Plugin Name: Event Espresso API Plugin
 Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
-Version: 2.0.1-ALPHA
+Version: 2.0.1.b
 Author: Event Espresso, (Mike Nelson)
 Requiresa at least: Event Espresso 3.1.30, and Wordpress 3.3.0
  *  For Developers: How this plugin generally works:
@@ -26,7 +26,7 @@ which corresponds to the current Event Espresso Core version.
  * puts it into JSON or XML format and prints it to the output buffer.
 */
 define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
-define('EspressoAPI_VERSION','2.0.1-ALPHA');
+define('EspressoAPI_VERSION','2.0.1.b');
 
 //constants relating to responses
 define('EspressoAPI_STATUS','status');
@@ -74,13 +74,18 @@ function ee_json_api_load_pue_update() {
 		require(EVENT_ESPRESSO_PLUGINFULLPATH . 'class/pue/pue-client.php' );
 		$api_key = $org_options['site_license_key'];
 		$host_server_url = 'http://eventespresso.com';
-		$plugin_slug = 'espresso-json-api';
+		$plugin_slug = array(
+			'premium' => array('p', 'espresso-json-api'),
+			'prerelease' => array('b', 'espresso-json-api-pr')
+			);
 		$options = array(
 			'apikey' => $api_key,
 			'lang_domain' => 'event_espresso',
 			'checkPeriod' => '24',
 			'option_key' => 'site_license_key',
-			'options_page_slug' => 'event_espresso'
+			'options_page_slug' => 'event_espresso',
+			'plugin_basename' => plugin_basename(__FILE__),
+			'use_wp_update' => FALSE
 		);
 		$check_for_updates = new PluginUpdateEngineChecker($host_server_url, $plugin_slug, $options); //initiate the class and start the plugin update engine!
 	}
