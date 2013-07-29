@@ -62,7 +62,8 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'Payment Declined'=>'incomplete',//note: when array_flipping, this value gets forgotten
 				'Incomplete'=>'incomplete',
 				'Not Completed'=>'incomplete',
-				'Cancelled'=>'incomplete');
+				'Cancelled'=>'incomplete',
+				'Declined'=>'incomplete');
 	protected function processSqlResults($rows,$keyOpVals){
 		$processedRows=array();
 		foreach($rows as $row){
