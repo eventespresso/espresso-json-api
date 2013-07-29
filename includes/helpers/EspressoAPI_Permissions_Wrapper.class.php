@@ -40,10 +40,10 @@ class EspressoAPI_Permissions_Wrapper{
 			return current_user_can('administrator');
 		}
 	}
-	
 	/**
-	 * if espresso_is_admin isn't defined, jsut reutnrs if the user is an admin
-	 * @return int 
+	 * Utilizes the permissions addon's function to determine if 
+	 * the user who's trying to login should be allowed to use EE (and the API)
+	 * @return boolean
 	 */
 	static function espresso_is_admin(){
 		if(function_exists('espresso_is_admin')){
@@ -62,8 +62,17 @@ class EspressoAPI_Permissions_Wrapper{
 	 * @param $id of the resource if they're wanting access to a particular resource. 
 	 */
 	static function current_user_can($httpMethod='get',$resource='Events',$id=null){
-		global $current_user;
-		if(isset($current_user) && $current_user->ID==0){//no user logged in, only allow for access to public stuff
+		global $current_user, $espresso_premium;
+		
+//		echo "check current users permission using current_user_can. http: $httpMethod, resource:$resource<br>";
+
+		//If the permissions manager is installed, then load the $espresso_manager global
+		if (function_exists('espresso_permissions_config_mnu') && $espresso_premium == true) {
+			global $espresso_manager;
+		} 
+		
+		
+		if(isset($current_user) && $current_user->ID!=0){//no user logged in, only allow for access to public stuff
 			//as some point in the future, we may wish to have more permissions
 			switch($httpMethod){
 				case'get':
@@ -77,6 +86,10 @@ class EspressoAPI_Permissions_Wrapper{
 				default:
 					switch($resource){
 						case 'Events':
+//							echo "current user is ";var_dump($current_user);
+							$can =  current_user_can(isset($espresso_manager['espresso_manager_events']) ? $espresso_manager['espresso_manager_events'] : 'administrator');
+//							echo "can? $can";
+							return $can;
 						case 'Categories':
 						case 'Datetimes':
 						case 'Prices':
@@ -101,4 +114,6 @@ class EspressoAPI_Permissions_Wrapper{
 			return true;
 		}
 	}
+	
+	
 }
