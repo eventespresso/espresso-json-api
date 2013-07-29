@@ -25,23 +25,7 @@ class EspressoAPI_Router{
     function __construct(){
           add_action('parse_query',array($this,'template_redirect'));//template_redirect was original action
     }
-	/**
-	 *checks if the user has capabilities allowing them to use the api at all. ie: at least event manager or event admin.
-	 * if the event espresso permissions plugin is installed, uses it to determine if the user is an event espresso admin
-	 *  
-	 */
-	function currentUserCanUseAPI(){
-		$current_user = wp_get_current_user();
-		if($current_user->ID==0){
-			return false;
-		}
-		
-		if(EspressoAPI_Permissions_Wrapper::espresso_is_admin() || current_user_can('espresso_event_manager'))
-			return true;
-		else{
-			return false;
-		}
-	}
+	
 	protected function  publicAccessQuery($sessionKey){
 		$allowPublicAccess=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
 		if($sessionKey=='public' && $allowPublicAccess)
