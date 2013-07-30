@@ -74,10 +74,11 @@ function ee_json_api_load_pue_update() {
 		require(EVENT_ESPRESSO_PLUGINFULLPATH . 'class/pue/pue-client.php' );
 		$api_key = $org_options['site_license_key'];
 		$host_server_url = 'http://eventespresso.com';
-		$plugin_slug = array(
-			'premium' => array('p', 'espresso-json-api'),
-			'prerelease' => array('b', 'espresso-json-api-pr')
-			);
+		$plugin_slug = 'espresso-json-api';
+//		$plugin_slug = array(
+//			'premium' => array('p', 'espresso-json-api'),
+//			'prerelease' => array('b', 'espresso-json-api-pr')
+//			);
 		$options = array(
 			'apikey' => $api_key,
 			'lang_domain' => 'event_espresso',
