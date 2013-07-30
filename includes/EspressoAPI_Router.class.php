@@ -26,6 +26,13 @@ class EspressoAPI_Router{
           add_action('parse_query',array($this,'template_redirect'));//template_redirect was original action
     }
 	
+	/**
+	 * Determine if the current query is a public access query, and whether the site
+	 * permits it.
+	 * @param string $sessionKey what the user used as the "session key" in teh request,
+	 * ...specifically, we're looking to see if it's 'public'
+	 * @return boolean
+	 */
 	protected function  publicAccessQuery($sessionKey){
 		$allowPublicAccess=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
 		if($sessionKey=='public' && $allowPublicAccess)
@@ -67,7 +74,7 @@ class EspressoAPI_Router{
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
 				global $current_user;
 				if($this->publicAccessQuery($sessionKey)){
-					$current_user->ID=0;
+					$current_user = null;
 				}else{
 					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
 					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);

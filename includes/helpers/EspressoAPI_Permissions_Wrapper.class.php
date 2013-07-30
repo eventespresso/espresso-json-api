@@ -62,17 +62,13 @@ class EspressoAPI_Permissions_Wrapper{
 	 * @param $id of the resource if they're wanting access to a particular resource. 
 	 */
 	static function current_user_can($httpMethod='get',$resource='Events',$id=null){
-		global $current_user, $espresso_premium;
+		global $current_user;
 		
 //		echo "check current users permission using current_user_can. http: $httpMethod, resource:$resource<br>";
 
-		//If the permissions manager is installed, then load the $espresso_manager global
-		if (function_exists('espresso_permissions_config_mnu') && $espresso_premium == true) {
-			global $espresso_manager;
-		} 
 		
 		
-		if(isset($current_user) && $current_user->ID!=0){//no user logged in, only allow for access to public stuff
+//		if(isset($current_user) && $current_user->ID!=0){//no user logged in, only allow for access to public stuff
 			//as some point in the future, we may wish to have more permissions
 			switch($httpMethod){
 				case'get':
@@ -86,33 +82,65 @@ class EspressoAPI_Permissions_Wrapper{
 				default:
 					switch($resource){
 						case 'Events':
-//							echo "current user is ";var_dump($current_user);
-							$can =  current_user_can(isset($espresso_manager['espresso_manager_events']) ? $espresso_manager['espresso_manager_events'] : 'administrator');
-//							echo "can? $can";
-							return $can;
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Categories':
+							return self::current_user_has_espresso_permission('espresso_manager_categories');
 						case 'Datetimes':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Prices':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Pricetypes':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Venues':
+							return self::current_user_has_espresso_permission('espresso_manager_venue_manager');
 						case 'Questions':
-							return true;
-							break;
+							return self::current_user_has_espresso_permission('espresso_manager_form_builder');
+						case 'Question_Groups':
+							return self::current_user_has_espresso_permission('espresso_manager_form_groups');
 						case 'Promocodes':
+							return self::current_user_has_espresso_permission('espresso_manager_discounts');
 						case 'Attendees':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Registrations':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Transactions':
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						case 'Answers':
-							return false;
-							break;
+							return self::current_user_has_espresso_permission('espresso_manager_events');
 						default:
-							return true;
+							return current_user_can('administrator');
 					}
 			}
-			
-		}else{
-			return true;
+//		}else{
+//			return true;
+//		}
+	}
+	
+	/**
+	 * 
+	 * @global array $espresso_manager set in the permissions addons
+	 * @param string $permission like espresso_manager_events (one of the array keys in
+	 * $espresso_manager) 
+	 * @return boolean
+	 */
+	private static function current_user_has_espresso_permission($permission){
+		global $espresso_manager, $current_user;
+		//if user isn't logged in, only grant them access to particular stuff
+		if( ! $current_user->ID){
+			$espresso_manager = array(
+				'espresso_manager_events'=>'read',
+				'espresso_manager_venue_manager'=>'read',
+				//espresso_manager_form_builder
+				//espresso_manager_form_groups
+				//espresso_manager_categories
+				//espresso_manager_discounts
+			);
 		}
+//		echo "current user ";//var_dump($current_user);
+//		echo "can ".$permission;
+		$can =  current_user_can(isset($espresso_manager[$permission]) ? $espresso_manager[$permission] : 'administrator');
+//		echo "? $can<br>";
+		return $can;
 	}
 	
 	
