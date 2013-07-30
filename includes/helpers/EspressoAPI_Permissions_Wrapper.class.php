@@ -62,18 +62,11 @@ class EspressoAPI_Permissions_Wrapper{
 	 * @param $id of the resource if they're wanting access to a particular resource. 
 	 */
 	static function current_user_can($httpMethod='get',$resource='Events',$id=null){
-		global $current_user, $espresso_premium;
+		global $current_user;
+				
 		
-//		echo "check current users permission using current_user_can. http: $httpMethod, resource:$resource<br>";
-
-		//If the permissions manager is installed, then load the $espresso_manager global
-		if (function_exists('espresso_permissions_config_mnu') && $espresso_premium == true) {
-			global $espresso_manager;
-		} 
-		
-		
-		if(isset($current_user) && $current_user->ID!=0){//no user logged in, only allow for access to public stuff
-			//as some point in the future, we may wish to have more permissions
+		if(empty($current_user) || $current_user->ID==0){//no user logged in, only allow for access to public stuff		
+//as some point in the future, we may wish to have more permissions
 			switch($httpMethod){
 				case'get':
 				case'GET':
@@ -86,10 +79,6 @@ class EspressoAPI_Permissions_Wrapper{
 				default:
 					switch($resource){
 						case 'Events':
-//							echo "current user is ";var_dump($current_user);
-							$can =  current_user_can(isset($espresso_manager['espresso_manager_events']) ? $espresso_manager['espresso_manager_events'] : 'administrator');
-//							echo "can? $can";
-							return $can;
 						case 'Categories':
 						case 'Datetimes':
 						case 'Prices':
@@ -97,7 +86,6 @@ class EspressoAPI_Permissions_Wrapper{
 						case 'Venues':
 						case 'Questions':
 							return true;
-							break;
 						case 'Promocodes':
 						case 'Attendees':
 						case 'Registrations':
@@ -110,8 +98,10 @@ class EspressoAPI_Permissions_Wrapper{
 					}
 			}
 			
-		}else{
+		}elseif(self::espresso_is_admin ()){//if they're an admin, give them all permisions (in this version)
 			return true;
+		}else{//they're a subscriber, so give no permissions
+			return false;
 		}
 	}
 	
