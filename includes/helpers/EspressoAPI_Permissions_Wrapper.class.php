@@ -45,9 +45,9 @@ class EspressoAPI_Permissions_Wrapper{
 	 * the user who's trying to login should be allowed to use EE (and the API)
 	 * @return boolean
 	 */
-	static function espresso_is_admin(){
+	static function current_user_has_espresso_permissions(){
 		if(function_exists('espresso_is_admin')){
-			return espresso_is_admin();
+			return espresso_is_admin() || current_user_can('espresso_event_manager');
 		}else{
 			return current_user_can('administrator');
 		}
@@ -98,7 +98,7 @@ class EspressoAPI_Permissions_Wrapper{
 					}
 			}
 			
-		}elseif(self::espresso_is_admin ()){//if they're an admin, give them all permisions (in this version)
+		}elseif(self::current_user_has_espresso_permissions ()){//if they're an admin, give them all permisions (in this version)
 			return true;
 		}else{//they're a subscriber, so give no permissions
 			return false;
