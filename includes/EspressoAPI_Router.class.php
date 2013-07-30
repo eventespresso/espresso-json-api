@@ -42,7 +42,10 @@ class EspressoAPI_Router{
 	}
     /**
      *intercepts requests, and finds ones for the espresso API, and routes them to the appropriate controller, if there is one
-     * @return type 
+	 * and echoes out the controller's output, and exits. Removes ALL actions on 'shutdown' so to prevent warnings
+	 * @global WP_User $current_user 
+	 * @global boolean $espressoAPI_public_access_query declared here, used within the EspressoAPI_Permissions_Wrapper
+     * @return void 
      */
      function template_redirect(){
 		 
@@ -73,14 +76,17 @@ class EspressoAPI_Router{
 			}else{
 				if(!empty($sessionKey) && empty($apiParam1))
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
-				global $current_user;
+				
+				global $current_user, $espressoAPI_public_access_query;
 				if($this->publicAccessQuery($sessionKey)){
 					$current_user = null;
 					wp_set_current_user(0);
+					$espressoAPI_public_access_query = true;
 				}else{
 					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
 					wp_set_current_user($current_user->ID);
 					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
+					$espressoAPI_public_access_query = false;
 				}
 				$controller=EspressoAPI_ClassLoader::load(ucwords($apiParam1),"Controller");
 				$response=$controller->handleRequest($apiParam2,$apiParam3,$format);
