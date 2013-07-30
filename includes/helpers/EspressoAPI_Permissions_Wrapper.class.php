@@ -62,7 +62,6 @@ class EspressoAPI_Permissions_Wrapper{
 	 * @param $id of the resource if they're wanting access to a particular resource. 
 	 */
 	static function current_user_can($httpMethod='get',$resource='Events',$id=null){
-		global $current_user;
 		
 //		echo "check current users permission using current_user_can. http: $httpMethod, resource:$resource<br>";
 
@@ -126,21 +125,25 @@ class EspressoAPI_Permissions_Wrapper{
 	private static function current_user_has_espresso_permission($permission){
 		global $espresso_manager, $current_user;
 		//if user isn't logged in, only grant them access to particular stuff
+//		echo "current user is :";
+//				var_dump($current_user);
 		if( ! $current_user->ID){
+//			echo "override epsresso_manager";
 			$espresso_manager = array(
-				'espresso_manager_events'=>'read',
-				'espresso_manager_venue_manager'=>'read',
+				'espresso_manager_events'=>true,
+				'espresso_manager_venue_manager'=>true,
 				//espresso_manager_form_builder
 				//espresso_manager_form_groups
 				//espresso_manager_categories
 				//espresso_manager_discounts
 			);
+			if(isset($espresso_manager[$permission]) && $espresso_manager[$permission] ){
+				return true;
+			}
+		}else{
+			$can =  current_user_can(isset($espresso_manager[$permission]) ? $espresso_manager[$permission] : 'administrator');
+			return $can;
 		}
-//		echo "current user ";//var_dump($current_user);
-//		echo "can ".$permission;
-		$can =  current_user_can(isset($espresso_manager[$permission]) ? $espresso_manager[$permission] : 'administrator');
-//		echo "? $can<br>";
-		return $can;
 	}
 	
 	

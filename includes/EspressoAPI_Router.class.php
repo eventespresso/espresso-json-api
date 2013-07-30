@@ -45,6 +45,7 @@ class EspressoAPI_Router{
      * @return type 
      */
      function template_redirect(){
+		 
 		//fetch params and sanitize. $_REQUEST variables must be passed by the api before doing anything in teh db
 		$apiRequest=get_query_var('espresso-api-request');
 		$apiAuthenticate=get_query_var('espresso-api-authenticate');
@@ -75,8 +76,10 @@ class EspressoAPI_Router{
 				global $current_user;
 				if($this->publicAccessQuery($sessionKey)){
 					$current_user = null;
+					wp_set_current_user(0);
 				}else{
 					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
+					wp_set_current_user($current_user->ID);
 					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
 				}
 				$controller=EspressoAPI_ClassLoader::load(ucwords($apiParam1),"Controller");
