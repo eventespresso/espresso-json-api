@@ -47,10 +47,10 @@ class EspressoAPI_Permissions_Wrapper {
 	 * the user who's trying to login should be allowed to use EE (and the API)
 	 * @return boolean
 	 */
-	static function espresso_is_admin() {
-		if (function_exists('espresso_is_admin')) {
-			return espresso_is_admin();
-		} else {
+	static function current_user_has_espresso_permissions(){
+		if(function_exists('espresso_is_admin')){
+			return espresso_is_admin() || current_user_can('espresso_event_manager');
+		}else{
 			return current_user_can('administrator');
 		}
 	}
@@ -75,25 +75,25 @@ class EspressoAPI_Permissions_Wrapper {
 			case'GET':
 				switch ($resource) {
 					case 'Events':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Categories':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Datetimes':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Prices':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Pricetypes':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Venues':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Questions':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Question_Groups':
-						return $espressoAPI_public_access_query || self::espresso_is_admin();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					//the following resources are NOT available publicley
 					//and only to certain privileged event espresso users
 					case 'Promocodes':
-						return self::espresso_is_admin();
+						return self::current_user_has_espresso_permissions();
 					case 'Attendees':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					case 'Registrations':

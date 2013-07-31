@@ -26,7 +26,7 @@ class EspressoAPI_Authentication_Controller {
 		global $current_user;
 		$current_user = $user;
 		//only allow admins to authenticate
-		if( ! EspressoAPI_Permissions_Wrapper::espresso_is_admin()){
+		if( ! EspressoAPI_Permissions_Wrapper::current_user_has_espresso_permissions()){
 			throw new EspressoAPI_UnauthorizedException();
 		}
 		$sessionKey=EspressoAPI_SessionKey_Manager::getSessionKeyForUser($user->ID);
