@@ -308,9 +308,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @return array  
 	 */
      function getMany($queryParameters){
-		 if(!EspressoAPI_Permissions_Wrapper::current_user_can('get', $this->modelNamePlural)){
-			 throw new EspressoAPI_UnauthorizedException();
-		 }
+		 
 		 
 		 //parse limit, and remove it from query parameters if present
 		 //figure out query limit

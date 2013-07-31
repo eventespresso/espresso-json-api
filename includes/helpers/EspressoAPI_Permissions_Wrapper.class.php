@@ -67,7 +67,16 @@ class EspressoAPI_Permissions_Wrapper {
 	 */
 	static function current_user_can($httpMethod = 'get', $resource = 'Events', $id = null) {
 		global $espressoAPI_public_access_query;
-
+		//at a minumum the current user must either be using the public access session key,
+		//or be an ee user.
+		//ie, if they aren't authenticated
+		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
+		//then they should get rejected here
+		if( ! $espressoAPI_public_access_query || ! self::current_user_has_espresso_permissions()){
+			return false;
+		}
+		
+		//ok, so now we know they're either a public user or an ee user
 		switch ($httpMethod) {
 			//for VIEWING of info, make certain resources publicley-available
 			//and available to any authenticated event espresso user/admin
