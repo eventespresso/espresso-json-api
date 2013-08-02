@@ -203,6 +203,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	
 	function _checkin($id,$queryParameters=array()){
+		global $wpdb;
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
