@@ -159,10 +159,12 @@ class EspressoAPI_Permissions_Wrapper {
 		//so the user dosn't have GENERAL permission to access this resource. maybe
 		//does the user have SPECIFIC access to the resource with this id?
 		$resource = EspressoAPI_ClassLoader::load($resource, 'Resource');
-		if ( $resource->current_user_has_specific_permission_for($id)){
+		if ( $resource->current_user_has_specific_permission_for($httpMethod,$id)){
+//			echo "but they do have permission for this one!";
 			return true;
 		}
-		
+//		echo "well, no. they can't";
+		return false;
 	}
 
 	/**

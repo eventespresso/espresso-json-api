@@ -296,32 +296,36 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	 * @param array $wpdb_results_row like $wpdb->get_row($query,ARRAY_A)
 	 * @return boolean
 	 */
-	function current_user_has_specific_permission_for($id,$wpdb_results_row = array()){
-		//is the event public? for that, it must be active and have a status of
-		//active, ongoing, or secondary/waitlist
-		if(isset($wpdb_results_row['Event.status'])){
-			$status = $wpdb_results_row['Event.event_status'];
-			$active = $wpdb_results_row['Event.is_active'];
-		}else{
-			global $wpdb;
-			$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
-			$status = $results['event_status'];
-			$active = $results['is_active'];
-		}
-		//echo "status:$status,active:$active";
+	function current_user_has_specific_permission_for($httpMethod,$id,$wpdb_results_row = array()){
 		
-		//avoid duplication by using the var $statiConsideredPublic
-		$publicStatiValuesInDB= array();
-		$statusConversionsFlipped = array_flip($this->statusConversions);
-		foreach($this->statiConsideredPublic as $apiStatus){
-			$publicStatiValuesInDB[] = $statusConversionsFlipped[$apiStatus];
+		if(in_array($httpMethod,array('GET','get'))){
+				//is the event public? for that, it must be active and have a status of
+				//active, ongoing, or secondary/waitlist
+				if(isset($wpdb_results_row['Event.status'])){
+					$status = $wpdb_results_row['Event.event_status'];
+					$active = $wpdb_results_row['Event.is_active'];
+				}else{
+					global $wpdb;
+					$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
+					$status = $results['event_status'];
+					$active = $results['is_active'];
+				}
+				//echo "status:$status,active:$active";
+
+				//avoid duplication by using the var $statiConsideredPublic
+				$publicStatiValuesInDB= array();
+				$statusConversionsFlipped = array_flip($this->statusConversions);
+				foreach($this->statiConsideredPublic as $apiStatus){
+					$publicStatiValuesInDB[] = $statusConversionsFlipped[$apiStatus];
+				}
+				//if teh event public?
+				if(in_array($status, $publicStatiValuesInDB) && $active == 'Y'){
+//					echo "this event is public";
+					return true;
+				}
 		}
-		//if teh event public?
-		if(in_array($status, $publicStatiValuesInDB) && $active == 'Y'){
-//			echo "this event is public";
-			return true;
-		}
-		//ok so its not public. but maybe this user has specific access?
+		
+		//ok so its not public (or they want to update it). maybe this user has specific access?
 		if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($id)){
 //			echo "this user has specific access to event";
 			return true;

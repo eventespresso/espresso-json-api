@@ -177,10 +177,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * Determines if the current user has specific permission to accesss/manipulate
 	 * the resource indicated by $id. If we're calling this just after running a db query,
 	 * then we can pass along $wpdb_results_row as it may save us having to run another query
+	 * @param string $httpMethod like 'get' or 'put'
 	 * @param int|float $id
 	 * @param array $wpdb_results_row like $wpdb->get_row($query,ARRAY_A)
 	 * @return boolean
 	 */
-	public abstract function current_user_has_specific_permission_for($id, $wpdb_results_row= array());
+	public abstract function current_user_has_specific_permission_for($httpMethod,$id, $wpdb_results_row= array());
 	
 }

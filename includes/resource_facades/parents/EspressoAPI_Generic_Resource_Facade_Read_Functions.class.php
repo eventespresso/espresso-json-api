@@ -339,7 +339,15 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			}
 			$limitStart=0;
 		}
-		 //parse query parameter
+		//check if they've requested only editable results (ie, results that they have permission to edit AND see)
+		if(isset($queryParameters['editable_only']) && $queryParameters['editable_only']=='true'){
+			$httpMethodForDeterminingPermissions = 'put';
+			unset($queryParameters['editable_only']);
+		}else{
+			$httpMethodForDeterminingPermissions = 'get';
+		}
+		
+		 //parse query parameters
 		 if (!empty($queryParameters)){
 			 if(array_key_exists('cache_result',$queryParameters)){
 				 $cacheResult=true;
@@ -353,6 +361,8 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$cacheResult=false;
 			$keyOpVals=array();
 		}
+		
+		
 		
 		//validate query parameter input first by normalizing input into 'Model.parameter'
 		$keyOpVals=$this->validator->validateQueryParameters($keyOpVals);
@@ -396,7 +406,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 				
 				foreach($topLevelModels as $key=>$model){
 					//verify the current user has permission to access this thing
-					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific('get', $this->modelNamePlural,$key)){
+					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($httpMethodForDeterminingPermissions, $this->modelNamePlural,$key)){
 						continue;
 					}
 				
