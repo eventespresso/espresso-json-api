@@ -178,6 +178,7 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	 * @return boolean
 	 */
 	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		//we don't care what http method they're using in this case.
 		if(is_array($resource_instance_array) && isset($resource_instance_array['Events'][0]['id'])){
 			$event_id = $resource_instance_array['Event']['id'];
 		}else{

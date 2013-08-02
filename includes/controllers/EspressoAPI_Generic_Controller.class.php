@@ -182,7 +182,9 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @param $id id of the object
 	 * @return boolean success fo deleting the event
 	 */
-	abstract protected function specificRequestDelete($id);
+	protected function specificRequestDelete($id){
+		throw new EspressoAPI_MethodNotImplementedException();
+	}
 	
 	/**
 	 * Should be overriden by subclass controller which have attributes which aren't proper models.

@@ -27,13 +27,6 @@
 class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controller{
 	
 	/**
-	 * for handling requests like DELETE /events/23 for deleting an event with id 23 
-	 * @param $id id of the object
-	 * @return boolean success fo deleting the event
-	 */
-	 protected function specificRequestDelete($id){throw new EspressoAPI_MethodNotImplementedException();}
-	
-	/**
 	 *request like GET events/13/attendees, for getting all attendees at an event 
 	 * @param $id id of the object
 	 * @param $attribute 3rd part of the URI, in teh above example it would 'attendees'
