@@ -287,39 +287,32 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		}
 		return $dbEntries;
 	}
-
+	
 	/**
 	 * Determines if the current user has specific permission to accesss/manipulate
 	 * the resource indicated by $id. If we're calling this just after running a db query,
 	 * then we can pass along $wpdb_results_row as it may save us having to run another query
 	 * @param int|float $id
-	 * @param array $wpdb_results_row like $wpdb->get_row($query,ARRAY_A)
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
 	 * @return boolean
 	 */
-	function current_user_has_specific_permission_for($httpMethod,$id,$wpdb_results_row = array()){
-		
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
 		if(in_array($httpMethod,array('GET','get'))){
 				//is the event public? for that, it must be active and have a status of
 				//active, ongoing, or secondary/waitlist
-				if(isset($wpdb_results_row['Event.status'])){
-					$status = $wpdb_results_row['Event.event_status'];
-					$active = $wpdb_results_row['Event.is_active'];
+				if(isset($resource_instance_array['status'])){
+					$status = $resource_instance_array['status'];
+					$active = $resource_instance_array['active'];
 				}else{
 					global $wpdb;
 					$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
-					$status = $results['event_status'];
-					$active = $results['is_active'];
+					$status = $this->statusConversions[$results['event_status']];
+					$active = $results['is_active'] == 'Y' ? true: false;
 				}
 				//echo "status:$status,active:$active";
 
-				//avoid duplication by using the var $statiConsideredPublic
-				$publicStatiValuesInDB= array();
-				$statusConversionsFlipped = array_flip($this->statusConversions);
-				foreach($this->statiConsideredPublic as $apiStatus){
-					$publicStatiValuesInDB[] = $statusConversionsFlipped[$apiStatus];
-				}
 				//if teh event public?
-				if(in_array($status, $publicStatiValuesInDB) && $active == 'Y'){
+				if(in_array($status, $this->statiConsideredPublic) && $active){
 //					echo "this event is public";
 					return true;
 				}

@@ -405,10 +405,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 				$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
 				
 				foreach($topLevelModels as $key=>$model){
-					//verify the current user has permission to access this thing
-					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($httpMethodForDeterminingPermissions, $this->modelNamePlural,$key)){
-						continue;
-					}
 				
 					foreach($relatedModelInfos as $relatedModelInfo){
 						//only add the related model's info if the current user has permission to access it
@@ -421,8 +417,12 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 							}
 						}
 					}
-					//echo "key:$key,floatval:".floatval($key);
-					//$key=$key*1000;
+					
+					//verify the current user has permission to access this thing
+					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($httpMethodForDeterminingPermissions, $this->modelNamePlural,$key,$model)){
+						continue;
+					}
+					
 					$apiItemsFetched[$key]=$model;
 				}
 			}

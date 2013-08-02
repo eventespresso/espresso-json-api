@@ -87,9 +87,9 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Promocodes':
 						return self::current_user_has_espresso_permissions();
 					case 'Attendees':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_has_espresso_permissions();
 					case 'Registrations':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_has_espresso_permissions();
 					case 'Transactions':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					case 'Payments':
@@ -150,16 +150,17 @@ class EspressoAPI_Permissions_Wrapper {
 	 * @param string $httpMethod like 'GET'
 	 * @param string $resource like 'Events'
 	 * @param int|float|string $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
 	 * @return boolean
 	 */
-	static function current_user_can_access_specific($httpMethod = 'get',$resource='Events',$id = null){
+	static function current_user_can_access_specific($httpMethod = 'get',$resource='Events',$id = null, $api_model_object = array()){
 		if(self::current_user_can_access_all($httpMethod,$resource)){
 			return true;
 		}
 		//so the user dosn't have GENERAL permission to access this resource. maybe
 		//does the user have SPECIFIC access to the resource with this id?
 		$resource = EspressoAPI_ClassLoader::load($resource, 'Resource');
-		if ( $resource->current_user_has_specific_permission_for($httpMethod,$id)){
+		if ( $resource->current_user_has_specific_permission_for($httpMethod,$id,$api_model_object)){
 //			echo "but they do have permission for this one!";
 			return true;
 		}
