@@ -63,7 +63,6 @@ class EspressoAPI_Permissions_Wrapper {
 		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
 		//then they should get rejected here
 		if( ! $espressoAPI_public_access_query && ! self::current_user_has_espresso_permissions() ){
-			
 			return false;
 		}
 		

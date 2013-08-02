@@ -178,7 +178,13 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 	 * @return boolean
 	 */
 	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
-		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
+		if(is_array($resource_instance_array) && isset($resource_instance_array['Events'][0]['id'])){
+			$event_id = $resource_instance_array['Event']['id'];
+		}else{
+			global $wpdb;
+			$event_id = $wpdb->get_var($wpdb->prepare("SELECT event_id FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=%d",$id));
+		}
+		return EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event_id);
 	}
 }
 //new Events_Controller();

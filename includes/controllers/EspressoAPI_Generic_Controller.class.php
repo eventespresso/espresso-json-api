@@ -193,7 +193,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @return boolean
 	 */
 	protected function canAccessAttribute($id, $attribute){
-		return EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($_REQUEST['REQUEST_METHOD'], ucwords($attribute), $id);
+		return EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], ucwords($attribute));
 	}
 	/**
 	 * for handling requests like 'events/14/attendees'
