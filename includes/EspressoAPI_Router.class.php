@@ -68,9 +68,8 @@ class EspressoAPI_Router{
 		if(empty($apiRequest))//this wasn't actually a request to the espresso API, let it go through the normal Wordpress response process
             return;
 		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
-		
 		try{
-			if($apiAuthenticate=='true'){				
+			if($apiAuthenticate=='true'){		
 				$controller=EspressoAPI_ClassLoader::load('Authentication',"Controller");
 				$response=$controller->authenticate();
 			}else{

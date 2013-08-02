@@ -203,10 +203,6 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	
 	function _checkin($id,$queryParameters=array()){
-		global $wpdb, $ticketing_installed;
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
-			 throw new EspressoAPI_UnauthorizedException();
-		}
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
@@ -277,9 +273,6 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb, $ticketing_installed;
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
-			 throw new EspressoAPI_UnauthorizedException();
-		}
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
@@ -611,6 +604,16 @@ protected function processSqlResults($rows,$keyOpVals){
 		return $dbEntries;
 	}
 	
-	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after running a db query,
+	 * then we can pass along $wpdb_results_row as it may save us having to run another query
+	 * @param int|float $id
+	 * @param array $wpdb_results_row like $wpdb->get_row($query,ARRAY_A)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($id,$wpdb_results_row = array()){
+		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
+	}
 }
 //new Events_Controller();

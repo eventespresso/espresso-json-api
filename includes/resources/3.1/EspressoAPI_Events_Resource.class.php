@@ -56,21 +56,26 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 				'P'=>'pending',
 				'R'=>'draft',
 				'D'=>'deleted');
+	
+	
 	/*
 	 * overrides parent constructSQLWherSubclauses in order to attach an additional wherecaluse
 	 * which will ensure we're only getting active events, unless they specify otherwise.
 	 * and if they're not logged in, only allow them to set active events
+		 see parent for more details
 	 */
-	protected function constructSQLWhereSubclauses($keyOpVals){
-		global $current_user;
-		if($current_user->ID==0){//public users can only see active events
-			$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,ongoing,secondary/waitlist');
+	protected function constructSQLWhereSubclauses($keyOpVals, $only_attempt_to_find_once = false){
+		global $espressoAPI_public_access_query;
+		//public users can only see active events
+		//so let's make this query a little more efficient but just totally NOT considering inactive events
+		if( $espressoAPI_public_access_query ){
+			$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>implode(",",$this->statiConsideredPublic));
 			$keyOpVals[]=array('key'=>'Event.active', 'operator'=>'=', 'value'=>'true');
-		}else{
+		}elseif(!$only_attempt_to_find_once){
 			//if the user is logged in, allow them to override thed efault status if desired
 			//but otherwise set the default to active events only
 			if($this->getIndexOfKeyInKeyOpVals('Event.status',$keyOpVals)==-1){
-				$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>'active,ongoing,secondary/waitlist');//inactive,denied,pending,draft, AND CERTAINLY not deleted
+				$keyOpVals[]=array('key'=>'Event.status','operator'=>'IN','value'=>implode(",",$this->statiConsideredPublic));//inactive,denied,pending,draft, AND CERTAINLY not deleted
 			}
 			if($this->getIndexOfKeyInKeyOpVals('Event.active',$keyOpVals)==-1){
 				$keyOpVals[]=array('key'=>'Event.active', 'operator'=>'=', 'value'=>'true');
@@ -283,4 +288,44 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		return $dbEntries;
 	}
 
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after running a db query,
+	 * then we can pass along $wpdb_results_row as it may save us having to run another query
+	 * @param int|float $id
+	 * @param array $wpdb_results_row like $wpdb->get_row($query,ARRAY_A)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($id,$wpdb_results_row = array()){
+		//is the event public? for that, it must be active and have a status of
+		//active, ongoing, or secondary/waitlist
+		if(isset($wpdb_results_row['Event.status'])){
+			$status = $wpdb_results_row['Event.event_status'];
+			$active = $wpdb_results_row['Event.is_active'];
+		}else{
+			global $wpdb;
+			$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
+			$status = $results['event_status'];
+			$active = $results['is_active'];
+		}
+		//echo "status:$status,active:$active";
+		
+		//avoid duplication by using the var $statiConsideredPublic
+		$publicStatiValuesInDB= array();
+		$statusConversionsFlipped = array_flip($this->statusConversions);
+		foreach($this->statiConsideredPublic as $apiStatus){
+			$publicStatiValuesInDB[] = $statusConversionsFlipped[$apiStatus];
+		}
+		//if teh event public?
+		if(in_array($status, $publicStatiValuesInDB) && $active == 'Y'){
+//			echo "this event is public";
+			return true;
+		}
+		//ok so its not public. but maybe this user has specific access?
+		if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($id)){
+//			echo "this user has specific access to event";
+			return true;
+		}
+	}
+	
 }

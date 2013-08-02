@@ -294,7 +294,7 @@ class EspressoAPI_Validator {
 		foreach($this->resource->relatedModels as $modelName=>$modelInfo){
 			//only require the related model's attributes as part of the response 
 			//if the current user should eb able to see them anyway
-			if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$modelInfo['modelNamePlural'])){
+			if(EspressoAPI_Permissions_Wrapper::current_user_can_access_some('get',$modelInfo['modelNamePlural'])){
 				$modelClass=  EspressoAPI_ClassLoader::load($modelInfo['modelNamePlural'],'Resource');
 				if($modelInfo['hasMany']){
 					$requiredFullResponse[$modelInfo['modelNamePlural']][]=$modelClass->getRequiredFields();

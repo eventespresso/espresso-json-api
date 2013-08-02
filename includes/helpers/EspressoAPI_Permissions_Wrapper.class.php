@@ -54,29 +54,19 @@ class EspressoAPI_Permissions_Wrapper {
 			return current_user_can('administrator');
 		}
 	}
-
-	/**
-	 * wrapper for checking if the current user has the necessary permission to
-	 * access/edit this resource.
-	 * initially though, we've just hard-coded the permissions
-	 * @param $httpMethod like get,post,put,delete
-	 * @param $resource name of API Model pluralized which user is trying to access,eg 'Events','Categories', etc.
-	 * @param $id of the resource if they're wanting access to a particular resource. 
-	 * @global boolean $espressoAPI_public_access_query indicates that the current request is using the public-access session key
-	 * @return booelean whether the current user can perform the given $httpMethod on the specified $resource
-	 */
-	static function current_user_can($httpMethod = 'get', $resource = 'Events', $id = null) {
+	
+	static function current_user_can_access_some($httpMethod = 'get',$resource = 'Events'){
 		global $espressoAPI_public_access_query;
 		//at a minumum the current user must either be using the public access session key,
 		//or be an ee user.
 		//ie, if they aren't authenticated
 		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
 		//then they should get rejected here
-		if( ! $espressoAPI_public_access_query || ! self::current_user_has_espresso_permissions()){
+		if( ! $espressoAPI_public_access_query && ! self::current_user_has_espresso_permissions() ){
+			
 			return false;
 		}
 		
-		//ok, so now we know they're either a public user or an ee user
 		switch ($httpMethod) {
 			//for VIEWING of info, make certain resources publicley-available
 			//and available to any authenticated event espresso user/admin
@@ -84,19 +74,12 @@ class EspressoAPI_Permissions_Wrapper {
 			case'GET':
 				switch ($resource) {
 					case 'Events':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Categories':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Datetimes':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Prices':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Pricetypes':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Venues':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Questions':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					case 'Question_Groups':
 						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
 					//the following resources are NOT available publicley
@@ -114,8 +97,9 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Answers':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					default:
-						return current_user_can('administrator');
+						return self::current_user_has_espresso_permissions();
 				}
+				break;
 			//creating, updating, or deleting the following resources generally take more specific privileges
 			case'post':
 			case'POST':
@@ -154,8 +138,144 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Answers':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					default:
+						return self::current_user_has_espresso_permissions();
+				}
+				break;
+		}
+	}
+	
+	/**
+	 * Checks if teh current user has access to this specific resource indicated by $id, 
+	 * using the http method $httpMethod.
+	 * @param string $httpMethod like 'GET'
+	 * @param string $resource like 'Events'
+	 * @param int|float|string $id
+	 * @return boolean
+	 */
+	static function current_user_can_access_specific($httpMethod = 'get',$resource='Events',$id = null){
+		if(self::current_user_can_access_all($httpMethod,$resource)){
+			return true;
+		}
+		//so the user dosn't have GENERAL permission to access this resource. maybe
+		//does the user have SPECIFIC access to the resource with this id?
+		$resource = EspressoAPI_ClassLoader::load($resource, 'Resource');
+		if ( $resource->current_user_has_specific_permission_for($id)){
+			return true;
+		}
+		
+	}
+
+	/**
+	 * wrapper for checking if the current user has the necessary permission to
+	 * access/edit this resource.
+	 * initially though, we've just hard-coded the permissions
+	 * @param $httpMethod like get,post,put,delete
+	 * @param $resource name of API Model pluralized which user is trying to access,eg 'Events','Categories', etc.
+	 * @global boolean $espressoAPI_public_access_query indicates that the current request is using the public-access session key
+	 * @return booelean whether the current user can perform the given $httpMethod on the specified $resource
+	 */
+	static function current_user_can_access_all($httpMethod = 'get', $resource = 'Events') {
+		global $espressoAPI_public_access_query;
+		//at a minumum the current user must either be using the public access session key,
+		//or be an ee user.
+		//ie, if they aren't authenticated
+		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
+		//then they should get rejected here
+		if( ! $espressoAPI_public_access_query && ! self::current_user_has_espresso_permissions() ){
+			return false;
+		}
+		
+		
+		//ok, so now we know they're either a public user or an ee user
+		switch ($httpMethod) {
+			//for VIEWING of info, make certain resources publicley-available
+			//and available to any authenticated event espresso user/admin
+			case'get':
+			case'GET':
+				switch ($resource) {
+					case 'Events':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Categories':
+					case 'Datetimes':
+					case 'Prices':
+					case 'Pricetypes':
+					case 'Venues':
+					case 'Questions':
+					case 'Question_Groups':
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
+					//the following resources are NOT available publicley
+					//and only to certain privileged event espresso users
+					case 'Promocodes':
+						return self::current_user_has_espresso_permissions();
+					case 'Attendees':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+					case 'Registrations':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+					case 'Transactions':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+					case 'Payments':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+					case 'Answers':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+					default:
 						return current_user_can('administrator');
 				}
+			//creating, updating, or deleting the following resources generally take more specific privileges
+			case'post':
+			case'POST':
+			case'put':
+			case'PUT':
+			case'delete':
+			case'DELETE':
+			default:
+				switch ($resource) {
+					case 'Events':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Categories':
+						return self::current_user_has_espresso_permission('espresso_manager_categories');
+						
+					case 'Datetimes':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Prices':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Pricetypes':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Venues':
+						return self::current_user_has_espresso_permission('espresso_manager_venue_manager');
+						
+					case 'Questions':
+						return self::current_user_has_espresso_permission('espresso_manager_form_builder');
+						
+					case 'Question_Groups':
+						return self::current_user_has_espresso_permission('espresso_manager_form_groups');
+						
+					case 'Promocodes':
+						return self::current_user_has_espresso_permission('espresso_manager_discounts');
+						
+					case 'Attendees':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Registrations':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Transactions':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Payments':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					case 'Answers':
+						return self::current_user_has_espresso_permission('espresso_manager_events');
+						
+					default:
+						return current_user_can('administrator');
+				}
+				
 		}
 	}
 
@@ -169,7 +289,7 @@ class EspressoAPI_Permissions_Wrapper {
 	 * @return boolean
 	 */
 	private static function current_user_has_espresso_permission($permission) {
-		global $espresso_manager, $current_user;
+		global $espresso_manager;
 		//if user isn't logged in, only grant them access to particular stuff
 //		echo "current user is :";
 //				var_dump($current_user);

@@ -67,7 +67,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * for handling requests like '/events/' 
 	 */
 	protected function generalRequest($format) {
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can($_SERVER['REQUEST_METHOD'], $this->resourceName)){
+		if(!EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], $this->resourceName)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -114,7 +114,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @param int $id id of event
 	 */
 	protected function specificRequest($id,$format) {
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can($_SERVER['REQUEST_METHOD'], $this->resourceName, $id)){
+		if(!EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($_SERVER['REQUEST_METHOD'], $this->resourceName, $id)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -183,16 +183,27 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @return boolean success fo deleting the event
 	 */
 	abstract protected function specificRequestDelete($id);
-
+	
+	/**
+	 * Should be overriden by subclass controller which have attributes which aren't proper models.
+	 * Eg, the endpoint 'espresso-api/v1/registrations/34/checkin'. They can call parent::canAccessAttribute
+	 * if they like to handle all 'normal'
+	 * @param string $id
+	 * @param string $attribute like 'attendees' from a request like espresso-api/v1/events/23/attendees
+	 * @return boolean
+	 */
+	protected function canAccessAttribute($id, $attribute){
+		return EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($_REQUEST['REQUEST_METHOD'], ucwords($attribute), $id);
+	}
 	/**
 	 * for handling requests like 'events/14/attendees'
-	 * @param type $id id of event
-	 * @param type $attribute attribute like 'attendees' or 'venue'
+	 * @param string $id id of event
+	 * @param string $attribute attribute like 'attendees' or 'venue'
+	 * @return array of response data for formatting
 	 */
 	protected function specificAttributeRequest($id, $attribute,$format) {
 		//don't do the usual permissions check. This may require special logic. 	
-		if( ! EspressoAPI_Permissions_Wrapper::current_user_can($_SERVER['REQUEST_METHOD'], $this->resourceName, $id) ||
-			! EspressoAPI_Permissions_Wrapper::current_user_can($_SERVER['REQUEST_METHOD'], ucwords($attribute))){
+		if( ! $this->canAccessAttribute($id, $attribute, $format)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {

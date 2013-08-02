@@ -16,9 +16,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * eg: id=4&date__lt=2012-04-02 08:04:45&title__like=%party%&graduation_year__IN=1997,1998,1999
 	 * becomes id=4 AND date< '2012-04-02 08:04:4' AND title LIKE '%party%' AND graduation_year IN (1997,1998,1999)
 	 * @param array $keyOpVals result of $this->seperateIntoKeyOperatorValue
+	 * @param boolean $only_attempt_to_find_once indicates we are only trying to find one. 
+	 * So overriding methods will probably want to avoid addign default query parameters in this case
 	 * @return string mySQL content for a WHERE clause
 	 */
-	protected function constructSQLWhereSubclauses($keyOpVals){
+	protected function constructSQLWhereSubclauses($keyOpVals,$only_attempt_to_find_once = false){
 		$whereSqlArray=array();
 		foreach($keyOpVals as $keyOpAndVal){
 			$whereSubclause=$this->constructSQLWhereSubclause($keyOpAndVal['key'],$keyOpAndVal['operator'],$keyOpAndVal['value']);
@@ -305,9 +307,12 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	/**
 	 * Gets events from database according ot query parameters by calling the concrete child classes' _getEvents function
 	 * @param array $queryParameters
+	 * @param boolean $only_attempt_to_find_once indicates whether we should continue querying
+	 * until we get the number of results indicated in the $queryParameters,
+	 * or just give up after one attempt (which is what we'd want to do if we're looking by ID or something else obvious)
 	 * @return array  
 	 */
-     function getMany($queryParameters){
+     function getMany($queryParameters, $only_attempt_to_find_once = false){
 		 
 		 
 		 //parse limit, and remove it from query parameters if present
@@ -352,7 +357,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		//validate query parameter input first by normalizing input into 'Model.parameter'
 		$keyOpVals=$this->validator->validateQueryParameters($keyOpVals);
 		
-		$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals);//should still be called in case it needs to add special where subclauses
+		$whereSubclauses=$this->constructSQLWhereSubclauses($keyOpVals,$only_attempt_to_find_once);//should still be called in case it needs to add special where subclauses
 		//construct database query
 		if(empty($whereSubclauses))
 			$sqlWhere='';
@@ -365,7 +370,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		$currentLimit=$limit;
 		$currentLimitStart=$limitStart;
 		$totalItemsInDB = intval($wpdb->get_var( "SELECT COUNT(id) FROM {$wpdb->prefix}events_attendee"));
-		while(count($apiItemsFetched)<$limit){
+		do{
 			//perform first query to get all the IDs of the primary models we want
 			$getIdsQuery=$this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'",$sqlWhere)." GROUP BY {$this->primaryIdColumn} LIMIT $currentLimitStart,$currentLimit";
 			if(isset($_GET['debug']))echo "generic api facade 350: get ids :$getIdsQuery";
@@ -385,12 +390,19 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 				$results = $wpdb->get_results($sqlQuery, ARRAY_A);
 				//process results (calculate 'calculated columns' and filter on them)
 				$processedResults=$this->initiateProcessSqlResults($results,$keyOpVals);
+				
 				//begin constructing response array
 				$topLevelModels=$this->extractMyUniqueModelsFromSqlResults($processedResults);
+				
 				foreach($topLevelModels as $key=>$model){
+					//verify the current user has permission to access this thing
+					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific('get', $this->modelNamePlural,$key)){
+						continue;
+					}
+				
 					foreach($relatedModelInfos as $relatedModelInfo){
 						//only add the related model's info if the current user has permission to access it
-						if(EspressoAPI_Permissions_Wrapper::current_user_can('get',$relatedModelInfo['modelNamePlural'])){
+						if(EspressoAPI_Permissions_Wrapper::current_user_can_access_some('get',$relatedModelInfo['modelNamePlural'])){
 							$modelClass=$relatedModelInfo['class'];
 							if($relatedModelInfo['hasMany']){
 								$model[$relatedModelInfo['modelNamePlural']]=$modelClass->extractMyUniqueModelsFromSqlResults($processedResults,$this->modelName.'.id',$model['id']);
@@ -412,7 +424,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			if($currentLimitStart>=$totalItemsInDB){//erroneous logic: || count($results)==0
 				break;
 			}
-		}
+		}while(count($apiItemsFetched)<$limit && ! $only_attempt_to_find_once);
 		$apiItemsFetched=array_slice($apiItemsFetched,0,$limit);
 		$models= array($this->modelNamePlural => $apiItemsFetched);
 		////i
@@ -433,7 +445,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	  */
 	 function getOne($id){
 		$queryParam=array('id'=>$id,'limit'=>'1');
-		$fullResults=$this->getMany($queryParam);
+		$fullResults=$this->getMany($queryParam,true);
 		$singleResult=array_shift($fullResults[$this->modelNamePlural]);
 		if(empty($singleResult)){
 			throw new EspressoAPI_ObjectDoesNotExist($id);

@@ -55,4 +55,12 @@ abstract class EspressoAPI_Events_Resource_Facade extends EspressoAPI_Generic_Re
 		array('var'=>'call_in_number','type'=>'string'),
 		array('var'=>'phone','type'=>'string'),
 		array('var'=>'metadata','type'=>'array'));
+	
+	/**
+	 * array where each value is the API event status which makes the 
+	 * event to be considered 'public' (meaning users with teh public session key
+	 * can view it, and all ee users)
+	 * @var array 
+	 */
+	protected $statiConsideredPublic = array('active','ongoing','secondary/waitlist');
 }
