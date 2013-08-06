@@ -158,7 +158,8 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			$myTimeToEnd=$sqlResult['StartEnd.end_time'];
 		}
 		//double-check that the time is in the right format.
-		
+		$myTimeToStart = $this->convertTimeFromAMPM($myTimeToStart);
+		$myTimeToEnd = $this->convertTimeFromAMPM($myTimeToEnd);
 		//if we can't get teh time from either, just default to midnight. or we could just return null
 		if(empty($myTimeToEnd) || empty($myTimeToStart)){
 			$myTimeToEnd="00:00";
@@ -185,6 +186,11 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		return $datetime; 
 	}
 	
+	/**
+	 * Fixes times like "5:00 PM" into the expected 24-hour format.
+	 * @param type $timeString
+	 * @return string in the php datetime format: "G:i" (24-hour format hour with leading zeros, a colon, and minutes with leading zeros)
+	 */
 	private function convertTimeFromAMPM($timeString){
 		$matches = array();
 		preg_match("~(\\d*):(\\d*)~",$timeString,$matches);
@@ -196,9 +202,11 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			$minutes = $matches[2];
 		}
 		if(strpos($timeString, 'PM') || strpos($timeString, 'pm')){
-			$hour = str_pad( intval($hour) + 12, 2, '0',STR_PAD_LEFT);
+			$hour = intval($hour) + 12;
 		}
-		
+		$hour = str_pad( "$hour", 2, '0',STR_PAD_LEFT);
+		$minutes = str_pad( "$minutes", 2, '0',STR_PAD_LEFT);
+		return "$hour:$minutes";
 	}
 	/**
 	 * gets the date and time contained in the $dateSTring
