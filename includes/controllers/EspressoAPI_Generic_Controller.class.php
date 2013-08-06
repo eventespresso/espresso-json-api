@@ -67,7 +67,7 @@ abstract class EspressoAPI_Generic_Controller {
 	 * for handling requests like '/events/' 
 	 */
 	protected function generalRequest($format) {
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], $this->resourceName)){
+		if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], $this->resourceName)){
 			 throw new EspressoAPI_UnauthorizedException();
 		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {

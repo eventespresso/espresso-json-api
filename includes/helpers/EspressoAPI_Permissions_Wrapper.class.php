@@ -43,11 +43,30 @@ class EspressoAPI_Permissions_Wrapper {
 	}
 
 	/**
-	 * Utilizes the permissions addon's function to determine if 
-	 * the user who's trying to login should be allowed to use EE (and the API)
+	 * Determines if the current user is a wp admin or an event master admin.
+	 * (does not consider "Regional Managers"/"regional_admin" to be an admin, as
+	 * when they are given permission to see the event list they can only view/edit
+	 * events they've been assigned to - which is similar to event managers, not event admins).
 	 * @return boolean
 	 */
-	static function current_user_has_espresso_permissions(){
+	static function current_user_is_event_admin(){
+		return  current_user_can('espresso_event_admin') || current_user_can('administrator');
+	}
+	
+	/**
+	 * Determines if the current user is either the wp admin or a master event admin
+	 * with permission to see the event list page (so they can edit ALL events and their attendees)
+	 * @return boolean
+	 */
+	static function current_user_is_privileged_event_admin(){
+		return current_user_can('administrator') || (current_user_can('espresso_event_admin') && self::current_user_has_espresso_permission('espresso_manager_events'));
+	}
+	/**
+	 * checks if the current user is ANY event espresso user: normal wp admin,
+	 * event admin, event manager, or regional manager.
+	 * @return boolean
+	 */
+	static function current_user_is_any_ee_user(){
 		if(function_exists('espresso_is_admin')){
 			return espresso_is_admin() || current_user_can('espresso_event_manager');
 		}else{
@@ -62,10 +81,9 @@ class EspressoAPI_Permissions_Wrapper {
 		//ie, if they aren't authenticated
 		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
 		//then they should get rejected here
-		if( ! $espressoAPI_public_access_query && ! self::current_user_has_espresso_permissions() ){
+		if( ! $espressoAPI_public_access_query && ! self::current_user_is_any_ee_user() ){
 			return false;
 		}
-		
 		switch ($httpMethod) {
 			//for VIEWING of info, make certain resources publicley-available
 			//and available to any authenticated event espresso user/admin
@@ -80,15 +98,15 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Venues':
 					case 'Questions':
 					case 'Question_Groups':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
+						return $espressoAPI_public_access_query || self::current_user_has_espresso_permission('espresso_manager_events');
 					//the following resources are NOT available publicley
 					//and only to certain privileged event espresso users
 					case 'Promocodes':
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_is_any_ee_user();
 					case 'Attendees':
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_has_espresso_permission('espresso_manager_events');
 					case 'Registrations':
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_has_espresso_permission('espresso_manager_events');
 					case 'Transactions':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					case 'Payments':
@@ -96,7 +114,7 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Answers':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					default:
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_is_event_admin();
 				}
 				break;
 			//creating, updating, or deleting the following resources generally take more specific privileges
@@ -137,7 +155,7 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Answers':
 						return self::current_user_has_espresso_permission('espresso_manager_events');
 					default:
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_is_event_admin();
 				}
 				break;
 		}
@@ -183,7 +201,7 @@ class EspressoAPI_Permissions_Wrapper {
 		//ie, if they aren't authenticated
 		//or if they're just a subscriber or author  (neither should happen because the router should have rejected them)
 		//then they should get rejected here
-		if( ! $espressoAPI_public_access_query && ! self::current_user_has_espresso_permissions() ){
+		if( ! $espressoAPI_public_access_query && ! self::current_user_is_any_ee_user() ){
 			return false;
 		}
 		
@@ -196,7 +214,11 @@ class EspressoAPI_Permissions_Wrapper {
 			case'GET':
 				switch ($resource) {
 					case 'Events':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						//even if regional managers and event managers have the espresso permission 'espresso_manager_events',
+						//they can only access that PAGE, but the events they see is ALWAYS FILTERED to only allow them
+						//to edit events they manage.
+						//and the 'event master admin' can only edit ALL iff he also has the espresso permission to 'espresso_manager_events'
+						return self::current_user_is_privileged_event_admin();
 						
 					case 'Categories':
 					case 'Datetimes':
@@ -205,21 +227,20 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Venues':
 					case 'Questions':
 					case 'Question_Groups':
-						return $espressoAPI_public_access_query || self::current_user_has_espresso_permissions();
+						return $espressoAPI_public_access_query || self::current_user_is_any_ee_user();
 					//the following resources are NOT available publicley
-					//and only to certain privileged event espresso users
 					case 'Promocodes':
-						return self::current_user_has_espresso_permissions();
+						return self::current_user_has_espresso_permission('espresso_manager_discounts');
 					case 'Attendees':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_is_privileged_event_admin();
 					case 'Registrations':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_is_privileged_event_admin();
 					case 'Transactions':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_is_privileged_event_admin();
 					case 'Payments':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_is_privileged_event_admin();
 					case 'Answers':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
+						return self::current_user_is_privileged_event_admin();
 					default:
 						return current_user_can('administrator');
 				}
@@ -233,47 +254,33 @@ class EspressoAPI_Permissions_Wrapper {
 			default:
 				switch ($resource) {
 					case 'Events':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();						
 					case 'Categories':
-						return self::current_user_has_espresso_permission('espresso_manager_categories');
-						
+						return self::current_user_has_espresso_permission('espresso_manager_categories');						
 					case 'Datetimes':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();						
 					case 'Prices':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();						
 					case 'Pricetypes':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();						
 					case 'Venues':
-						return self::current_user_has_espresso_permission('espresso_manager_venue_manager');
-						
+						return self::current_user_has_espresso_permission('espresso_manager_venue_manager');						
 					case 'Questions':
-						return self::current_user_has_espresso_permission('espresso_manager_form_builder');
-						
+						return self::current_user_has_espresso_permission('espresso_manager_form_builder');						
 					case 'Question_Groups':
-						return self::current_user_has_espresso_permission('espresso_manager_form_groups');
-						
+						return self::current_user_has_espresso_permission('espresso_manager_form_groups');						
 					case 'Promocodes':
-						return self::current_user_has_espresso_permission('espresso_manager_discounts');
-						
+						return self::current_user_has_espresso_permission('espresso_manager_discounts');						
 					case 'Attendees':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();
 					case 'Registrations':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();
 					case 'Transactions':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();
 					case 'Payments':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();
 					case 'Answers':
-						return self::current_user_has_espresso_permission('espresso_manager_events');
-						
+						return self::current_user_is_privileged_event_admin();
 					default:
 						return current_user_can('administrator');
 				}

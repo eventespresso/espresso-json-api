@@ -320,8 +320,9 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 		
 		//ok so its not public (or they want to update it). maybe this user has specific access?
 		if (EspressoAPI_Permissions_Wrapper::espresso_is_my_event($id)){
-//			echo "this user has specific access to event";
 			return true;
+		}else{
+			return false;
 		}
 	}
 	

@@ -422,7 +422,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 					if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($httpMethodForDeterminingPermissions, $this->modelNamePlural,$key,$model)){
 						continue;
 					}
-					
 					$apiItemsFetched[$key]=$model;
 				}
 			}

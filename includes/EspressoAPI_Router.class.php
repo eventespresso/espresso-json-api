@@ -83,12 +83,12 @@ class EspressoAPI_Router{
 					$espressoAPI_public_access_query = true;
 				}else{
 					$current_user=EspressoAPI_SessionKey_Manager::getUserFromSessionKey($sessionKey);
+					wp_set_current_user($current_user->ID);
 					//before we proceed ONE INCH
 					//ensure they're a valid EE user
-					if( ! EspressoAPI_Permissions_Wrapper::current_user_has_espresso_permissions()){
+					if( ! EspressoAPI_Permissions_Wrapper::current_user_is_any_ee_user()){
 						throw new EspressoAPI_UnauthorizedException();
 					}
-					wp_set_current_user($current_user->ID);
 					EspressoAPI_SessionKey_Manager::updateSessionKeyActivity($current_user->ID);
 					$espressoAPI_public_access_query = false;
 				}
