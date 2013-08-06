@@ -119,32 +119,32 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		$pricesToReturn=array();
 		$pricesToReturn['base']=array(
-		'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR),
-		'amount'=>$sqlResult['Price.event_cost'],
-		'name'=>$sqlResult['Price.price_type'],
-		'description'=>$sqlResult['Price.description'],
-		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>$sqlResult['Price.remaining'],
-		'start_date'=>$sqlResult['Price.start_date'],
-		'end_date'=>$sqlResult['Price.end_date'],
-		'Pricetype'=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_BASE]
+			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR),
+			'amount'=>$sqlResult['Price.event_cost'],
+			'name'=>isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.price_type'],
+			'description'=>$sqlResult['Price.description'],
+			'limit'=>$sqlResult['Price.limit'],
+			'remaining'=>$sqlResult['Price.remaining'],
+			'start_date'=>$sqlResult['Price.start_date'],
+			'end_date'=>$sqlResult['Price.end_date'],
+			'Pricetype'=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_BASE]
 		);
 		if($sqlResult['Price.surcharge']!=0){
 			if($sqlResult['Price.surcharge_type']=='pct')
 				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE];
 			else
 				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE];
-			
+			$price_name = isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.price_type'];
 			$pricesToReturn['surcharge']=array(
-			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR),
-			'amount'=>$sqlResult['Price.surcharge'],
-			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
-			'description'=>null,
-			'limit'=>$sqlResult['Price.limit'],
-			'remaining'=>$sqlResult['Price.remaining'],
-			'start_date'=>null,
-			'end_date'=>null,
-			"Pricetype"=>$priceType
+				'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR),
+				'amount'=>$sqlResult['Price.surcharge'],
+				'name'=> sprintf(__("Surcharge for %s",'event_espresso'),$price_name),
+				'description'=>null,
+				'limit'=>$sqlResult['Price.limit'],
+				'remaining'=>$sqlResult['Price.remaining'],
+				'start_date'=>null,
+				'end_date'=>null,
+				"Pricetype"=>$priceType
 			);
 		}
 		
@@ -155,7 +155,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			$pricesToReturn['member']=array(
 			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_MEMBER_INDICATOR),
 			'amount'=>$sqlResult['Price.member_price'],
-			'name'=>$sqlResult['Price.member_price_type'],
+			'name'=>isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.member_price_type'],
 			'description'=>null,
 			'limit'=>$sqlResult['Price.limit'],
 			'remaining'=>$sqlResult['Price.remaining'],
@@ -201,8 +201,9 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				break;
 			}
 		}
-		if($foundOrigPrice && isset($priceWhichMatchesOrigPrice))
+		if($foundOrigPrice && isset($priceWhichMatchesOrigPrice)){
 			return $priceWhichMatchesOrigPrice;
+		}
 		else{
 			$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 			return array(

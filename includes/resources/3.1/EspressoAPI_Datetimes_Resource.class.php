@@ -141,6 +141,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
+
 		// if the user signs up for a time, and then the time changes,  StartEnd.start_time won't be set! So 
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
 		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['StartEnd.end_time'])){
@@ -152,9 +153,12 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				$myTimeToEnd=$sqlResult['Attendee.end_time'];
 			}
 		}else{
+			
 			$myTimeToStart=$sqlResult['StartEnd.start_time'];
 			$myTimeToEnd=$sqlResult['StartEnd.end_time'];
 		}
+		//double-check that the time is in the right format.
+		
 		//if we can't get teh time from either, just default to midnight. or we could just return null
 		if(empty($myTimeToEnd) || empty($myTimeToStart)){
 			$myTimeToEnd="00:00";
@@ -179,6 +183,22 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			'tickets_left'=>$sqlResult['Datetime.tickets_left']
 			);
 		return $datetime; 
+	}
+	
+	private function convertTimeFromAMPM($timeString){
+		$matches = array();
+		preg_match("~(\\d*):(\\d*)~",$timeString,$matches);
+		if( ! $matches || count($matches)<3){
+			$hour = '00';
+			$minutes = '00';
+		}else{
+			$hour = intval($matches[1]);
+			$minutes = $matches[2];
+		}
+		if(strpos($timeString, 'PM') || strpos($timeString, 'pm')){
+			$hour = str_pad( intval($hour) + 12, 2, '0',STR_PAD_LEFT);
+		}
+		
 	}
 	/**
 	 * gets the date and time contained in the $dateSTring
