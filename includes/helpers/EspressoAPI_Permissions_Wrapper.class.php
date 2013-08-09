@@ -96,7 +96,7 @@ class EspressoAPI_Permissions_Wrapper {
 					case 'Prices':
 					case 'Pricetypes':
 					case 'Venues':
-					case 'Questions':
+					case 'Questions'://NOTE: admin-only questions shoudl be filtered out unless the user can edit them
 					case 'Question_Groups':
 						return $espressoAPI_public_access_query || self::current_user_has_espresso_permission('espresso_manager_events');
 					//the following resources are NOT available publicley
