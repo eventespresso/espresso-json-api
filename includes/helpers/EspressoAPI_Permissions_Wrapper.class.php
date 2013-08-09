@@ -60,7 +60,7 @@ class EspressoAPI_Permissions_Wrapper {
 	 * @return boolean
 	 */
 	static function current_user_is_privileged_event_admin($espresso_permission = 'espresso_manager_events'){
-		return current_user_can('administrator') || (current_user_can('espresso_event_admin') && self::current_user_has_espresso_permission($espresso_permission));
+		return current_user_can('administrator') || (current_user_can('espresso_event_admin') && ! current_user_can('espresso_group_admin') && self::current_user_has_espresso_permission($espresso_permission) );
 	}
 	/**
 	 * checks if the current user is ANY event espresso user: normal wp admin,
