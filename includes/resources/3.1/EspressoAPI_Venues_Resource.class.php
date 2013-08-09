@@ -82,6 +82,10 @@ class EspressoAPI_Venues_Resource extends EspressoAPI_Venues_Resource_Facade{
 	 * @return boolean
 	 */
 	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		//IMPORTANT NOTES WHEN IMPLEMENTING THIS:
+		//all users can see all venues
+		//event managers can only edit their own venues
+		//regional managers can always edit their own venues; if the admin setting allowing them to edit ones in their region is set, those ones too
 		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
 	}
 }

@@ -297,25 +297,26 @@ class EspressoAPI_Events_Resource extends EspressoAPI_Events_Resource_Facade {
 	 * @return boolean
 	 */
 	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
-		if(in_array($httpMethod,array('GET','get'))){
-				//is the event public? for that, it must be active and have a status of
-				//active, ongoing, or secondary/waitlist
-				if(isset($resource_instance_array['status'])){
-					$status = $resource_instance_array['status'];
-					$active = $resource_instance_array['active'];
-				}else{
-					global $wpdb;
-					$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
-					$status = $this->statusConversions[$results['event_status']];
-					$active = $results['is_active'] == 'Y' ? true: false;
-				}
-				//echo "status:$status,active:$active";
+		$httpMethod = strtolower($httpMethod);
+		if($httpMethod == 'get'){
+			//is the event public? for that, it must be active and have a status of
+			//active, ongoing, or secondary/waitlist
+			if(isset($resource_instance_array['status'])){
+				$status = $resource_instance_array['status'];
+				$active = $resource_instance_array['active'];
+			}else{
+				global $wpdb;
+				$results = $wpdb->get_row($wpdb->prepare("SELECT event_status, is_active FROM ".EVENTS_DETAIL_TABLE." WHERE id=%d LIMIT 1",$id), ARRAY_A);
+				$status = $this->statusConversions[$results['event_status']];
+				$active = $results['is_active'] == 'Y' ? true: false;
+			}
+			//echo "status:$status,active:$active";
 
-				//if teh event public?
-				if(in_array($status, $this->statiConsideredPublic) && $active){
+			//if teh event public?
+			if(in_array($status, $this->statiConsideredPublic) && $active){
 //					echo "this event is public";
-					return true;
-				}
+				return true;
+			}
 		}
 		
 		//ok so its not public (or they want to update it). maybe this user has specific access?
