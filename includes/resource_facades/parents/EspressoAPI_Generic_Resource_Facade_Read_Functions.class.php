@@ -348,8 +348,9 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			}
 			unset($queryParameters['editable_only']);
 		}else{
+			global $espressoAPI_public_access_query;
 			//check the default set by the site admin
-			if(get_option(EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT)){
+			if($espressoAPI_public_access_query || get_option(EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT)){
 				$httpMethodForDeterminingPermissions = 'get';
 			}else{
 				$httpMethodForDeterminingPermissions = 'put';

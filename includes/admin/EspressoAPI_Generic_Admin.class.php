@@ -45,8 +45,8 @@ class EspressoAPI_Generic_Admin {
 		}
 		//if roles and permissions addon is active, we add another var for that
 		if(defined('ESPRESSO_MANAGER_PRO_VERSION')){
-			if(isset($_POST[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT])){
-				update_option(EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT,$_POST[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT]);
+			if(isset($_POST[EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT])){
+				update_option(EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT,$_POST[EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT]);
 			}
 			
 		}
@@ -69,7 +69,7 @@ class EspressoAPI_Generic_Admin {
 				'Registrations'=>100);
 		}
 		if(defined('ESPRESSO_MANAGER_PRO_VERSION')){
-			$templateVars[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT] = get_option(EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT);
+			$templateVars[EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT] = get_option(EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT);
 		}
 		
 		

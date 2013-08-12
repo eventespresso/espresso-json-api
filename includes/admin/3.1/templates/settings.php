@@ -47,7 +47,7 @@
 									<p><?php _e("Force API users to re-authenticate (login) after this much time of inactivity. Requiring users to login more frequently 
 									may help improve security, but may also be tedious for API users.","event_espresso")?></p>
 									<br/>
-									<label for='<?php EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'><?php _e("Allow Public API Access?",'event_espresso');?></label>
+									<label for='<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'><?php _e("Allow Public API Access?",'event_espresso');?></label>
 									
 									<select name="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>" id="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>">
 										<option value="1" <?php echo $templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>><?php _e("Allow", "event_espresso");?></option>
@@ -58,11 +58,11 @@
 									registrations, transactions, or answers",'event_espresso');?></p>
 									
 									<?php if(defined('ESPRESSO_MANAGER_PRO_VERSION')){?>
-									<label for='<?php EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>'><?php _e("Show API Users Data They Can't Edit",'event_espresso');?></label>
+									<label for='<?php echo EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT?>'><?php _e("Show API Users Data They Can't Edit",'event_espresso');?></label>
 									
-									<select name="<?php echo EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>" id="<?php echo EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>">
-										<option value="1" <?php echo $templateVars[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("Yes", "event_espresso");?></option>
-										<option value="0" <?php echo !$templateVars[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("No", "event_espresso");?></option>
+									<select name="<?php echo EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT?>" id="<?php echo EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT?>">
+										<option value="1" <?php echo $templateVars[EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("Yes", "event_espresso");?></option>
+										<option value="0" <?php echo !$templateVars[EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("No", "event_espresso");?></option>
 									</select>
 									<p><?php _e("When set to 'No', API Users (eg, Event Espresso iOS users) can, by default, see only events they can edit. When set to 'Yes',
 										they will also see all 'public' events (ie, events which can be seen by anyone visiting the event list page). API Client applications can override this default.",'event_espresso');?></p>
