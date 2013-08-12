@@ -50,12 +50,25 @@
 									<label for='<?php EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>'><?php _e("Allow Public API Access?",'event_espresso');?></label>
 									
 									<select name="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>" id="<?php echo EspressoAPI_ALLOW_PUBLIC_API_ACCESS?>">
-										<option value="1" <?php echo $templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Allow</option>
-										<option value="0" <?php echo !$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>>Don't Allow</option>
+										<option value="1" <?php echo $templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>><?php _e("Allow", "event_espresso");?></option>
+										<option value="0" <?php echo !$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]?'selected':''?>><?php _e("Don't Allow", "event_espresso");?></option>
 									</select>
 									<p><?php _e("Enabling will allow non-logged-in api clients to get certain information from your website via the API. Accessible information consists of:
 									events, event categories, dates and times of events, prices, price types, venues and questions. However, they will NOT be able to see: promocodes, attendees,
 									registrations, transactions, or answers",'event_espresso');?></p>
+									
+									<?php if(defined('ESPRESSO_MANAGER_PRO_VERSION')){?>
+									<label for='<?php EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>'><?php _e("Show API Users Data They Can't Edit",'event_espresso');?></label>
+									
+									<select name="<?php echo EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>" id="<?php echo EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT?>">
+										<option value="1" <?php echo $templateVars[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("Yes", "event_espresso");?></option>
+										<option value="0" <?php echo !$templateVars[EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT]?'selected':''?>><?php _e("No", "event_espresso");?></option>
+									</select>
+									<p><?php _e("When set to 'No', API Users (eg, Event Espresso iOS users) can, by default, see only events they can edit. When set to 'Yes',
+										they will also see all 'public' events (ie, events which can be seen by anyone visiting the event list page). API Client applications can override this default.",'event_espresso');?></p>
+									<?php }?>
+									
+									
 									<label for'<?php echo EspressoAPI_DEFAULT_QUERY_LIMITS?>' id='<?php echo EspressoAPI_DEFAULT_QUERY_LIMITS?>'><?php _e("Default Query Limits",'event_espresso')?></label>
 									<p><?php _e('When an api API clients make a request to the following endpoints, and they do not specify a "limit", how many results should be returned?','event_espresso');?>
 									<p><?php _e('Note: returning a smaller number by default will increase speed, but api clients may not see all the results they would like.','event_espresso');?>

@@ -340,11 +340,20 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$limitStart=0;
 		}
 		//check if they've requested only editable results (ie, results that they have permission to edit AND see)
-		if(isset($queryParameters['editable_only']) && $queryParameters['editable_only']=='true'){
-			$httpMethodForDeterminingPermissions = 'put';
+		if(isset($queryParameters['editable_only'])){
+			if($queryParameters['editable_only'] == 'true'){
+				$httpMethodForDeterminingPermissions = 'put';
+			}else{
+				$httpMethodForDeterminingPermissions = 'get';
+			}
 			unset($queryParameters['editable_only']);
 		}else{
-			$httpMethodForDeterminingPermissions = 'get';
+			//check the default set by the site admin
+			if(get_option(EspressoAPI_SHOW_EVENTS_I_CANT_EDIT_BY_DEFAULT)){
+				$httpMethodForDeterminingPermissions = 'get';
+			}else{
+				$httpMethodForDeterminingPermissions = 'put';
+			}
 		}
 		
 		 //parse query parameters
