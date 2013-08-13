@@ -252,7 +252,7 @@ protected function processSqlResults($rows,$keyOpVals){
 					'method'				=> 'api',
 					'type'					=> 'checkin',
 				);
-				$data_formats = array( '%d', '%s', '%d', '%d', '%s', );
+				$data_formats = array( '%d', '%s', '%d', '%d', '%s', '%s', '%s', );
 				$scan_date = $wpdb->insert( "{$wpdb->prefix}events_attendee_checkin", $columns_and_values, $data_formats );
 				if(!$scan_date){
 					throw new EspressoAPI_OperationFailed(__("Adding of date checked-in failed:","event_espresso").$scan_date);
