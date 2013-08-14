@@ -29,15 +29,18 @@ define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
 define('EspressoAPI_VERSION','2.1.0.p');
 
 //constants relating to responses
+//(why use these instead of normal strings? because if you mispell these you get a warning
+//...not so with normal strings.)
 define('EspressoAPI_STATUS','status');
 define('EspressoAPI_STATUS_CODE','status_code');
 define('EspressoAPI_USER_FRIENDLY_STATUS','user_friendly_status');
 define('EspressoAPI_RESPONSE_BODY','body');
+//these constants should eb used as wp option names, input names and ids.
 define('EspressoAPI_ADMIN_SESSION_TIMEOUT','espressoapi_admin_session_timeout');
 define('EspressoAPI_ALLOW_PUBLIC_API_ACCESS','EspressoAPI_allow_public_api_access');
 define('EspressoAPI_DEFAULT_QUERY_LIMITS','EspresoAPI_default_query_limits');
 define('EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT','EspressoAPI_show_resources_i_cant_edit_by_default');
-
+define('EpsressoAPI_DEBUG_MODE','EspressoAPI_debug_mode');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Exceptions.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_ClassLoader.class.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Permissions_Wrapper.class.php');

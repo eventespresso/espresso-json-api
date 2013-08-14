@@ -31,7 +31,7 @@ class EspressoAPI_Generic_Admin {
 		}
 	}
 	function display_api_settings_page(){
-		if(isset($_POST[EspressoAPI_ADMIN_REAUTHENTICATE])){
+		if(isset($_POST[EspressoAPI_ADMIN_REAUTHENTICATE]) && $_POST[EspressoAPI_ADMIN_REAUTHENTICATE] == 'true'){
 			EspressoAPI_SessionKey_Manager::regeneratAllSessionKeys();
 		}
 		if(isset($_POST[EspressoAPI_ADMIN_SESSION_TIMEOUT])){
@@ -42,6 +42,9 @@ class EspressoAPI_Generic_Admin {
 		}
 		if(isset($_POST[EspressoAPI_DEFAULT_QUERY_LIMITS])){
 			update_option(EspressoAPI_DEFAULT_QUERY_LIMITS,$_POST[EspressoAPI_DEFAULT_QUERY_LIMITS]);
+		}
+		if(isset($_POST[EpsressoAPI_DEBUG_MODE])){
+			update_option(EpsressoAPI_DEBUG_MODE,$_POST[EpsressoAPI_DEBUG_MODE]);
 		}
 		//if roles and permissions addon is active, we add another var for that
 		if(defined('ESPRESSO_MANAGER_PRO_VERSION')){
@@ -62,6 +65,8 @@ class EspressoAPI_Generic_Admin {
 						'6 Hours'=>60*60*6,
 						'Never'=>-1));
 		$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=get_option(EspressoAPI_DEFAULT_QUERY_LIMITS);
+		$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
+		$templateVars[EpsressoAPI_DEBUG_MODE]=get_option(EpsressoAPI_DEBUG_MODE);
 		if(empty($templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS])){
 			$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=array(
 				'Events'=>50,
@@ -73,7 +78,8 @@ class EspressoAPI_Generic_Admin {
 		}
 		
 		
-		$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
+		
+		
 		$this->includeVersionedTemplate('settings.php',$templateVars);
 	}
 	

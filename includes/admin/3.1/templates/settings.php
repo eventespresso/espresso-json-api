@@ -5,6 +5,7 @@
 		<?php _e('API Settings', 'event_espresso'); ?>
 	  </h2>
 <?php ob_start();?>
+	  <form method="post">
 	<div class="meta-box-sortables ui-sortable">
 		<ul id="event_espresso-sortables" class="api-settings">
 			<li>
@@ -29,14 +30,13 @@
 						<h3 class="hndle"><?php _e("Options",'event_espresso')?></h3>
 						<div class='inside'>
 							<div class="padding">
-								<form method="post">
-									<input type="hidden" name="<?php echo EspressoAPI_ADMIN_REAUTHENTICATE?>" value="true">
-									<input type="submit" class='button' value="<?php _e("Force API clients to re-authenticate",'event_espresso')?>" ></input><br/>
+								
+									<input type="hidden" name="<?php echo EspressoAPI_ADMIN_REAUTHENTICATE?>" id='<?php echo EspressoAPI_ADMIN_REAUTHENTICATE?>' value="false">
+									<input type="submit" class='button' id='make-api-users-reauthenticate' value="<?php _e("Force API clients to re-authenticate",'event_espresso')?>" ></input><br/>
 									<p><?php _e("By clicking the above button, all API sessions for anyone using the API (users of iphone app, iPad app, and other API clients)
 										will be forced to provide their username and password again. Do this if you suspect an authenticated device (eg, iPad, computer, etc) has
 									fallen into the hands of someone who shouldn't be allowed to access your private data",'event_espresso')?></p>
-								</form>
-								<form method='post'>
+
 									<label for="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>">API Session Timeout After </label>
 									<select name="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>" id="<?php echo EspressoAPI_ADMIN_SESSION_TIMEOUT?>"> 
 										<?php foreach($templateVars[EspressoAPI_ADMIN_SESSION_TIMEOUT_OPTIONS] as $optionLabel=>$optionTime){
@@ -79,7 +79,6 @@
 										<label for='<?php echo $name?>'><?php echo $endpoint?></label><input type='text' name='<?php echo $name?>' value='<?php echo $limit?>'><br/>
 									<?php }?>
 									<input type='submit' class='button'value='Save'>
-								</form>
 							</div>
 						</div>
 					</div>
@@ -92,6 +91,18 @@
 						<h3 class="hndle"><?php _e("Developers",'event_espresso')?></h3>
 						<div class='inside'>
 							<div class="padding">
+								<label for='<?php echo EpsressoAPI_DEBUG_MODE?>'><?php _e("API Debug Mode",'event_espresso');?></label>
+									
+									<select name="<?php echo EpsressoAPI_DEBUG_MODE?>" id="<?php echo EpsressoAPI_DEBUG_MODE?>">
+										<option value="1" <?php echo $templateVars[EpsressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("On", "event_espresso");?></option>
+										<option value="0" <?php echo !$templateVars[EpsressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("Off", "event_espresso");?></option>
+									</select>
+								<input type='submit' class='button'value='Save'>
+									<p><?php _e("When developing, it is recommended you put the API in Debug Mode. If the API Debug Mode is On,
+										you will be notified of incorrect usage of API query parameters, malformed requests, and bad data in the database. If left Off,
+										the API will instead try to cover over these errors.",'event_espresso');?></p>
+							</div>
+							<div class="padding">
 								<p><?php _e("For information on how to use the API, please read the",'event_espresso')?> <a href='http://codex.eventespresso.com/index.php?title=Rest_api' target='_blank'><?php _e("Event Espresso Codex Documentation",'event_espresso')?></a></p>
 							</div>
 						</div>
@@ -100,6 +111,7 @@
 			</li>
 		</ul>
 	</div>
+	  </form>
 <?php $main_post_content=ob_get_clean();
 espresso_choose_layout($main_post_content, event_espresso_display_right_column());?>
 </div>
@@ -107,6 +119,11 @@ espresso_choose_layout($main_post_content, event_espresso_display_right_column()
 	//<![CDATA[
 	jQuery(document).ready(function() {
 		postboxes.add_postbox_toggles('<?php echo EspressoAPI_ADMIN_SETTINGS_PAGE_SLUG?>');
+		//on submission using the button to reauthenticate, set a flag in the request
+		//so taht the server knows the admin wants to reset all users' api sessions
+		jQuery('#make-api-users-reauthenticate').click(function(){
+			jQuery('#<?php echo EspressoAPI_ADMIN_REAUTHENTICATE?>').val('true');
+		});
 	}); 
 	//]]>
 </script>
