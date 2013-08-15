@@ -34,6 +34,7 @@ class EspressoAPI_Validator {
 	 * @throws EspressoAPI_BadRequestException if any of the requets parameters are of teh wrong type
 	 */
 	function validateQueryParameters($keyOpVals){
+		$api_debug_mode = get_option(EspressoAPI_DEBUG_MODE);
 		//get related models
 		$relatedModels=$this->resource->getFullRelatedModels();
 		
@@ -50,17 +51,24 @@ class EspressoAPI_Validator {
 						break;
 					}
 				}
-			}if(empty($fieldInfo) || empty($fieldInfo['type'])){
-				throw new EspressoAPI_BadRequestException(sprintf(__("Query parameter '%s' not a valid parameter of resource '%s'"),$fieldName,$modelName));
 			}
-			elseif(!$this->valueIs($keyOpVal['value'],$fieldInfo['type'],$fieldInfo['allowedEnumValues'])){
-				if($fieldInfo['type']=='enum'){
-					$enumInfoString=sprintf(__("Allowed values are :%s"),implode(",",$fieldInfo['allowedEnumValues']));
-				}else{
-					$enumInfoString='';
+			if((empty($fieldInfo) || empty($fieldInfo['type']))){
+				if($api_debug_mode){
+					throw new EspressoAPI_BadRequestException(sprintf(__("Query parameter '%s' not a valid parameter of resource '%s'"),$fieldName,$modelName));
 				}
-				throw new EspressoAPI_BadRequestException(sprintf(
-								__("Param '%s' with value '%s' is not of allowed type '%s'. %s","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type'],$enumInfoString));
+				//otherwise, ignore the query parameter. forget about it. pretend it doesn't exist. you didn't see anything...
+			}
+			elseif(!$this->queryParameterValueIs($keyOpVal['value'],$fieldInfo['type'],$fieldInfo['allowedEnumValues'])){
+				if($api_debug_mode){
+					if($fieldInfo['type']=='enum'){
+						$enumInfoString=sprintf(__("Allowed values are :%s"),implode(",",$fieldInfo['allowedEnumValues']));
+					}else{
+						$enumInfoString='';
+					}
+					throw new EspressoAPI_BadRequestException(sprintf(
+									__("Param '%s' with value '%s' is not of allowed type '%s'. %s","event_espresso"),$keyOpVal['key'],$keyOpVal['value'],$fieldInfo['type'],$enumInfoString));
+				}
+				//otherwise, ignore the query parameter entirely. It didn't happen. Forget you ever saw it.
 				
 			}else{//it passed, so now just normalize the value and prepare it to be returned
 				$normalizedKeyOpVals[]=array('key'=>$keyOpVal['key'],
@@ -105,6 +113,7 @@ class EspressoAPI_Validator {
 	 * @throws Exception if the response is not in the specified format
 	 */
 	private function forceResponseIntoFormat($response,$format,$options=array()){
+		$api_debug_mode = get_option(EspressoAPI_DEBUG_MODE);
 		$options=shortcode_atts(array('requireRelated'=>true,'allowTempIds'=>false,'requireAllFields'=>true),$options);
 		
 		$filteredResponse=array();
@@ -134,7 +143,7 @@ class EspressoAPI_Validator {
 									$filteredResponse[$variableInfo['var']]=$this->castToType($response[$variableInfo['var']], $variableInfo['type']);
 								}else{
 									//the value is of the wrong type for this variable. what are we going to do?
-									if($options['allowTempIds'] && strpos($response[$variableInfo['var']],"temp-")==0){//if the value is like 'temp-%', and we're accepting temporary ids, then let it be
+									if($options['allowTempIds'] && strpos($response[$variableInfo['var']],"temp-")==0 || !$api_debug_mode){//if the value is like 'temp-%', and we're accepting temporary ids, then let it be. or if we're in LIVE mode (non-debug mode), leave it be too
 											$filteredResponse[$variableInfo['var']]=$response[$variableInfo['var']];
 									}else{//it's not a temporary id, and it's an invalid value for this type of variable, so error
 										throw new EspressoAPI_BadRequestException(sprintf(
@@ -185,9 +194,29 @@ class EspressoAPI_Validator {
 	}
 	
 	/**
-	 * validates that $value is of the specified type
-	 * @param type $value
-	 * @param type $type
+	 * Used to verify that query parameter is of the given type. This is nearly identical
+	 * to when we're normally using EspressoAPI_Validtor::valueIs(), except that we want to allow
+	 * users to provide the strings 'true' or 'false' for booleans. Eg "?member_only=true" instead
+	 * of requiring "member_only=1".
+	 * @param mixed $value
+	 * @param string $type one of 'int','float','string','bool','datetime','enum','array'
+	 * @param array $allowedEnumValues
+	 * @return boolean
+	 */
+	function queryParameterValueIs($value,$type,$allowedEnumValues=array()){
+		if($type=='bool'){
+			return $this->valueIs($value,'enum',array('true','false'));
+		}else{
+			return $this->valueIs($value,$type,$allowedEnumValues);
+		}
+	}
+	/**
+	 * validates that $value is of the specified type. Eg, if $type is 'datetime' verifies that $value is a string in the mysql datetime format.
+	 * If it isn't, returns false. (Note: checks that 'bool's are actually a 1 or 0, not the strings 'true' or 'false'. If you want those strings
+	 * to be acceptable values for a 'bool', use EspressoAPI_Validator::queryParameterValueIs which is a wrapper for this function.)
+	 * @param mixed $value
+	 * @param string $type one of 'int','float','string','bool','datetime','enum','array'
+	 * @param array $allowedEnumValues where each value is a possibel value for $value
 	 * @return boolean 
 	 */
 	function valueIs($value,$type,$allowedEnumValues=array()){
@@ -251,7 +280,7 @@ class EspressoAPI_Validator {
 	}
 	
 	/**
-	 * validates that $value is of the specified type
+	 * ensures the value is of the specified type
 	 * @param type $value
 	 * @param type $type
 	 * @return boolean 
@@ -263,15 +292,20 @@ class EspressoAPI_Validator {
 			case 'float':
 				return floatval($value);				
 			case 'string':
-				return $value;
+				return "$value";
 			case 'bool':
 				return $value;
 			case 'datetime':
+				if( ! get_option(EspressoAPI_DEBUG_MODE) && ! $this->valueIs($value,'datetime')){
+					//if an invalid datetime has made it this far, and its still not right...
+					//just return the start of the unix epoc
+					$value = '1970-01-01 00:00:00';
+				}
 				return $value;
 			case 'enum':
 				return $value;
 			case 'array':
-				return $value;
+				return (array)$value;
 			default:
 				throw new EspressoAPI_SpecialException(sprintf(__("Internal Event Espresso API Error while validating data. Type %s not permitted","event_espresso"),$type));
 		}

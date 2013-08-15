@@ -91,11 +91,11 @@
 						<h3 class="hndle"><?php _e("Developers",'event_espresso')?></h3>
 						<div class='inside'>
 							<div class="padding">
-								<label for='<?php echo EpsressoAPI_DEBUG_MODE?>'><?php _e("API Debug Mode",'event_espresso');?></label>
+								<label for='<?php echo EspressoAPI_DEBUG_MODE?>'><?php _e("API Debug Mode",'event_espresso');?></label>
 									
-									<select name="<?php echo EpsressoAPI_DEBUG_MODE?>" id="<?php echo EpsressoAPI_DEBUG_MODE?>">
-										<option value="1" <?php echo $templateVars[EpsressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("On", "event_espresso");?></option>
-										<option value="0" <?php echo !$templateVars[EpsressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("Off", "event_espresso");?></option>
+									<select name="<?php echo EspressoAPI_DEBUG_MODE?>" id="<?php echo EspressoAPI_DEBUG_MODE?>">
+										<option value="1" <?php echo $templateVars[EspressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("On", "event_espresso");?></option>
+										<option value="0" <?php echo !$templateVars[EspressoAPI_DEBUG_MODE]?'selected':''?>><?php _e("Off", "event_espresso");?></option>
 									</select>
 								<input type='submit' class='button'value='Save'>
 									<p><?php _e("When developing, it is recommended you put the API in Debug Mode. If the API Debug Mode is On,

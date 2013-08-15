@@ -267,7 +267,10 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @return boolean success of deletion
 	 */
 	abstract protected function specificAttributeRequestDelete($id, $attribute);
-	// Function to fix up PHP's messing up POST input containing dots, etc.
+	/**
+	 * Function to fix up PHP's messing up POST input containing dots, etc.
+	 * @return array 
+	 */
 	protected function realQueryString() {
 		$pairs = explode("&", $_SERVER['QUERY_STRING']);
 		$vars = array();

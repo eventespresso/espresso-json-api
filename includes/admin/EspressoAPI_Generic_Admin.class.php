@@ -43,8 +43,8 @@ class EspressoAPI_Generic_Admin {
 		if(isset($_POST[EspressoAPI_DEFAULT_QUERY_LIMITS])){
 			update_option(EspressoAPI_DEFAULT_QUERY_LIMITS,$_POST[EspressoAPI_DEFAULT_QUERY_LIMITS]);
 		}
-		if(isset($_POST[EpsressoAPI_DEBUG_MODE])){
-			update_option(EpsressoAPI_DEBUG_MODE,$_POST[EpsressoAPI_DEBUG_MODE]);
+		if(isset($_POST[EspressoAPI_DEBUG_MODE])){
+			update_option(EspressoAPI_DEBUG_MODE,$_POST[EspressoAPI_DEBUG_MODE]);
 		}
 		//if roles and permissions addon is active, we add another var for that
 		if(defined('ESPRESSO_MANAGER_PRO_VERSION')){
@@ -66,7 +66,7 @@ class EspressoAPI_Generic_Admin {
 						'Never'=>-1));
 		$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=get_option(EspressoAPI_DEFAULT_QUERY_LIMITS);
 		$templateVars[EspressoAPI_ALLOW_PUBLIC_API_ACCESS]=get_option(EspressoAPI_ALLOW_PUBLIC_API_ACCESS);
-		$templateVars[EpsressoAPI_DEBUG_MODE]=get_option(EpsressoAPI_DEBUG_MODE);
+		$templateVars[EspressoAPI_DEBUG_MODE]=get_option(EspressoAPI_DEBUG_MODE);
 		if(empty($templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS])){
 			$templateVars[EspressoAPI_DEFAULT_QUERY_LIMITS]=array(
 				'Events'=>50,

@@ -117,8 +117,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * @throws EspressoAPI_BadRequestException 
 	 */
 	protected function constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
-		//first: validate that the input is acceptable
-		//if($this->validator->valueIs($valueInput, , $allowedEnumValues)
 		if(isset($mappingFromApiToDbColumn)){
 			if(array_key_exists($valueInput,$mappingFromApiToDbColumn)){
 				$valueInput=$mappingFromApiToDbColumn[$valueInput];

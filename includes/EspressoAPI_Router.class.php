@@ -114,7 +114,7 @@ class EspressoAPI_Router{
 		catch (Exception $e) {
 			$response= array(EspressoAPI_STATUS => $e->getMessage(), EspressoAPI_STATUS_CODE => 500);
 		}
-		if(array_key_exists('debug',$_REQUEST)){
+		if(array_key_exists('debug',$_REQUEST) && isset($e)){
 			$response['error'] = $e;
 		}
 		

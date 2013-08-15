@@ -40,7 +40,7 @@ define('EspressoAPI_ADMIN_SESSION_TIMEOUT','espressoapi_admin_session_timeout');
 define('EspressoAPI_ALLOW_PUBLIC_API_ACCESS','EspressoAPI_allow_public_api_access');
 define('EspressoAPI_DEFAULT_QUERY_LIMITS','EspresoAPI_default_query_limits');
 define('EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT','EspressoAPI_show_resources_i_cant_edit_by_default');
-define('EpsressoAPI_DEBUG_MODE','EspressoAPI_debug_mode');
+define('EspressoAPI_DEBUG_MODE','EspressoAPI_debug_mode');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Exceptions.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_ClassLoader.class.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Permissions_Wrapper.class.php');
