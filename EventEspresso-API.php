@@ -81,7 +81,7 @@ function ee_json_api_load_pue_update() {
 //		$plugin_slug = 'espresso-json-api';
 		$plugin_slug = array(
 			'premium' => array('p', 'espresso-json-api'),
-			'prerelease' => array('b', 'espresso-json-api-pr')
+			'prerelease' => array('BETA', 'espresso-json-api-pr')
 			);
 		$options = array(
 			'apikey' => $api_key,
