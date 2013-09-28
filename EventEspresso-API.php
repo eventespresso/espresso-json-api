@@ -80,8 +80,8 @@ function ee_json_api_load_pue_update() {
 		$host_server_url = 'http://eventespresso.com';
 //		$plugin_slug = 'espresso-json-api';
 		$plugin_slug = array(
-			'premium' => array('P', 'espresso-json-api'),
-			'prerelease' => array('B', 'espresso-json-api-pr')
+			'premium' => array('P'=> 'espresso-json-api'),
+			'prerelease' => array('B'=> 'espresso-json-api-pr')
 			);
 		$options = array(
 			'apikey' => $api_key,
