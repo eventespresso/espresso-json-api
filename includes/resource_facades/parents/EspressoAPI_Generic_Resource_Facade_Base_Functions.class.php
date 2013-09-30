@@ -173,7 +173,9 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	
 	/**
 	 * Determines if the current user has specific permission to accesss/manipulate
-	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * the resource indicated by $id. This is generally called by the Permissions Wrapper AFTER checking
+	 * if the current user has access to ALL items of this resource, so implementing functions DO NOT NEED
+	 * to check for that. If we're calling this just after creating an array representing a resource instance
 	 * (array which only needs to be json-encoded before displaying to the user)
 	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
 	 * @param string $httpMethod like 'get' or 'put'

@@ -607,7 +607,9 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	/**
 	 * Determines if the current user has specific permission to accesss/manipulate
-	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * the resource indicated by $id. For Registrations, basically a user has SPECIFIC permissions to
+	 * view & edit an Registration IF they have permission to view & edit the EVENT the registration is for.
+	 * If we're calling this just after creating an array representing a resource instance
 	 * (array which only needs to be json-encoded before displaying to the user)
 	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
 	 * @param string $httpMethod like 'get' or 'put'
@@ -625,6 +627,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			global $wpdb;
 			$event_id = $wpdb->get_var($wpdb->prepare("SELECT event_id FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=%d",$db_attendee_id));
 		}
+		//
 		return EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event_id);
 	}
 }
