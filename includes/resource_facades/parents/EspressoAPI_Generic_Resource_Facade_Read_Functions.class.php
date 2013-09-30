@@ -306,7 +306,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param array $queryParameters 
 	 * @return array with 2 entries: the first being the limitStart (int) and the 2nd being the limit. Eg array(15,5)
 	 */
-	private function _determineLimit($queryParameters){
+	private function _determineLimit(&$queryParameters){
 		try {
 			if (!empty($queryParameters) && array_key_exists('limit', $queryParameters)) {
 				if (EspressoAPI_Validator::valueIs($queryParameters['limit'], 'int')) {
@@ -346,7 +346,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param array $queryParameters
 	 * @return string either 'GET' or 'PUT'
 	 */
-	private function _determineEffectiveHTTPMethod($queryParameters){
+	private function _determineEffectiveHTTPMethod(&$queryParameters){
 		//check if they've requested only editable results (ie, results that they have permission to edit AND see)
 		if (isset($queryParameters['editable_only'])) {
 			if ($queryParameters['editable_only'] == 'true') {
@@ -372,7 +372,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param array $queryParameters
 	 * @return boolean
 	 */
-	private function _determineIfWeShouldCacheResult($queryParameters){
+	private function _determineIfWeShouldCacheResult(&$queryParameters){
 		//parse query parameters
 		if (!empty($queryParameters)) {
 			if (array_key_exists('cache_result', $queryParameters)) {

@@ -31,13 +31,21 @@ class EspressoAPI_Validator {
 	 * validates all the queyr parameters provided in $keyOpVals
 	 * @param array $keyOpVals like array(0=>array('key'=>'Transaction.id','operator'=>'=','value'=>'23')
 	 * @return array of the same $keyOpVals, but where the values are cast to their correct type, eg from strings to ints, floats, etc.
+	 * Also, the model's name is prepended onto each key-op-val. IE, if a user submits a querystring like
+	 * "espresso-api/v1/events/public?id__lt=23", keyOpVals will be 
+	 * array(
+	 *		array(
+	 *			'key'=>'Event.id',
+	 *			'operator'=>'<',
+	 *			'value'=>23
+	 *		)
+	 * )
 	 * @throws EspressoAPI_BadRequestException if any of the requets parameters are of teh wrong type
 	 */
 	function validateQueryParameters($keyOpVals){
 		$api_debug_mode = get_option(EspressoAPI_DEBUG_MODE);
 		//get related models
 		$relatedModels=$this->resource->getFullRelatedModels();
-		
 		$normalizedKeyOpVals=array();
 		foreach($keyOpVals as $keyOpVal){
 			list($modelName,$fieldName)=explode(".",$keyOpVal['key']);
@@ -53,6 +61,7 @@ class EspressoAPI_Validator {
 				}
 			}
 			if((empty($fieldInfo) || empty($fieldInfo['type']))){
+				//only throw an error if the field ALSO isn't a global query parameter, and we're in debug 
 				if($api_debug_mode){
 					throw new EspressoAPI_BadRequestException(sprintf(__("Query parameter '%s' not a valid parameter of resource '%s'"),$fieldName,$modelName));
 				}
