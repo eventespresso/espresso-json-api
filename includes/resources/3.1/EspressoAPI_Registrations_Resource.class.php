@@ -25,6 +25,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		Attendee.is_primary as 'Attendee.is_primary',
 		Attendee.quantity as 'Attendee.quantity',
 		Attendee.checked_in as 'Attendee.checked_in',
+		Attendee.checked_in_quantity as 'Attendee.checked_in_quantity',
 		Attendee.price_option as 'Attendee.price_option',
 		Attendee.event_time as 'Attendee.event_time',
 		Attendee.end_time as 'Attendee.end_time'";

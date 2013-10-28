@@ -140,7 +140,8 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 */
 	function getFullRelatedModels(){
 		//if we've already called this function and assigned the classes in the relatedModels array, just use it
-		if(array_key_exists('class',array_shift(array_values($this->relatedModels)))){
+		$firstRelatedModel = reset($this->relatedModels);
+		if(array_key_exists('class',$firstRelatedModel)){
 			return $this->relatedModels;
 		}
 		$relatedModels=array();

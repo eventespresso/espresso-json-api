@@ -25,6 +25,25 @@
  */
 //require_once("EspressoAPI_Generic_Controller.class.php");
 class EspressoAPI_Attendees_Controller extends EspressoAPI_Generic_Controller{
+	/**
+	 *for handling reuqests like POST /events for creating a new event 
+	 * @return array with 'id' of newly created object
+	 */
+	 protected function generalRequestPost($format){throw new EspressoAPI_MethodNotImplementedException();}
+	 
+	 protected function specificRequestGet($id){throw new EspressoAPI_MethodNotImplementedException();}
+	/**
+	 *for handling requests like PUT /events/13 for updating an event with id 13 
+	 * @param $id id of the object
+	 * @return boolean success of updating object
+	 */
+	 protected function specificRequestPut($id,$format){throw new EspressoAPI_MethodNotImplementedException();}
+	/**
+	 * for handling requests like DELETE /events/23 for deleting an event with id 23 
+	 * @param $id id of the object
+	 * @return boolean success fo deleting the event
+	 */
+	 protected function specificRequestDelete($id){throw new EspressoAPI_MethodNotImplementedException();}
 	
 	/**
 	 *request like GET events/13/attendees, for getting all attendees at an event 

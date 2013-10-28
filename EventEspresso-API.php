@@ -3,7 +3,7 @@
 Plugin Name: Event Espresso API Plugin
 Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
-Version: 2.1.0.B
+Version: 2.1.0.B.1
 Author: Event Espresso, (Mike Nelson)
 Requiresa at least: Event Espresso 3.1.30, and Wordpress 3.3.0
  *  For Developers: How this plugin generally works:
@@ -26,7 +26,7 @@ which corresponds to the current Event Espresso Core version.
  * puts it into JSON or XML format and prints it to the output buffer.
 */
 define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
-define('EspressoAPI_VERSION','2.1.0.B');
+define('EspressoAPI_VERSION','2.1.0.B.1');
 
 //constants relating to responses
 //(why use these instead of normal strings? because if you mispell these you get a warning

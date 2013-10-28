@@ -87,7 +87,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				}
 				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
-			$row['Price.limit']=intval($row['Event.reg_limit']);
+			$row['Price.limit']=isset($row['StartEnd.reg_limit']) ? intval($row['StartEnd.reg_limit']) : intval($row['Event.reg_limit']); 
 			$row['Price.remaining']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
 			$row['Price.description']=null;
 			$row['Price.start_date']=null;

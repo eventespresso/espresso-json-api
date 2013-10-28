@@ -110,9 +110,9 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				$attendeesPerEvent[$row['Event.id']]=get_number_of_attendees_reg_limit($row['Event.id'],'num_attendees');//basically cache the result
 			}
 			//first: figure out is there a ticket limit on this registration?
-			$ticket_limit_on_datetime = intval($row['StartEnd.reg_limit']) ? true : false;
+			$ticket_limit_on_datetime = isset($row['StartEnd.reg_limit']) ? true : false;
 			$row['StartEnd.reg_limit']= $ticket_limit_on_datetime ? intval($row['StartEnd.reg_limit']) : intval($row['Event.reg_limit']);
-			$row['Datetime.tickets_left']= $ticket_limit_on_datetime ? $row['StartEnd.reg_limit'] - $this->getTicketsSoldForDateTime($row['Event.id'],$row['StartEnd.start_time'],$row['StartEnd.end_time']) : intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];
+			$row['Datetime.tickets_left']= $ticket_limit_on_datetime ? $row['StartEnd.reg_limit'] - $this->getTicketsSoldForDateTime($row['Event.id'],$row['StartEnd.start_time'],$row['StartEnd.end_time']) : intval($row['StartEnd.reg_limit'])-$attendeesPerEvent[$row['Event.id']];
 			$row['Datetime.is_primary']=true;
 //now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))

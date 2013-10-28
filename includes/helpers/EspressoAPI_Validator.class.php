@@ -45,6 +45,7 @@ class EspressoAPI_Validator {
 	function validateQueryParameters($keyOpVals){
 		$api_debug_mode = get_option(EspressoAPI_DEBUG_MODE);
 		//get related models
+		
 		$relatedModels=$this->resource->getFullRelatedModels();
 		$normalizedKeyOpVals=array();
 		foreach($keyOpVals as $keyOpVal){
