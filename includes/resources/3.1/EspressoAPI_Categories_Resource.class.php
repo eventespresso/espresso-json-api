@@ -39,7 +39,6 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		$metas=unserialize($sqlResult['Venue.metas']);
 		$category=array(
 		'id'=>$sqlResult['Category.id'],
 		'name'=>$sqlResult['Category.category_name'],

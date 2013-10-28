@@ -35,8 +35,8 @@ class EspressoAPI_Validator {
 	 */
 	function validateQueryParameters($keyOpVals){
 		//get related models
-		$relatedModels=$this->resource->getFullRelatedModels();
 		
+		$relatedModels=$this->resource->getFullRelatedModels();
 		$normalizedKeyOpVals=array();
 		foreach($keyOpVals as $keyOpVal){
 			list($modelName,$fieldName)=explode(".",$keyOpVal['key']);
