@@ -119,6 +119,11 @@ class EspressoAPI_Router{
 		}
 		
 		EspressoAPI_Response_Formatter::setContentType($format);
+		//NOBODY BUFFERS MY OUTPUT! Because some other plugins, like NextGen gallery
+		//and HTTPS plugin, buffer output and echo it on shutdown. But we want to remove
+		//the shutdown hooks because OTHER plugins (like wp shopping cart) output
+		//stuff on shutdown, leading us to want to deactivate ALL shutdown hooks
+		wp_ob_end_flush_all();
 		echo EspressoAPI_Response_Formatter::format($response,$format);
 		//prevent any silly shutdown functions from outputting warnings on 'shutdown', etc., like wp-e-commerce's wpsc-functions.php
 		remove_all_actions('shutdown',1000);
