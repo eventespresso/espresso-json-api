@@ -141,7 +141,11 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-
+		
+		//default $myTimeToEnd to midnight
+		$myTimeToEnd="00:00";
+		$myTimeToStart="00:00";
+		
 		// if the user signs up for a time, and then the time changes,  StartEnd.start_time won't be set! So 
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
 		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['StartEnd.end_time'])){
@@ -160,11 +164,7 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 		//double-check that the time is in the right format.
 		$myTimeToStart = $this->convertTimeFromAMPM($myTimeToStart);
 		$myTimeToEnd = $this->convertTimeFromAMPM($myTimeToEnd);
-		//if we can't get teh time from either, just default to midnight. or we could just return null
-		if(empty($myTimeToEnd) || empty($myTimeToStart)){
-			$myTimeToEnd="00:00";
-			$myTimeToStart="00:00";
-		}
+		
 		$registrationStartTime=(empty($sqlResult['Event.registration_startT']))?"00:00":$sqlResult['Event.registration_startT'];
 		$registrationEndTime=(empty($sqlResult['Event.registration_endT']))?"00:00":$sqlResult['Event.registration_endT'];
 		$eventStart=$sqlResult['Event.start_date']." $myTimeToStart:00";
