@@ -25,7 +25,15 @@
  * ------------------------------------------------------------------------
  */
 abstract class EspressoAPI_Generic_Controller {
-
+	/**
+	 * Names of the resources requested, plural. Eg, 'Events','Registrations', etc.
+	 * @var string
+	 */
+	var $resourceName;
+	/**
+	 * THe Resource Facade generally associated with this controller
+	 * @var EspressoAPI_Generic_Resource_Facade
+	 */
 	var $apiFacade;
 
 	function __construct() {
@@ -34,8 +42,8 @@ abstract class EspressoAPI_Generic_Controller {
 		//they should be hooked with a do_action("include_Resource_{controlelrName}")
 		//echo "espressoeventscontroller32:";var_dump(get_class($this));
 		preg_match('~^EspressoAPI_(.*)_Controller~', get_class($this), $matches);
-		$apiModel = $matches[1];
-		$this->apiFacade = EspressoAPI_ClassLoader::load($apiModel, 'Resource');//new $apiFacadeName;
+		$this->resourceName = $matches[1];
+		$this->apiFacade = EspressoAPI_ClassLoader::load($this->resourceName, 'Resource');//new $apiFacadeName;
 	}
 	/**
 	 * for handling http requests for the api. We've already confirmed it's a request for the api.
@@ -59,6 +67,9 @@ abstract class EspressoAPI_Generic_Controller {
 	 * for handling requests like '/events/' 
 	 */
 	protected function generalRequest($format) {
+		if( ! EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], $this->resourceName)){
+			 throw new EspressoAPI_UnauthorizedException();
+		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			return array(EspressoAPI_STATUS => __("OK","event_espresso"), EspressoAPI_STATUS_CODE => 200, EspressoAPI_RESPONSE_BODY => $this->generalRequestGet());
 		} elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -103,6 +114,9 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @param int $id id of event
 	 */
 	protected function specificRequest($id,$format) {
+		if(!EspressoAPI_Permissions_Wrapper::current_user_can_access_specific($_SERVER['REQUEST_METHOD'], $this->resourceName, $id)){
+			 throw new EspressoAPI_UnauthorizedException();
+		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			$object = $this->specificRequestGet($id);
 			if (empty($object))
@@ -168,14 +182,32 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @param $id id of the object
 	 * @return boolean success fo deleting the event
 	 */
-	abstract protected function specificRequestDelete($id);
-
+	protected function specificRequestDelete($id){
+		throw new EspressoAPI_MethodNotImplementedException();
+	}
+	
+	/**
+	 * Should be overriden by subclass controller which have attributes which aren't proper models.
+	 * Eg, the endpoint 'espresso-api/v1/registrations/34/checkin'. They can call parent::canAccessAttribute
+	 * if they like to handle all 'normal'
+	 * @param string $id
+	 * @param string $attribute like 'attendees' from a request like espresso-api/v1/events/23/attendees
+	 * @return boolean
+	 */
+	protected function canAccessAttribute($id, $attribute){
+		return EspressoAPI_Permissions_Wrapper::current_user_can_access_some($_SERVER['REQUEST_METHOD'], ucwords($attribute));
+	}
 	/**
 	 * for handling requests like 'events/14/attendees'
-	 * @param type $id id of event
-	 * @param type $attribute attribute like 'attendees' or 'venue'
+	 * @param string $id id of event
+	 * @param string $attribute attribute like 'attendees' or 'venue'
+	 * @return array of response data for formatting
 	 */
 	protected function specificAttributeRequest($id, $attribute,$format) {
+		//don't do the usual permissions check. This may require special logic. 	
+		if( ! $this->canAccessAttribute($id, $attribute, $format)){
+			 throw new EspressoAPI_UnauthorizedException();
+		}
 		if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 			$object = $this->specificAttributeRequestGet($id, $attribute);
 			if (empty($object))
@@ -235,7 +267,10 @@ abstract class EspressoAPI_Generic_Controller {
 	 * @return boolean success of deletion
 	 */
 	abstract protected function specificAttributeRequestDelete($id, $attribute);
-	// Function to fix up PHP's messing up POST input containing dots, etc.
+	/**
+	 * Function to fix up PHP's messing up POST input containing dots, etc.
+	 * @return array 
+	 */
 	protected function realQueryString() {
 		$pairs = explode("&", $_SERVER['QUERY_STRING']);
 		$vars = array();

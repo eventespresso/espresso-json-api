@@ -25,6 +25,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 		Attendee.is_primary as 'Attendee.is_primary',
 		Attendee.quantity as 'Attendee.quantity',
 		Attendee.checked_in as 'Attendee.checked_in',
+		Attendee.checked_in_quantity as 'Attendee.checked_in_quantity',
 		Attendee.price_option as 'Attendee.price_option',
 		Attendee.event_time as 'Attendee.event_time',
 		Attendee.end_time as 'Attendee.end_time'";
@@ -203,10 +204,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	
 	function _checkin($id,$queryParameters=array()){
-		global $wpdb, $ticketing_installed;
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
-			 throw new EspressoAPI_UnauthorizedException();
-		}
+		global $wpdb,$ticketing_installed;
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
@@ -277,9 +275,6 @@ protected function processSqlResults($rows,$keyOpVals){
 	
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb, $ticketing_installed;
-		if(!EspressoAPI_Permissions_Wrapper::current_user_can('put', $this->modelNamePlural)){
-			 throw new EspressoAPI_UnauthorizedException();
-		}
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
 		//where all tickets use the same attendee info
 		//if that's the case, we row we want to update is 1 or 343, respectively.
@@ -611,6 +606,30 @@ protected function processSqlResults($rows,$keyOpVals){
 		return $dbEntries;
 	}
 	
-	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. For Registrations, basically a user has SPECIFIC permissions to
+	 * view & edit an Registration IF they have permission to view & edit the EVENT the registration is for.
+	 * If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		if(is_array($resource_instance_array) && isset($resource_instance_array['Event']['id'])){
+			$event_id = $resource_instance_array['Event']['id'];
+		}else{
+			//get the registration's event's ID
+			//ok so get the 3.1 attendee id from the api registration $id
+			$db_attendee_id = $this->convertAPIRegistrationIdToDbAttendeeId($id);
+			global $wpdb;
+			$event_id = $wpdb->get_var($wpdb->prepare("SELECT event_id FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=%d",$db_attendee_id));
+		}
+		//
+		return EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event_id);
+	}
 }
 //new Events_Controller();

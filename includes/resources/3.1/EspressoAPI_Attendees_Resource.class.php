@@ -166,5 +166,26 @@ class EspressoAPI_Attendees_Resource extends EspressoAPI_Attendees_Resource_Faca
 		}
 		return $dbEntries;
 	}
+	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		//we don't care what http method they're using in this case.
+		if(is_array($resource_instance_array) && isset($resource_instance_array['Events'][0]['id'])){
+			$event_id = $resource_instance_array['Event']['id'];
+		}else{
+			global $wpdb;
+			$event_id = $wpdb->get_var($wpdb->prepare("SELECT event_id FROM ".EVENTS_ATTENDEE_TABLE." WHERE id=%d",$id));
+		}
+		return EspressoAPI_Permissions_Wrapper::espresso_is_my_event($event_id);
+	}
 }
 //new Events_Controller();

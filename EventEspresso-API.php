@@ -3,7 +3,7 @@
 Plugin Name: Event Espresso API Plugin
 Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
-Version: 2.0.4.p
+Version: 2.1.0.B.1
 Author: Event Espresso, (Mike Nelson)
 Requiresa at least: Event Espresso 3.1.30, and Wordpress 3.3.0
  *  For Developers: How this plugin generally works:
@@ -26,17 +26,21 @@ which corresponds to the current Event Espresso Core version.
  * puts it into JSON or XML format and prints it to the output buffer.
 */
 define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
-define('EspressoAPI_VERSION','2.0.4.p');
+define('EspressoAPI_VERSION','2.1.0.B.1');
 
 //constants relating to responses
+//(why use these instead of normal strings? because if you mispell these you get a warning
+//...not so with normal strings.)
 define('EspressoAPI_STATUS','status');
 define('EspressoAPI_STATUS_CODE','status_code');
 define('EspressoAPI_USER_FRIENDLY_STATUS','user_friendly_status');
 define('EspressoAPI_RESPONSE_BODY','body');
+//these constants should eb used as wp option names, input names and ids.
 define('EspressoAPI_ADMIN_SESSION_TIMEOUT','espressoapi_admin_session_timeout');
 define('EspressoAPI_ALLOW_PUBLIC_API_ACCESS','EspressoAPI_allow_public_api_access');
 define('EspressoAPI_DEFAULT_QUERY_LIMITS','EspresoAPI_default_query_limits');
-
+define('EspressoAPI_SHOW_RESOURCES_I_CANT_EDIT_BY_DEFAULT','EspressoAPI_show_resources_i_cant_edit_by_default');
+define('EspressoAPI_DEBUG_MODE','EspressoAPI_debug_mode');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Exceptions.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_ClassLoader.class.php');
 require (EspressoAPI_DIR_PATH.'/includes/helpers/EspressoAPI_Permissions_Wrapper.class.php');
@@ -74,11 +78,12 @@ function ee_json_api_load_pue_update() {
 		require(EVENT_ESPRESSO_PLUGINFULLPATH . 'class/pue/pue-client.php' );
 		$api_key = $org_options['site_license_key'];
 		$host_server_url = 'http://eventespresso.com';
-		//$plugin_slug = 'espresso-json-api';
-		$plugin_slug = array(
-			'premium' => array('p'=> 'espresso-json-api'),
-			'prerelease' => array('BETA'=> 'espresso-json-api-pr')
-			);
+		$plugin_slug = 'espresso-json-api-pr';
+//		TODO: uncomment when releasing LIVE
+//		$plugin_slug = array(
+//			'premium' => array('P' => 'espresso-json-api'),
+//			'prerelease' => array('B' => 'espresso-json-api-pr')
+//			);
 		$options = array(
 			'apikey' => $api_key,
 			'lang_domain' => 'event_espresso',

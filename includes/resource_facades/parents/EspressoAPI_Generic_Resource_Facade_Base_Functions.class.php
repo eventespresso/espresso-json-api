@@ -117,8 +117,6 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 * @throws EspressoAPI_BadRequestException 
 	 */
 	protected function constructSimpleValueInWhereClause($valueInput,$mappingFromApiToDbColumn=null,$apiKey=null){
-		//first: validate that the input is acceptable
-		//if($this->validator->valueIs($valueInput, , $allowedEnumValues)
 		if(isset($mappingFromApiToDbColumn)){
 			if(array_key_exists($valueInput,$mappingFromApiToDbColumn)){
 				$valueInput=$mappingFromApiToDbColumn[$valueInput];
@@ -142,7 +140,8 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 	 */
 	function getFullRelatedModels(){
 		//if we've already called this function and assigned the classes in the relatedModels array, just use it
-		if(array_key_exists('class',array_shift(array_values($this->relatedModels)))){
+		$firstRelatedModel = reset($this->relatedModels);
+		if(array_key_exists('class',$firstRelatedModel)){
 			return $this->relatedModels;
 		}
 		$relatedModels=array();
@@ -172,4 +171,18 @@ abstract class EspressoAPI_Generic_Resource_Facade_Base_Functions {
 		}
 		return -1;
 	}
+	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. This is generally called by the Permissions Wrapper AFTER checking
+	 * if the current user has access to ALL items of this resource, so implementing functions DO NOT NEED
+	 * to check for that. If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	abstract function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array());
 }

@@ -110,9 +110,9 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				$attendeesPerEvent[$row['Event.id']]=get_number_of_attendees_reg_limit($row['Event.id'],'num_attendees');//basically cache the result
 			}
 			//first: figure out is there a ticket limit on this registration?
-			$ticket_limit_on_datetime = intval($row['StartEnd.reg_limit']) ? true : false;
+			$ticket_limit_on_datetime = isset($row['StartEnd.reg_limit']) ? true : false;
 			$row['StartEnd.reg_limit']= $ticket_limit_on_datetime ? intval($row['StartEnd.reg_limit']) : intval($row['Event.reg_limit']);
-			$row['Datetime.tickets_left']= $ticket_limit_on_datetime ? $row['StartEnd.reg_limit'] - $this->getTicketsSoldForDateTime($row['Event.id'],$row['StartEnd.start_time'],$row['StartEnd.end_time']) : intval($row['Event.reg_limit'])-$attendeesPerEvent[$row['Event.id']];
+			$row['Datetime.tickets_left']= $ticket_limit_on_datetime ? $row['StartEnd.reg_limit'] - $this->getTicketsSoldForDateTime($row['Event.id'],$row['StartEnd.start_time'],$row['StartEnd.end_time']) : intval($row['StartEnd.reg_limit'])-$attendeesPerEvent[$row['Event.id']];
 			$row['Datetime.is_primary']=true;
 //now that 'tickets_left' has been set, we can filter by it, if the query parameter has been set, of course
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
@@ -141,6 +141,11 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
+		
+		//default $myTimeToEnd to midnight
+		$myTimeToEnd="00:00";
+		$myTimeToStart="00:00";
+		
 		// if the user signs up for a time, and then the time changes,  StartEnd.start_time won't be set! So 
 		// insteadof returning a blank, we'll return the time the attendee originally registered for)
 		if(empty($sqlResult['StartEnd.start_time']) || empty($sqlResult['StartEnd.end_time'])){
@@ -152,14 +157,14 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 				$myTimeToEnd=$sqlResult['Attendee.end_time'];
 			}
 		}else{
+			
 			$myTimeToStart=$sqlResult['StartEnd.start_time'];
 			$myTimeToEnd=$sqlResult['StartEnd.end_time'];
 		}
-		//if we can't get teh time from either, just default to midnight. or we could just return null
-		if(empty($myTimeToEnd) || empty($myTimeToStart)){
-			$myTimeToEnd="00:00";
-			$myTimeToStart="00:00";
-		}
+		//double-check that the time is in the right format.
+		$myTimeToStart = $this->convertTimeFromAMPM($myTimeToStart);
+		$myTimeToEnd = $this->convertTimeFromAMPM($myTimeToEnd);
+		
 		$registrationStartTime=(empty($sqlResult['Event.registration_startT']))?"00:00":$sqlResult['Event.registration_startT'];
 		$registrationEndTime=(empty($sqlResult['Event.registration_endT']))?"00:00":$sqlResult['Event.registration_endT'];
 		$eventStart=$sqlResult['Event.start_date']." $myTimeToStart:00";
@@ -179,6 +184,29 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			'tickets_left'=>$sqlResult['Datetime.tickets_left']
 			);
 		return $datetime; 
+	}
+	
+	/**
+	 * Fixes times like "5:00 PM" into the expected 24-hour format.
+	 * @param type $timeString
+	 * @return string in the php datetime format: "G:i" (24-hour format hour with leading zeros, a colon, and minutes with leading zeros)
+	 */
+	private function convertTimeFromAMPM($timeString){
+		$matches = array();
+		preg_match("~(\\d*):(\\d*)~",$timeString,$matches);
+		if( ! $matches || count($matches)<3){
+			$hour = '00';
+			$minutes = '00';
+		}else{
+			$hour = intval($matches[1]);
+			$minutes = $matches[2];
+		}
+		if(strpos($timeString, 'PM') || strpos($timeString, 'pm')){
+			$hour = intval($hour) + 12;
+		}
+		$hour = str_pad( "$hour", 2, '0',STR_PAD_LEFT);
+		$minutes = str_pad( "$minutes", 2, '0',STR_PAD_LEFT);
+		return "$hour:$minutes";
 	}
 	/**
 	 * gets the date and time contained in the $dateSTring
@@ -302,6 +330,20 @@ class EspressoAPI_Datetimes_Resource extends EspressoAPI_Datetimes_Resource_Faca
 			AND ATT.end_time = %s ";
 	$tickets_sold = $wpdb->get_var($wpdb->prepare($count_at_time_sql,$event_id,$event_start_time,$event_end_time));
 	return $tickets_sold;
+	}
+	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
 	}
 }
 //new Events_Controller();

@@ -27,13 +27,6 @@
 class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controller{
 	
 	/**
-	 * for handling requests like DELETE /events/23 for deleting an event with id 23 
-	 * @param $id id of the object
-	 * @return boolean success fo deleting the event
-	 */
-	 protected function specificRequestDelete($id){throw new EspressoAPI_MethodNotImplementedException();}
-	
-	/**
 	 *request like GET events/13/attendees, for getting all attendees at an event 
 	 * @param $id id of the object
 	 * @param $attribute 3rd part of the URI, in teh above example it would 'attendees'
@@ -89,4 +82,21 @@ class EspressoAPI_Registrations_Controller extends EspressoAPI_Generic_Controlle
 	 * @return boolean success of deletion
 	 */
 	 protected function specificAttributeRequestDelete($id,$attribute){throw new EspressoAPI_MethodNotImplementedException();}
+	 
+	 /**
+	  * For handling non-standard attributes like 'checkin' and 'checkout'.
+	  * @param string $id
+	  * @param string $attribute like 'registrations', or 'checkin'
+	  * @return boolean
+	  */
+	 protected function canAccessAttribute($id, $attribute){
+		 switch($attribute){
+				case 'checkin':
+				case 'checkout':
+					return EspressoAPI_Permissions_Wrapper::current_user_can_access_specific('put', 'Registrations', $id);
+		 }
+		 //the attribute isn't one of registrations' exceptions
+		 //so treat it as normal
+		 return parent::canAccessAttribute($id, $attribute);
+	 }
 }

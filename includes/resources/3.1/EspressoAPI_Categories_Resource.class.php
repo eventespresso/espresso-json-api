@@ -39,7 +39,6 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		$metas=unserialize($sqlResult['Venue.metas']);
 		$category=array(
 		'id'=>$sqlResult['Category.id'],
 		'name'=>$sqlResult['Category.category_name'],
@@ -51,6 +50,21 @@ class EspressoAPI_Categories_Resource extends EspressoAPI_Categories_Resource_Fa
 	}
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		return $dbEntries;
+	}
+	
+	
+	/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
 	}
 }
 //new Events_Controller();

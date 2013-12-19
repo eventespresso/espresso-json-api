@@ -87,7 +87,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				}
 				$attendeesPerEvent[$row['Event.id']]=$totalAttending;//basically cache the result
 			}
-			$row['Price.limit']=intval($row['Event.reg_limit']);
+			$row['Price.limit']=isset($row['StartEnd.reg_limit']) ? intval($row['StartEnd.reg_limit']) : intval($row['Event.reg_limit']); 
 			$row['Price.remaining']=intval($row['Price.limit'])-$attendeesPerEvent[$row['Event.id']];//$row['Event.reg_limit'];// just reutnr  abig number for now. Not sure how to calculate this. $row['StartEnd.reg_limit']-$attendeesPerEvent[$row['Event.id']];
 			$row['Price.description']=null;
 			$row['Price.start_date']=null;
@@ -119,32 +119,32 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
 		$pricesToReturn=array();
 		$pricesToReturn['base']=array(
-		'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR),
-		'amount'=>$sqlResult['Price.event_cost'],
-		'name'=>$sqlResult['Price.price_type'],
-		'description'=>$sqlResult['Price.description'],
-		'limit'=>$sqlResult['Price.limit'],
-		'remaining'=>$sqlResult['Price.remaining'],
-		'start_date'=>$sqlResult['Price.start_date'],
-		'end_date'=>$sqlResult['Price.end_date'],
-		'Pricetype'=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_BASE]
+			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_NONMEMBER_INDICATOR),
+			'amount'=>$sqlResult['Price.event_cost'],
+			'name'=>isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.price_type'],
+			'description'=>$sqlResult['Price.description'],
+			'limit'=>$sqlResult['Price.limit'],
+			'remaining'=>$sqlResult['Price.remaining'],
+			'start_date'=>$sqlResult['Price.start_date'],
+			'end_date'=>$sqlResult['Price.end_date'],
+			'Pricetype'=>$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_BASE]
 		);
 		if($sqlResult['Price.surcharge']!=0){
 			if($sqlResult['Price.surcharge_type']=='pct')
 				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_PERCENT_SURCHARGE];
 			else
 				$priceType=$this->pricetypeModel->fakeDbTable[ESPRESSOAPI_PRICETYPE_AMOUNT_SURCHARGE];
-			
+			$price_name = isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.price_type'];
 			$pricesToReturn['surcharge']=array(
-			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR),
-			'amount'=>$sqlResult['Price.surcharge'],
-			'name'=>"Surcharge for ".$sqlResult['Price.price_type'],
-			'description'=>null,
-			'limit'=>$sqlResult['Price.limit'],
-			'remaining'=>$sqlResult['Price.remaining'],
-			'start_date'=>null,
-			'end_date'=>null,
-			"Pricetype"=>$priceType
+				'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_SURCHARGE_INDICATOR),
+				'amount'=>$sqlResult['Price.surcharge'],
+				'name'=> sprintf(__("Surcharge for %s",'event_espresso'),$price_name),
+				'description'=>null,
+				'limit'=>$sqlResult['Price.limit'],
+				'remaining'=>$sqlResult['Price.remaining'],
+				'start_date'=>null,
+				'end_date'=>null,
+				"Pricetype"=>$priceType
 			);
 		}
 		
@@ -155,7 +155,7 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			$pricesToReturn['member']=array(
 			'id'=>floatval(intval($sqlResult['Price.id'])+ESPRESSOAPI_PRICE_MEMBER_INDICATOR),
 			'amount'=>$sqlResult['Price.member_price'],
-			'name'=>$sqlResult['Price.member_price_type'],
+			'name'=>isset($sqlResult['Attendee.price_option']) ? $sqlResult['Attendee.price_option'] : $sqlResult['Price.member_price_type'],
 			'description'=>null,
 			'limit'=>$sqlResult['Price.limit'],
 			'remaining'=>$sqlResult['Price.remaining'],
@@ -201,8 +201,9 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 				break;
 			}
 		}
-		if($foundOrigPrice && isset($priceWhichMatchesOrigPrice))
+		if($foundOrigPrice && isset($priceWhichMatchesOrigPrice)){
 			return $priceWhichMatchesOrigPrice;
+		}
 		else{
 			$priceTypeModel=  EspressoAPI_ClassLoader::load("Pricetypes",'Resource');
 			return array(
@@ -313,6 +314,20 @@ class EspressoAPI_Prices_Resource extends EspressoAPI_Prices_Resource_Facade{
 			}
 		}
 		return $dbEntries;
+	}
+	
+/**
+	 * Determines if the current user has specific permission to accesss/manipulate
+	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
+	 * (array which only needs to be json-encoded before displaying to the user)
+	 * then $resource_instance_array can be provided in hopes of avoiding extra querying
+	 * @param string $httpMethod like 'get' or 'put'
+	 * @param int|float $id
+	 * @param array $api_model_object array that could be returned to the user, like for an event that would be array('id'=>1,'code'=>'3ffw3', 'name'=>'party'...)
+	 * @return boolean
+	 */
+	function current_user_has_specific_permission_for($httpMethod,$id,$resource_instance_array = array()){
+		throw new EspressoAPI_MethodNotImplementedException(" current_user_has_specific_permission_for not implemented on ".get_class($this));
 	}
 }
 //new Events_Controller();
