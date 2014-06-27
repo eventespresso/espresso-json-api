@@ -1,13 +1,13 @@
 <?php
 /**
- *this file should actually exist in the Event Espresso Core Plugin 
+ *this file should actually exist in the Event Espresso Core Plugin
  */
 /**
  * IMPORTANT NOTE TO DEVELOPER!!!
- * When getting a single transaction, don't forget to get all the registrations for that 
+ * When getting a single transaction, don't forget to get all the registrations for that
  * transaction. It's easier said tahn done. only query to transaction (attendee row entries)
  * which are marked as 'primary', and then for each of them, get all 'registrations'
- * that have teh same 'code' (registration_id in the db) 
+ * that have teh same 'code' (registration_id in the db)
  */
 class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resource_Facade{
 	/**
@@ -21,7 +21,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		//'amount_paid'=>'Attendee.amount_pd',
 		////'registrations_on_transaction'=>'Attendee.quantity',
 		//'payment_gateway'=>'Attendee.txn_type');
-		
+
 	var $calculatedColumnsToFilterOn=array(
 		'Transaction.id',
 		'Transaction.timestamp',
@@ -32,7 +32,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		'Transaction.tax_data',
 		'Transaction.session_data',
 		'Transaction.status');
-	
+
 	var $selectFields="
 		Attendee.id as 'Transaction.id',
 		Attendee.id as 'Attendee.id',
@@ -44,17 +44,17 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		Attendee.txn_type as 'Attendee.txn_type',
 		Attendee.checked_in_quantity as 'Attendee.checked_in_quantity'";
 	var $relatedModels=array();
-	
+
 	/**
 	 * used for caching 'primary transactions' (that is, transaction info
 	 * on events_attendee rows that are marked as 'primary')
-	 * @var type 
+	 * @var type
 	 */
 	private $primaryTransactions=array();
 	/**
 	 * used for converting between api version of Transaction.status and the DB version
 	 * keys are DB versions, valuesare teh api versions
-	 * @var type 
+	 * @var type
 	 */
 	private $statusMapping=array(
 				'Completed'=>'complete',
@@ -63,14 +63,16 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'Incomplete'=>'incomplete',
 				'Not Completed'=>'incomplete',
 				'Cancelled'=>'incomplete',
-				'Declined'=>'incomplete');
+				'Declined'=>'incomplete',
+				''=>'incomplete',//not sure why the 3.1 statu would be blank
+		);
 	protected function processSqlResults($rows,$keyOpVals){
 		$processedRows=array();
 		foreach($rows as $row){
 			//if this is a primary registration, use this data
 			//if its not, call the private function getPrimaryTransaction
 			if(!$row['Attendee.is_primary']){
-				//convert the 
+				//convert the
 				$primaryTransaction=$this->getPrimaryTransaction($row);
 				$row['Transaction.id']=$primaryTransaction['Transaction.id'];
 				$row['Transaction.timestamp']=$primaryTransaction['Attendee.date'];
@@ -88,9 +90,9 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 			$row['Transaction.tax_data']=null;
 			$row['Transaction.session_data']=null;
 			if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
-				continue;			
+				continue;
 			$processedRows[]=$row;
-			
+
 		}
 		return $processedRows;
 	}
@@ -101,8 +103,8 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-			
-			
+
+
 			$transaction=array(
 				'id'=>$sqlResult['Transaction.id'],
 				'timestamp'=>$sqlResult['Transaction.timestamp'],
@@ -118,12 +120,12 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 	}
 
 	/**
-	 * special function for getting the transaction id and other data from the primary 
-	 * attendee's row, not the current row being processed. 
-	 * Eg: 
+	 * special function for getting the transaction id and other data from the primary
+	 * attendee's row, not the current row being processed.
+	 * Eg:
 	 * @global type $wpdb
 	 * @param type $sqlResult
-	 * @return type 
+	 * @return type
 	 */
 	private function getPrimaryTransaction($sqlResult){
 		//based on the Attendee.registration_id, and Attendee.is_primary
@@ -143,7 +145,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 		}
 		return $this->primaryTransactions[$sqlResult['Attendee.registration_id']];
 	}
-	
+
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		switch($columnName){
 			case 'Transaction.status':
@@ -156,31 +158,31 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				}
 				$apiStatusToDbStatus=array_flip($this->statusMapping);
 				$value=$this->constructValueInWhereClause($operator,$value,$apiStatusToDbStatus,'Transaction.status');
-				return "Attendee.payment_status $operator $value $exceptionSQL";	
+				return "Attendee.payment_status $operator $value $exceptionSQL";
 		}
-		return parent::constructSQLWhereSubclause($columnName, $operator, $value);		
+		return parent::constructSQLWhereSubclause($columnName, $operator, $value);
 	}
-	
-	
+
+
 	/**
 	 * gets all the database column values from api input
-	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * @param array $apiInput either like array('events'=>array(array('id'=>...
 	 * //OR like array('event'=>array('id'=>...
-	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'...
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		global $wpdb;
 		$options=shortcode_atts(array('correspondingAttendeeId'=>null,'correspondingEvent'=>null),$options);
 		$models=$this->extractModelsFromApiInput($apiInput);
 		//$dbEntries=array(EVENTS_ATTENDEE_TABLE=>array());
-		
+
 		foreach($models as $thisModel){
 			if(!array_key_exists('id', $thisModel)){
 				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
 			}
 			$thisModelId=$options['correspondingAttendeeId']?$options['correspondingAttendeeId']:$thisModel['id'];
 
-						
+
 			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModelId)){
 				$forCreate=true;
 			}else{
@@ -188,7 +190,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 			}
 			foreach($this->requiredFields as $fieldInfo){
 				$apiField=$fieldInfo['var'];
-				
+
 				if(array_key_exists($apiField,$thisModel)){//provide default value
 					$apiValue=$thisModel[$apiField];
 					$fieldMissing=false;
@@ -207,7 +209,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				switch($apiField){
 					case 'id':
 						$dbCol=$apiField;
-						//if both this trasnaction's id is a temp ID, and its been suuplied a 'correspondingAttendeeId' 
+						//if both this trasnaction's id is a temp ID, and its been suuplied a 'correspondingAttendeeId'
 						//that's a temp ID, set the two of them to be equal
 						$dbValue=$thisModelId;
 						break;
@@ -264,17 +266,17 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 					case 'details':
 					case 'tax_data':
 					case 'session_data':
-						continue;			
+						continue;
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
 			//@todo determine quantity more intelligently
 			$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId]['quantity']=1;
-			
+
 		}
 		return $dbEntries;
 	}
-	
+
 	/**
 	 * Determines if the current user has specific permission to accesss/manipulate
 	 * the resource indicated by $id. If we're calling this just after creating an array representing a resource instance
