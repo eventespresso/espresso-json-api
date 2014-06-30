@@ -3,9 +3,9 @@
 Plugin Name: Event Espresso API Plugin
 Plugin URI: http://eventespresso.com
 Description: A JSON/XML API for Event Espresso
-Version: 2.1.1.P
+Version: 2.1.2.P
 Author: Event Espresso, (Mike Nelson)
-Requiresa at least: Event Espresso 3.1.30, and Wordpress 3.3.0
+Requires at least: Event Espresso 3.1.30, and Wordpress 3.3.0
  *  For Developers: How this plugin generally works:
  *  /includes/EspressoAPI_URL_Rewrite.class.php hooks in our URLs into wordpress, so that 
  * if a URL like /espresso-api/v1/ is requested, the /includes/EspressoAPI_Router.class.php will detect that request and hook in our code to generate a response.
@@ -26,16 +26,16 @@ which corresponds to the current Event Espresso Core version.
  * puts it into JSON or XML format and prints it to the output buffer.
 */
 define('EspressoAPI_DIR_PATH',plugin_dir_path(__FILE__));
-define('EspressoAPI_VERSION','2.1.1.P');
+define('EspressoAPI_VERSION','2.1.2.P');
 
 //constants relating to responses
-//(why use these instead of normal strings? because if you mispell these you get a warning
+//(why use these instead of normal strings? because if you misspell these you get a warning
 //...not so with normal strings.)
 define('EspressoAPI_STATUS','status');
 define('EspressoAPI_STATUS_CODE','status_code');
 define('EspressoAPI_USER_FRIENDLY_STATUS','user_friendly_status');
 define('EspressoAPI_RESPONSE_BODY','body');
-//these constants should eb used as wp option names, input names and ids.
+//these constants should be used as wp option names, input names, and ids.
 define('EspressoAPI_ADMIN_SESSION_TIMEOUT','espressoapi_admin_session_timeout');
 define('EspressoAPI_ALLOW_PUBLIC_API_ACCESS','EspressoAPI_allow_public_api_access');
 define('EspressoAPI_DEFAULT_QUERY_LIMITS','EspresoAPI_default_query_limits');
