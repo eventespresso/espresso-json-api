@@ -25,7 +25,7 @@ class EspressoAPI_Router{
     function __construct(){
           add_action('parse_query',array($this,'template_redirect'));//template_redirect was original action
     }
-	
+
 	/**
 	 * Determine if the current query is a public access query, and whether the site
 	 * permits it.
@@ -43,42 +43,42 @@ class EspressoAPI_Router{
     /**
      *intercepts requests, and finds ones for the espresso API, and routes them to the appropriate controller, if there is one
 	 * and echoes out the controller's output, and exits. Removes ALL actions on 'shutdown' so to prevent warnings
-	 * @global WP_User $current_user 
+	 * @global WP_User $current_user
 	 * @global boolean $espressoAPI_public_access_query declared here, used within the EspressoAPI_Permissions_Wrapper
-     * @return void 
+     * @return void
      */
      function template_redirect(){
-		 
+
 		//fetch params and sanitize. $_REQUEST variables must be passed by the api before doing anything in teh db
 		$apiRequest=get_query_var('espresso-api-request');
 		$apiAuthenticate=get_query_var('espresso-api-authenticate');
-		$sessionKeyAndMaybeFormat=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-sessionkey')));
+		$sessionKeyAndMaybeFormat=sanitize_text_field(esc_sql(get_query_var('espresso-sessionkey')));
 		$sessionKey=$this->stripFormat($sessionKeyAndMaybeFormat);
-        $apiParam1=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api1')));
-        $apiParam2=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api2')));
-        $apiParam3=sanitize_text_field(mysql_real_escape_string(get_query_var('espresso-api3')));
-        
-		
-		
+        $apiParam1=sanitize_text_field(esc_sql(get_query_var('espresso-api1')));
+        $apiParam2=sanitize_text_field(esc_sql(get_query_var('espresso-api2')));
+        $apiParam3=sanitize_text_field(esc_sql(get_query_var('espresso-api3')));
+
+
+
 		if(empty($apiRequest))//this wasn't actually a request to the espresso API, let it go through the normal Wordpress response process
             return;
-		
+
 		//checks for the METHOD parameter in $_REQUEST, which sets the request method if
 		//the client is unable to use PUT and DELETE methods
 		if(array_key_exists('request_method',$_REQUEST) && in_array($_REQUEST['request_method'],array('GET','POST','PUT','DELETE','get','post','put','delete'))){
 			$_SERVER['REQUEST_METHOD']=$_REQUEST['request_method'];
 			unset($_REQUEST['request_method']);
 		}
-		
+
 		$format=EspressoAPI_Response_Formatter::findFormatInParams(array($sessionKeyAndMaybeFormat));
 		try{
-			if($apiAuthenticate=='true'){		
+			if($apiAuthenticate=='true'){
 				$controller=EspressoAPI_ClassLoader::load('Authentication',"Controller");
 				$response=$controller->authenticate();
 			}else{
 				if(!empty($sessionKey) && empty($apiParam1))
 					throw new EspressoAPI_BadRequestException(__("Invalid request. You should also provide a resource, eg: 'events'. You only provided the following api key:","event-espresso").$sessionkey);
-				
+
 				global $current_user, $espressoAPI_public_access_query;
 				if($this->publicAccessQuery($sessionKey)){
 					$current_user = null;
@@ -117,7 +117,7 @@ class EspressoAPI_Router{
 		if(array_key_exists('debug',$_REQUEST) && isset($e)){
 			$response['error'] = $e;
 		}
-		
+
 		EspressoAPI_Response_Formatter::setContentType($format);
 		//NOBODY BUFFERS MY OUTPUT! Because some other plugins, like NextGen gallery
 		//and HTTPS plugin, buffer output and echo it on shutdown. But we want to remove
@@ -130,10 +130,10 @@ class EspressoAPI_Router{
         exit;
     }
 	/**
-	 * removes the format part of the URL. eg: espresso-api/v1/regisration/32trfwse4.xml 
+	 * removes the format part of the URL. eg: espresso-api/v1/regisration/32trfwse4.xml
 	 * would be remove the ".xml" part
 	 * @param string $urlPart
-	 * @return string 
+	 * @return string
 	 */
     function stripFormat($urlPart){
 		$posOfDot=strpos($urlPart,".");
@@ -141,8 +141,8 @@ class EspressoAPI_Router{
 			return $urlPart;
 		else{
 			return substr($urlPart,0,$posOfDot);
-		}	
+		}
 	}
-    
+
 }
 new EspressoAPI_Router();
