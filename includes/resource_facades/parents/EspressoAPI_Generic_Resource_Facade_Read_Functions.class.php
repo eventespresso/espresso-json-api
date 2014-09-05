@@ -2,7 +2,7 @@
 
 /**
  * Description of EspressoAPI_Generic_Resource_Facade_Update_Functions
- * 
+ *
  * @author mnelson4
  */
 require_once(dirname(__FILE__) . '/EspressoAPI_Generic_Resource_Facade_Base_Functions.class.php');
@@ -14,7 +14,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * eg: id=4&date__lt=2012-04-02 08:04:45&title__like=%party%&graduation_year__IN=1997,1998,1999
 	 * becomes id=4 AND date< '2012-04-02 08:04:4' AND title LIKE '%party%' AND graduation_year IN (1997,1998,1999)
 	 * @param array $keyOpVals result of $this->seperateIntoKeyOperatorValue
-	 * @param boolean $only_attempt_to_find_once indicates we are only trying to find one. 
+	 * @param boolean $only_attempt_to_find_once indicates we are only trying to find one.
 	 * So overriding methods will probably want to avoid addign default query parameters in this case
 	 * @return string mySQL content for a WHERE clause
 	 */
@@ -34,7 +34,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * array('Event.id'=>array('operator'=>'equals','123'),
 	 * 		'Datetime.event_start'=>array('operator'=>'lt','value'=>'2012-03-04%2012:23:34'))
 	 * @param array $queryParameters basically $_GET parameters
-	 * @return array as described above 
+	 * @return array as described above
 	 */
 	protected function seperateIntoKeyOperatorValues($queryParameters) {
 		$keyOperatorValues = array();
@@ -54,7 +54,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param string $apiParam like 'Event.name' (API param, not SQL column yet. Mapping from one to the other is part of what happens here)
 	 * @param string $operator like '<', '=', 'LIKE', (SQL already, no longer API operators like __lt or __like)
 	 * @param string $value like 23, 'foobar', '2012-03-03 12:23:34' (API values, not SQL ones yet. Mapping happens here)
-	 * @return string of full where Subcluae like "foo='bar'", no 'AND's 
+	 * @return string of full where Subcluae like "foo='bar'", no 'AND's
 	 */
 	protected function constructSQLWhereSubclause($apiParam, $operator, $value) {
 		//take an api param like "Datetime.is_primary" or "id"
@@ -85,10 +85,10 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * constructs a complete value for a where clause, inluding quotes and parentheses. eg, 123, 'monkey', (1,23), ('foo','bar','weee').
 	 * optional parameter include $mappingFromApiToDbColumn and $apiKey.
 	 * @param type $operator like 'IN','<',etc.
-	 * @param type $valueInput value from $_GET 
+	 * @param type $valueInput value from $_GET
 	 * @param type $mappingFromApiToDbColumn eg array('true'=>'Y','false'=>'N')
 	 * @param type $apiKey eg 'Event.name'
-	 * @return type 
+	 * @return type
 	 */
 	protected function constructValueInWhereClause($operator, $valueInput, $mappingFromApiToDbColumn = null, $apiKey = null) {
 		if ($operator == 'IN') {
@@ -143,7 +143,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	/**
 	 * seperatesan input parameter like 'Event.id__lt' or 'id__like' into array('Event.id','lt') and array('id','like'), respectively
 	 * @param string $apiParam, basically a GET parameter
-	 * @return array with 2 values: frst being the queryParam, the second beign the operator 
+	 * @return array with 2 values: frst being the queryParam, the second beign the operator
 	 */
 	protected function seperateQueryParamAndOperator($apiParam) {
 		$matches = array();
@@ -158,7 +158,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	/**
 	 * calls 'processSqlResults' on each related model and the current one
 	 * @param array $rows results of wpdb->get_results, with lots of inner joins and renaming of tables in normal format
-	 * @param array $queryParameters like those 
+	 * @param array $queryParameters like those
 	 * @return same results as before, but with certain results filtered out as implied by queryParameters not taken
 	 * into account in the SQL
 	 */
@@ -190,7 +190,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * for filtering out rows from sqlresults that don't meet the criteria expressed
 	 * in keyOpVal, where the key is a post-db-query-calculated column.
 	 * Eg, in 3.1, 'Datetime.tickets_left' doesn't exist in the db, and
-	 * is calculated in processSqlResults(). An api query param of 
+	 * is calculated in processSqlResults(). An api query param of
 	 * 'Datetime.tickets_left__lt=10' would be handled in this function.
 	 * @param array $row single row from wpdb->get_results
 	 * @param array $keyOpVals like array(0=>array('key'=>'Datetime.tickets_left','operator'=>'<','value'=>10))
@@ -215,7 +215,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param string $operand2 querystringValue. eg: '2','monkey','thing1,thing2,thing3','%mysql%like%value'
 	 * @return boolean
 	 * @throws EspressoAPI_MethodNotImplementedException
-	 * @throws EspressoAPI_BadRequestException 
+	 * @throws EspressoAPI_BadRequestException
 	 */
 	protected function evaluate($operand1, $operatorRepresentation, $operand2) {
 		$booleanStrings = array('true' => true, 'false' => false);
@@ -264,13 +264,13 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * Also, if we're going to just be finding models that relate
 	 * to a specific foreign_key on any table in the query, we can specify
 	 * to only return those models using the $idKey and $idValue,
-	 * for example if you have a bunch of results from a query like 
+	 * for example if you have a bunch of results from a query like
 	 * "select * FROM events INNER JOIn attendees", and you just want
 	 * all the attendees for event with id 13, then you'd call this as follows:
 	 * $attendeesForEvent13=parseSQLREsultsForMyDate($results,'Event.id',13);
 	 * @param array $sqlResults
 	 * @param string/int $idKey
-	 * @param string/int $idValue 
+	 * @param string/int $idValue
 	 * @return array compatible with the required reutnr type for this model
 	 */
 	protected function extractMyUniqueModelsFromSqlResults($sqlResults, $idKey = null, $idValue = null) {
@@ -294,16 +294,16 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	abstract protected function _extractMyUniqueModelsFromSqlResults($sqlRow);
 
 	/**
-	 * return first result from  extractMyUniqueModelsfromSqlResults 
+	 * return first result from  extractMyUniqueModelsfromSqlResults
 	 */
 	protected function extractMyUniqueModelFromSqlResults($sqlResults, $idKey = null, $idValue = null) {
 		$modelRepresentations = $this->extractMyUniqueModelsFromSqlResults($sqlResults, $idKey, $idValue);
 		return array_shift($modelRepresentations);
 	}
-	
+
 	/**
 	 * determines the limit set in the query parameters
-	 * @param array $queryParameters 
+	 * @param array $queryParameters
 	 * @return array with 2 entries: the first being the limitStart (int) and the 2nd being the limit. Eg array(15,5)
 	 */
 	private function _determineLimit(&$queryParameters){
@@ -338,7 +338,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		}
 		return array($limitStart,$limit);
 	}
-	
+
 	/**
 	 * When users do a GET request but only want to see items they can see, the effective http method
 	 * used for determine whether to show the item or not is a PUT.
@@ -366,7 +366,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 		}
 		return $httpMethodForDeterminingPermissions;
 	}
-	
+
 	/**
 	 * Determines if the user has requested that the results be cached
 	 * @param array $queryParameters
@@ -381,14 +381,14 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			} else {
 				$cacheResult = false;
 			}
-			
+
 		} else {
 			$cacheResult = false;
 		}
 		return $cacheResult;
 	}
-	
-	
+
+
 
 	/**
 	 * Gets events from database according ot query parameters by calling the concrete child classes' _getEvents function
@@ -396,7 +396,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	 * @param boolean $only_attempt_to_find_once indicates whether we should continue querying
 	 * until we get the number of results indicated in the $queryParameters,
 	 * or just give up after one attempt (which is what we'd want to do if we're looking by ID or something else obvious)
-	 * @return array  
+	 * @return array
 	 */
 	function getMany($queryParameters, $only_attempt_to_find_once = false) {
 		$api_debug_mode = get_option(EspressoAPI_DEBUG_MODE);
@@ -427,7 +427,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 			$getIdsQuery = $this->getManyConstructQuery("{$this->primaryIdColumn} AS '{$this->primaryIdColumn}'", $sqlWhere) . " GROUP BY {$this->primaryIdColumn} LIMIT $currentLimitStart,$currentLimit";
 			if (isset($_GET['debug']))
 				echo "generic api facade 350: get ids :$getIdsQuery";
+			$wpdb->last_error = NULL;
 			$ids = $wpdb->get_col($getIdsQuery);
+			if( get_option(EspressoAPI_DEBUG_MODE ) && ! empty( $wpdb->last_error ) ){
+					throw new EspressoAPI_OperationFailed( sprintf( __( 'Database error when querying the JSON API: %s', 'event_espresso' ), $wpdb->last_error ) );
+			}
 			if (!empty($ids)) {
 				//now construct query which will get us all the fields and data we want, using the ids from the first query
 				$sqlWhereInIds = "WHERE {$this->primaryIdColumn} IN (" . implode(",", $ids) . ")";
@@ -441,7 +445,11 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 
 				if (isset($_GET['debug']))
 					echo "<br><br>generic api facade 362: sql:$sqlQuery";
+				$wpdb->last_error = NULL;
 				$results = $wpdb->get_results($sqlQuery, ARRAY_A);
+				if( get_option(EspressoAPI_DEBUG_MODE ) && ! empty( $wpdb->last_error ) ){
+					throw new EspressoAPI_OperationFailed( sprintf( __( 'Database error when querying the JSON API: %s', 'event_espresso' ), $wpdb->last_error ) );
+				}
 				//process results (calculate 'calculated columns' and filter on them)
 				$processedResults = $this->initiateProcessSqlResults($results, $keyOpVals);
 
@@ -493,7 +501,7 @@ abstract class EspressoAPI_Generic_Resource_Facade_Read_Functions extends Espres
 	/**
 	 * gets a specific event acording to its id
 	 * @param int $id
-	 * @return array 
+	 * @return array
 	 */
 	function getOne($id) {
 		$queryParam = array('id' => $id, 'limit' => '1');
