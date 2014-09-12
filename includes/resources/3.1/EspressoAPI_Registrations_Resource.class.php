@@ -1,6 +1,6 @@
 <?php
 /**
- *this file should actually exist in the Event Espresso Core Plugin 
+ *this file should actually exist in the Event Espresso Core Plugin
  */
 class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resource_Facade{
 	/**
@@ -9,7 +9,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 	protected $primaryIdColumn='Attendee.id';
 	var $APIqueryParamsToDbColumns=array(
 		//"id"=>"Attendee.id",
-		"date_of_registration"=>"Attendee.date_of_registration",
+		"date_of_registration"=>"Attendee.date",
 		'final_price'=>'Attendee.final_price',
 		'code'=>'Attendee.registration_id',
 		//'is_primary'=>'Attendee.is_primary',
@@ -38,15 +38,15 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 /**
  * an array for caching  registration ids taht related to group registrations
  * it coudl look like array('2etf2w24rtw'=>true, '54tgsdsf'=>false), meaning
- * '2etf2w24rtw' is a known group registration, but '54tgsdsf' is known to NOT 
+ * '2etf2w24rtw' is a known group registration, but '54tgsdsf' is known to NOT
  * be a gruop registration. All other registartion ids are not yet known andshould eb cached.
- * @var type 
+ * @var type
  */
 	private $knownGroupRegistrationRegIds=array();
 	function getManyConstructQuery($sqlSelect,$whereSql){
 		global $wpdb;
 		$sql = "
-            SELECT			
+            SELECT
 				{$sqlSelect}
             FROM
                 {$wpdb->prefix}events_attendee Attendee
@@ -55,7 +55,7 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 			LEFT JOIN
 				{$wpdb->prefix}events_attendee_meta AttendeeMeta ON Attendee.id=AttendeeMeta.attendee_id
 			LEFT JOIN
-				{$wpdb->prefix}events_prices Price ON Attendee.event_id=Price.event_id and 
+				{$wpdb->prefix}events_prices Price ON Attendee.event_id=Price.event_id and
 													(
 														(Price.surcharge_type='flat_rate'
 														AND(
@@ -76,10 +76,10 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 			LEFT JOIN
 				{$wpdb->prefix}events_start_end StartEnd ON StartEnd.start_time=Attendee.event_time AND StartEnd.end_time=Attendee.end_time AND StartEnd.event_id=Attendee.event_id
 			$whereSql";
-				
+
 		return $sql;
 	}
-	
+
 	protected function constructSQLWhereSubclause($columnName,$operator,$value){
 		switch($columnName){
 			/*case 'Registration.status':
@@ -92,8 +92,8 @@ class EspressoAPI_Registrations_Resource extends EspressoAPI_Registrations_Resou
 				}else{
 					return "Attendee.quantity <= 1";
 				}
-				
-			
+
+
 		}
 		return parent::constructSQLWhereSubclause($columnName,$operator,$value);
 	}
@@ -116,16 +116,16 @@ protected function processSqlResults($rows,$keyOpVals){
 			$row['Registration.url_link']=null;
 			$row['Registration.is_group_registration']=$this->determineIfGroupRegistration($row);
 			$row['Registration.is_primary']=$row['Attendee.is_primary']?true:false;
-			
+
 			//in 3.2, every single row in registrationtable relates to a ticket for somebody
 			//to get into the event. In 3.1 each row in the event_attendee table corresponds to an attendee
 			//who may have multiple tickets/registrations for an event.
 			//so, in order to have multiple registrations per row, each having their own ID,
 			//we add a decimal point onto the row's ID, and make it unique for each row.
-			//Eg, if we 3.1 attendee row has 13 tickets on it, then we should get 13 registrations 
+			//Eg, if we 3.1 attendee row has 13 tickets on it, then we should get 13 registrations
 			//from that single row. They should have the following IDs: 13.0, 13.1, 13.2, 13.3, 13.4, 13.5,
 			//13.6, 13.7, 13.8, 13.9, 13.11, 13.12, 13.13. Notice, however, that there wasn't a 13.10, because that's
-			//actually identical to 13.1. So the decimal value simply implies that it's unique, it cannot be 
+			//actually identical to 13.1. So the decimal value simply implies that it's unique, it cannot be
 			//reliably used for counting registrations on an attendee
 			$baseRegId=$row['Registration.id'];
 			$checkedInQuantity=$row['Attendee.checked_in_quantity'];
@@ -139,19 +139,19 @@ protected function processSqlResults($rows,$keyOpVals){
 				$currentId="$baseRegId.$i";
 				$ids[]=(float)$currentId;
 				$row['Registration.id']=$currentId;
-				 if($i>1){  
-					$row['Registration.is_primary']=false;  
-				}  
+				 if($i>1){
+					$row['Registration.is_primary']=false;
+				}
 				if(!$this->rowPassesFilterByCalculatedColumns($row,$keyOpVals))
-					continue;		
+					continue;
 				$row['Registration.is_checked_in']=($count<$checkedInQuantity || ($i==0 && $row['Attendee.checked_in']))?true:false;
-			
+
 				$processedRows[]=$row;
-			}	
+			}
 		}
 		return $processedRows;
 	}
-	
+
 	private function determineIfGroupRegistration($sqlResult){
 		//if it hasa quantity over 1
 		//or there are other registrations with teh same Attendee.registration_id
@@ -172,7 +172,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			}
 		}
 		return $this->knownGroupRegistrationRegIds[$sqlResult['Attendee.registration_id']];
-			
+
 
 //return in_array($sqlResult['Attendee.registration_id'],$this->knowGroupRegistrationRegIds);
 	}
@@ -183,7 +183,7 @@ protected function processSqlResults($rows,$keyOpVals){
 	 * @return array formatted for API, but only toplevel stuff usually (usually no nesting)
 	 */
 	protected function _extractMyUniqueModelsFromSqlResults($sqlResult){
-		
+
 		$transaction=array(
 			'id'=>$sqlResult['Registration.id'],
 			'status'=>$sqlResult['Registration.status'],
@@ -198,11 +198,11 @@ protected function processSqlResults($rows,$keyOpVals){
 			);
 		return $transaction;
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	function _checkin($id,$queryParameters=array()){
 		global $wpdb,$ticketing_installed;
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
@@ -229,7 +229,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		if(intval($registration['checked_in_quantity'])+$quantity>$registration['quantity']){
 			throw new EspressoAPI_SpecialException(sprintf(__("Checkins Exceeded! Only %s checkins are permitted on for this attendee on this event, but you have requested to checkin %s when there were already %s","event_espresso"),$registration['quantity'],$quantity,$registration['checked_in_quantity']));
 		}
-		
+
 		//check payment status
 		if($registration['payment_status']=='Incomplete' && !$ignorePayment){
 		//if its 'Incomplete' then stop
@@ -241,7 +241,7 @@ protected function processSqlResults($rows,$keyOpVals){
 		if($result){
 			//refetch the registration again
 			//return $this->getOne($id);
-			
+
 			if ($ticketing_installed == true){
 				//Add the date checked-in into the events_attendee_checkin table
 				$columns_and_values = array(
@@ -259,7 +259,7 @@ protected function processSqlResults($rows,$keyOpVals){
 					throw new EspressoAPI_OperationFailed(__("Adding of date checked-in failed:","event_espresso").$scan_date);
 				}
 			}
-			
+
 			$allRegistrations= $this->getMany(array('Attendee.id'=>$rowId,'Event.id'=>$registration['event_id']));
 			$updatedRegistrations=array_slice($allRegistrations['Registrations'], $registration['checked_in_quantity'], $quantity, true);
 			return array('Registrations'=>$updatedRegistrations);
@@ -267,12 +267,12 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked-in failed:","event_espresso").$result);
 		}
 	}
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	function _checkout($id,$queryParameters=array()){
 		global $wpdb, $ticketing_installed;
 		//note: they might be checking in a registrant with an id like 1.1 or 343.4, (this happens in group registrations
@@ -287,8 +287,8 @@ protected function processSqlResults($rows,$keyOpVals){
 		}else{
 			$rowId=$id;
 		}
-		
-		
+
+
 		//get the registration
 		$fetchSQL="SELECT * FROM {$wpdb->prefix}events_attendee WHERE id=$rowId";
 		$registration=$wpdb->get_row($fetchSQL,ARRAY_A);
@@ -298,12 +298,12 @@ protected function processSqlResults($rows,$keyOpVals){
 			throw new EspressoAPI_UnauthorizedException();
 		//handle a special case.
 		//there was a bug where sometimes checked_in was set to 1 (true), but
-		//checked_in_quantity was left at 0. In this case, pretend 
+		//checked_in_quantity was left at 0. In this case, pretend
 		//checked_in_quantity were maxed-out (at 'quantity')
 		if(intval($registration['checked_in'])==1 && intval($registration['checked_in_quantity'])==0){
 			$registration['checked_in_quantity']=$registration['quantity'];
 		}
-		
+
 		if(isset($queryParameters['quantity']) && is_numeric($queryParameters['quantity'])){
 			$quantityToChange=$queryParameters['quantity'];
 			$newCheckedInQuantity=intval($registration['checked_in_quantity'])-$quantityToChange;
@@ -315,15 +315,15 @@ protected function processSqlResults($rows,$keyOpVals){
 		if($newCheckedInQuantity<0){
 			throw new EspressoAPI_SpecialException(sprintf(__("Checkouts Exceeded! You tried to checkout %s when there were only %s checked in on registration %s","event_espresso"),$quantityToChange,$registration['checked_in_quantity'],$id));
 		}
-		//decide on what we're going to set the new 'checked_in' value to, 
+		//decide on what we're going to set the new 'checked_in' value to,
 		//based on whether new checked_in_quantity will be 0 or not
 		$newCheckedInvalue=$newCheckedInQuantity==0?0:1;
-		
+
 		$sql="UPDATE {$wpdb->prefix}events_attendee SET checked_in_quantity = $newCheckedInQuantity, checked_in=$newCheckedInvalue WHERE id='{$registration['id']}'";
 		//update teh attendee to checked-in-quanitty and checked_in columns
 		$result=$wpdb->query($sql);
 		if($result){
-			
+
 			if ($ticketing_installed == true){
 				//Add the date checked-out into the events_attendee_checkin table
 				$columns_and_values = array(
@@ -341,8 +341,8 @@ protected function processSqlResults($rows,$keyOpVals){
 					throw new EspressoAPI_OperationFailed(__("Adding of date checked-out failed:","event_espresso").$scan_date);
 				}
 			}
-			
-			
+
+
 			//fetch the updated registrations. if we updated 4, we ought to return
 			//4. If our first non-checked-in ID was 555.6, that means we should return 6 through 2 (so from .etc.
 			//
@@ -352,13 +352,13 @@ protected function processSqlResults($rows,$keyOpVals){
 		}else{
 			throw new EspressoAPI_OperationFailed(__("Updating of registration as checked-out failed:","event_espresso").$result);
 		}
-		
+
 	}
-	
+
 	/**
 	 * handles converting an API Registration id to a database attendee id.
 	 * handles teh case where $registrationId is actually a temp id, in which case
-	 * it doesn't change it. However, otherwise the conversion is done by simply 
+	 * it doesn't change it. However, otherwise the conversion is done by simply
 	 * removing the decimal
 	 * @param float or string $registrationId, like 'temp-my-reg' or 12.3, etc.
 	 * @return float or string
@@ -370,10 +370,10 @@ protected function processSqlResults($rows,$keyOpVals){
 			return intval($registrationId);
 		}
 	}
-	
+
 	/**
 	 * overrides parent. instead of creating query parameters  to search for API registration
-	 * IDs, it searches for Transaction ids. This is done because 
+	 * IDs, it searches for Transaction ids. This is done because
 	 * @param type $idsAffected
 	 * @return type
 	 */
@@ -396,10 +396,10 @@ protected function processSqlResults($rows,$keyOpVals){
 	/**
 	 * overrides parent's createorUpdateOne. Should create something in our db according to this
 	 * @param type $model, array exactly like response of getOne, eg array('Registration'=>array('id'=>1.1,'final_price'=>123.20, 'Attendees'=>array(...
-	 * 
+	 *
 	 */
     function performCreateOrUpdate($apiInput){
-			
+
 		//construct list of key-value pairs, for insertion or update
 		$attendeeRowId=$this->convertAPIRegistrationIdToDbAttendeeId($apiInput[$this->modelName]['id']);
 		if(EspressoAPI_Temp_Id_Holder::isTempId($apiInput[$this->modelName]['id'])){
@@ -416,14 +416,14 @@ protected function processSqlResults($rows,$keyOpVals){
 		}
 		$eventRow=$this->getDbEventForAttendeeId($attendeeRowId,$dbEntries);//we need the event data correponding to this registration
 		$dbEntries=$this->extractMyColumnsFromApiInput($apiInput,$dbEntries);
-		
-		
+
+
 		foreach($relatedModels as $relatedModelInfo){
 			if(array_key_exists($relatedModelInfo['modelName'],$apiInput[$this->modelName])){
 				if(is_array($apiInput[$this->modelName][$relatedModelInfo['modelName']]) && $relatedModelInfo['modelName']!='Event'){
 					$dbEntries=$relatedModelInfo['class']->extractMyColumnsFromApiInput($apiInput[$this->modelName],$dbEntries,array('correspondingAttendeeId'=>$attendeeRowId,'correspondingEvent'=>$eventRow));
 				}/*else{
-					//they only provided the id of the related model, 
+					//they only provided the id of the related model,
 					//eg on array('Registration'=>array('id'=>1,...'Event'=>1...)
 					//instead of array('Registration'=>array('id'=>1...'Event'=>array('id'=>1,'name'=>'party1'...)
 					//this is logic very specific to the current application
@@ -448,9 +448,9 @@ protected function processSqlResults($rows,$keyOpVals){
 		}
 		return $this->updateAndCreateDbEntries($dbEntries);
 	}
-	
+
 	/**
-	 * handles getting the related Event DB row for a given $attendeeId. 
+	 * handles getting the related Event DB row for a given $attendeeId.
 	 * If the event already exists in the database, fetches it.
 	 * If the event doesn't already exist, uses what's provided in the API input.
 	 * If the event exists but there are updates from teh API input, merges the two
@@ -482,9 +482,9 @@ protected function processSqlResults($rows,$keyOpVals){
 
 	/**
 	 * gets all the database column values from api input
-	 * @param array $apiInput either like array('events'=>array(array('id'=>... 
+	 * @param array $apiInput either like array('events'=>array(array('id'=>...
 	 * //OR like array('event'=>array('id'=>...
-	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'... 
+	 * @return array like array('wp_events_attendee'=>array(12=>array('id'=>12,name=>'bob'...
 	 */
 	function extractMyColumnsFromApiInput($apiInput,$dbEntries,$options=array()){
 		$options=shortcode_atts(array('correspondingEvent'=>null),$options);
@@ -493,7 +493,7 @@ protected function processSqlResults($rows,$keyOpVals){
 			if(!array_key_exists('id', $thisModel)){
 				throw new EspressoAPI_SpecialException(__("No ID provided on registration","event_espresso"));
 			}
-			
+
 			if(EspressoAPI_Temp_Id_Holder::isTempId($thisModel['id'])){
 				$forCreate=true;
 				$thisModelId=$thisModel['id'];
@@ -501,11 +501,11 @@ protected function processSqlResults($rows,$keyOpVals){
 				$forCreate=false;
 				$thisModelId=intval($thisModel['id']);
 			}
-			
+
 			$relatedEvent=$options['correspondingEvent'];
 			foreach($this->requiredFields as $fieldInfo){
 				$apiField=$fieldInfo['var'];
-				
+
 				if(array_key_exists($apiField,$thisModel)){//provide default value
 					$apiValue=$thisModel[$apiField];
 					$fieldMissing=false;
@@ -521,7 +521,7 @@ protected function processSqlResults($rows,$keyOpVals){
 					continue;
 				}
 				$useDefault=$fieldMissing && $forCreate;//if $useDefault is true: case 1, otherwise case 2 or 4
-				
+
 				switch($apiField){
 					case 'id':
 						$dbCol='id';
@@ -555,7 +555,7 @@ protected function processSqlResults($rows,$keyOpVals){
 						}else{
 							$dbValue=$apiValue;
 						}
-						
+
 						break;
 					case 'final_price':
 						$dbCol='final_price';
@@ -564,14 +564,14 @@ protected function processSqlResults($rows,$keyOpVals){
 						}else{
 							$dbValue=$apiValue;
 						}
-						
+
 						break;
 					case 'code':
 						$dbCol='registration_id';
 						if($useDefault){
 							$dbValue=espresso_build_registration_id($relatedEvent['id']);
 						}else{
-							
+
 							$dbValue=$apiValue;
 						}
 						break;
@@ -601,11 +601,11 @@ protected function processSqlResults($rows,$keyOpVals){
 				}
 				$dbEntries[EVENTS_ATTENDEE_TABLE][$thisModelId][$dbCol]=$dbValue;
 			}
-			
+
 		}
 		return $dbEntries;
 	}
-	
+
 	/**
 	 * Determines if the current user has specific permission to accesss/manipulate
 	 * the resource indicated by $id. For Registrations, basically a user has SPECIFIC permissions to

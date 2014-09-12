@@ -64,6 +64,7 @@ class EspressoAPI_Transactions_Resource extends EspressoAPI_Transactions_Resourc
 				'Not Completed'=>'incomplete',
 				'Cancelled'=>'incomplete',
 				'Declined'=>'incomplete',
+				'Refund'=>'refund',
 				''=>'incomplete',//not sure why the 3.1 statu would be blank
 		);
 	protected function processSqlResults($rows,$keyOpVals){
