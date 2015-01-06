@@ -23,7 +23,7 @@
  */
 class EspressoAPI_Router{
     function __construct(){
-          add_action('parse_query',array($this,'template_redirect'));//template_redirect was original action
+          add_action('template_redirect',array($this,'template_redirect'));//template_redirect was original action
     }
 
 	/**
